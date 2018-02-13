@@ -1,0 +1,14 @@
+{
+    "name": "alexacrm/dynamics-webapi-toolkit",
+    "description": "Web API toolkit for Microsoft Dynamics 365 and Dynamics CRM",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "AlexaCRM",
+            "email": "info@alexacrm.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
