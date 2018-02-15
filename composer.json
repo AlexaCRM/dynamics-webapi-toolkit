@@ -1,14 +1,22 @@
 {
-    "name": "alexacrm/dynamics-webapi-toolkit",
-    "description": "Web API toolkit for Microsoft Dynamics 365 and Dynamics CRM",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "AlexaCRM",
-            "email": "info@alexacrm.com"
-        }
-    ],
-    "minimum-stability": "dev",
-    "require": {}
+  "name": "alexacrm/dynamics-webapi-toolkit",
+  "description": "Web API toolkit for Microsoft Dynamics 365 and Dynamics CRM",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "AlexaCRM",
+      "email": "info@alexacrm.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.0",
+    "ramsey/uuid": "^3.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "AlexaCRM\\": "src/"
+    }
+  }
 }
