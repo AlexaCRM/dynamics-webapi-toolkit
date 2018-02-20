@@ -2,7 +2,7 @@
 
 namespace AlexaCRM\Xrm;
 
-use AlexaCRM\Guid;
+use Ramsey\Uuid\UuidInterface as Guid;
 
 /**
  * Describes how Dynamics 365 is accessed.

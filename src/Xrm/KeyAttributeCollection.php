@@ -2,6 +2,11 @@
 
 namespace AlexaCRM\Xrm;
 
+/**
+ * Represents the key attribute collection.
+ *
+ * @property-read int $Count Gets the number of key attributes in the collection.
+ */
 class KeyAttributeCollection implements \Iterator {
 
     /**
@@ -24,45 +29,53 @@ class KeyAttributeCollection implements \Iterator {
     }
 
     /**
-     * Return the current element
+     * Getters.
      *
-     * @link http://php.net/manual/en/iterator.current.php
+     * @param string $name
+     *
+     * @return mixed
+     */
+    public function __get( $name ) {
+        switch ( $name ) {
+            case 'Count':
+                return count( $this->keys );
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the current element.
+     *
      * @return mixed Can return any type.
-     * @since 5.0.0
      */
     public function current() {
         return current( $this->keys );
     }
 
     /**
-     * Move forward to next element
+     * Move forward to next element.
      *
-     * @link http://php.net/manual/en/iterator.next.php
      * @return void Any returned value is ignored.
-     * @since 5.0.0
      */
     public function next() {
         next( $this->keys );
     }
 
     /**
-     * Return the key of the current element
+     * Return the key of the current element.
      *
-     * @link http://php.net/manual/en/iterator.key.php
      * @return mixed scalar on success, or null on failure.
-     * @since 5.0.0
      */
     public function key() {
         return key( $this->keys );
     }
 
     /**
-     * Checks if current position is valid
+     * Checks if current position is valid.
      *
-     * @link http://php.net/manual/en/iterator.valid.php
      * @return boolean The return value will be casted to boolean and then evaluated.
      * Returns true on success or false on failure.
-     * @since 5.0.0
      */
     public function valid() {
         $key = $this->key();
@@ -71,11 +84,9 @@ class KeyAttributeCollection implements \Iterator {
     }
 
     /**
-     * Rewind the Iterator to the first element
+     * Rewind the Iterator to the first element.
      *
-     * @link http://php.net/manual/en/iterator.rewind.php
      * @return void Any returned value is ignored.
-     * @since 5.0.0
      */
     public function rewind() {
         reset( $this->keys );

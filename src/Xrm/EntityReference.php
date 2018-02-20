@@ -2,8 +2,7 @@
 
 namespace AlexaCRM\Xrm;
 
-use AlexaCRM\Guid;
-use Ramsey\Uuid\UuidInterface;
+use Ramsey\Uuid\UuidInterface as Guid;
 
 /**
  * Identifies a record in Dynamics 365.
@@ -47,17 +46,17 @@ class EntityReference {
      * or with entity name, key name and key value specified.
      *
      * @param string $entityName
-     * @param Guid|KeyAttributeCollection|string $entityId
-     * @param mixed $keyValue Blabla
+     * @param Guid|KeyAttributeCollection|string $entityId Record ID, KeyAttributeCollection, or key name
+     * @param mixed $keyValue Key value
      */
     public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
-        if ( $entityName !== null ) {
-            $this->LogicalName = $entityName;
-        } else {
+        if ( $entityName === null ) {
             return; // other properties cannot be set without a concrete entityName value
         }
 
-        if ( $entityId instanceof UuidInterface ) {
+        $this->LogicalName = $entityName;
+
+        if ( $entityId instanceof Guid ) {
             $this->Id = $entityId;
 
             return;
