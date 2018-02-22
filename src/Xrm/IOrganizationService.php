@@ -14,12 +14,12 @@ interface IOrganizationService {
      *
      * @param string $entityName
      * @param Guid $entityId
-     * @param $relationship
+     * @param Relationship $relationship
      * @param EntityReference[] $relatedEntities
      *
      * @return void
      */
-    public function Associate( string $entityName, Guid $entityId, $relationship, $relatedEntities ) : void;
+    public function Associate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities ) : void;
 
     /**
      * Creates a record.
@@ -45,12 +45,12 @@ interface IOrganizationService {
      *
      * @param string $entityName
      * @param Guid $entityId
-     * @param $relationship
+     * @param Relationship $relationship
      * @param EntityReference[] $relatedEntities
      *
      * @return void
      */
-    public function Disassociate( string $entityName, Guid $entityId, $relationship, $relatedEntities ) : void;
+    public function Disassociate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities ) : void;
 
     /**
      * Executes a function or action formed as a request.
