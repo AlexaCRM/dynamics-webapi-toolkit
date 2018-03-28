@@ -19,16 +19,16 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Associate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities ) : void;
+    public function Associate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities );
 
     /**
      * Creates a record.
      *
      * @param Entity $entity
      *
-     * @return mixed
+     * @return Guid
      */
-    public function Create( Entity $entity );
+    public function Create( Entity $entity ) : Guid;
 
     /**
      * Deletes a record.
@@ -38,7 +38,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Delete( string $entityName, Guid $entityId ) : void;
+    public function Delete( string $entityName, Guid $entityId );
 
     /**
      * Deletes a link between records.
@@ -50,7 +50,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Disassociate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities ) : void;
+    public function Disassociate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities );
 
     /**
      * Executes a function or action formed as a request.
@@ -88,6 +88,6 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Update( Entity $entity ) : void;
+    public function Update( Entity $entity );
 
 }
