@@ -2,9 +2,6 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-use AlexaCRM\WebAPI\OData\Metadata\EntitySet;
-use AlexaCRM\WebAPI\OData\Metadata\EntityType;
-
 class Metadata {
 
     /**
@@ -22,22 +19,19 @@ class Metadata {
     public $alias;
 
     /**
-     * Map of declared entity types.
-     *
-     * @var EntityType[]
+     * @var EntityMap[]
      */
-    public $entityTypes;
+    public $entityMaps;
 
     /**
-     * Map of declared entity sets.
+     * Lists all types which have children, together with their descendants.
      *
-     * @var EntitySet[]
+     * @var array
      */
-    public $entitySets;
+    public $parentTypesMap;
 
     public static function createFromXML( $xml ) {
         $metadata = new Metadata();
-        $metadata->entityTypes = [];
 
         $dom = new \DOMDocument( '1.0', 'utf-8' );
         if ( !$dom->loadXML( $xml ) ) {
@@ -51,24 +45,62 @@ class Metadata {
         $metadata->namespace = $x->evaluate( 'string(/edmx:Edmx/edmx:DataServices/edm:Schema/@Namespace)' );
         $metadata->alias = $x->evaluate( 'string(/edmx:Edmx/edmx:DataServices/edm:Schema/@Alias)' );
 
-        $abstractEntities = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType[@Abstract='true']" );
-        foreach ( $abstractEntities as $abstractEntity ) {
-            $newType = EntityType::createFromDOMNode( $abstractEntity, $metadata );
-            $metadata->entityTypes[$newType->name] = $newType;
+        $baseTypeList = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType/@BaseType" );
+        $baseTypes = [];
+        foreach ( $baseTypeList as $baseTypeElement ) {
+            $baseTypes[] = $baseTypeElement->nodeValue;
+        }
+        $baseTypes = array_map( [ $metadata, 'stripNamespace'], array_unique( $baseTypes ) );
+
+        $metadata->parentTypesMap = [];
+        foreach ( $baseTypes as $baseType ) {
+            $typeChildren = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType[@BaseType='mscrm.{$baseType}']" );
+            foreach ( $typeChildren as $typeChild ) {
+                $metadata->parentTypesMap[$baseType][] = $typeChild->getAttribute( 'Name' );
+            }
         }
 
-        $entityTypes = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType[not(@Abstract='true')]" );
-        foreach ( $entityTypes as $entityType ) {
-            $newType = EntityType::createFromDOMNode( $entityType, $metadata );
-            $metadata->entityTypes[$newType->name] = $newType;
+        foreach ( $baseTypes as $baseType ) {
+            $baseEntity = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType[@Name='{$baseType}']" );
+            if ( !$baseEntity->length ) {
+                continue;
+            }
+
+            $metadata->entityMaps[$baseType] = EntityMap::createFromDOM( $baseEntity->item( 0 ), $metadata );
+        }
+
+        foreach ( $metadata->entityMaps as $entityMap ) {
+            if ( $entityMap->baseEntity === null ) {
+                continue;
+            }
+
+            $baseEntityName = $entityMap->baseEntity;
+            $baseType = $metadata->entityMaps[$baseEntityName];
+            $entityMap->rebuildFromBase( $baseType );
+        }
+
+        $skipEntities = array_keys( $metadata->entityMaps );
+        $typesList = $x->query( '/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType' );
+        foreach ( $typesList as $type ) {
+            /**
+             * @var \DOMElement $type
+             */
+            $typeName = $type->getAttribute( 'Name' );
+            if ( in_array( $typeName, $skipEntities ) ) {
+                continue;
+            }
+            $newMap = EntityMap::createFromDOM( $type, $metadata );
+            $metadata->entityMaps[$typeName] = $newMap;
+
+            $baseType = $metadata->entityMaps[$newMap->baseEntity];
+            $metadata->entityMaps[$typeName]->rebuildFromBase( $baseType );
         }
 
         return $metadata;
     }
 
     public function stripNamespace( $typeName ) {
-        $typeName = str_replace( $this->namespace . '.', '', $typeName );
-        $typeName = str_replace( $this->alias . '.', '', $typeName );
+        $typeName = str_replace( [ $this->namespace . '.', $this->alias . '.' ], '', $typeName );
 
         return $typeName;
     }

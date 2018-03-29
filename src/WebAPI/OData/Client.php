@@ -78,18 +78,20 @@ class Client {
             'verify' => false,
             'handler' => $handlerStack,
         ] );
+    }
 
-        $resp = $this->httpClient->get( $settings->getEndpointURI() . '$metadata', [
+    public function getMetadata() {
+        if ( $this->metadata instanceof Metadata ) {
+            return $this->metadata;
+        }
+
+        $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
             'headers' => [ 'Accept' => 'application/xml' ],
         ] );
         $metadataXML = $resp->getBody()->getContents();
 
-        $metadata = Metadata::createFromXML( $metadataXML );
+        $this->metadata = Metadata::createFromXML( $metadataXML );
 
-        print_r( $metadata );
-    }
-
-    public function getMetadata() {
         return $this->metadata;
     }
 
