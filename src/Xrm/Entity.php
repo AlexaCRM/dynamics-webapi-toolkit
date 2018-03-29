@@ -2,8 +2,6 @@
 
 namespace AlexaCRM\Xrm;
 
-use Ramsey\Uuid\UuidInterface as Guid;
-
 /**
  * Represents a record in Dynamics 365.
  *
@@ -15,7 +13,7 @@ class Entity implements \ArrayAccess {
     /**
      * Unique ID of the record.
      *
-     * @var Guid
+     * @var string
      */
     public $Id;
 
@@ -48,6 +46,15 @@ class Entity implements \ArrayAccess {
     public $FormattedValues;
 
     /**
+     * Collection of attributes' states.
+     * If the attribute key exists and equals true, the attribute value has been changed
+     * since the last time entity was persisted in CRM.
+     *
+     * @var AttributeState
+     */
+    protected $attributeState;
+
+    /**
      * Entity instance constructor.
      *
      * An Entity instance may be created without any parameters specified,
@@ -56,19 +63,19 @@ class Entity implements \ArrayAccess {
      * or with entity name, key name and key value specified.
      *
      * @param string $entityName Entity logical name
-     * @param Guid|KeyAttributeCollection|string $entityId Record ID, KeyAttributeCollection, or key name
+     * @param string|KeyAttributeCollection $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value
      */
     public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
-        if ( $entityName !== null ) {
-            $this->LogicalName = $entityName;
-        } else {
-            return; // other properties cannot be set without a concrete entityName value
+        $this->attributeState = new AttributeState();
+
+        if ( $entityName === null ) {
+            return;
         }
 
-        if ( $entityId instanceof Guid ) {
-            $this->Id = $entityId;
+        $this->LogicalName = $entityName;
 
+        if ( $entityId === null && $keyValue === null ) {
             return;
         }
 
@@ -79,11 +86,15 @@ class Entity implements \ArrayAccess {
             return;
         }
 
-        if ( is_string( $entityId ) && $keyValue !== null ) {
-            $this->KeyAttributes = new KeyAttributeCollection();
-            $keyName = $entityId;
-            $this->KeyAttributes->Add( $keyName, $keyValue );
+        if ( is_string( $entityId ) && $keyValue === null ) {
+            $this->Id = $entityId;
+
+            return;
         }
+
+        $this->KeyAttributes = new KeyAttributeCollection();
+        $keyName = $entityId;
+        $this->KeyAttributes->Add( $keyName, $keyValue );
     }
 
     /**
@@ -139,8 +150,7 @@ class Entity implements \ArrayAccess {
      */
     public function SetAttributeValue( string $attribute, $value ) {
         $this->Attributes[$attribute] = $value;
-
-        // TODO: update attribute changed state
+        $this->attributeState[$attribute] = true;
     }
 
     /**
@@ -208,8 +218,12 @@ class Entity implements \ArrayAccess {
      * @return void
      */
     public function offsetUnset($offset) {
-        // TODO: Implement offsetUnset() method.
         unset( $this->Attributes[$offset] );
+        unset( $this->attributeState[$offset] );
+    }
+
+    public function getAttributeState() {
+        return $this->attributeState;
     }
 
 }

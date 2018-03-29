@@ -2,8 +2,6 @@
 
 namespace AlexaCRM\Xrm;
 
-use Ramsey\Uuid\UuidInterface as Guid;
-
 /**
  * Describes how Dynamics 365 is accessed.
  */
@@ -13,44 +11,44 @@ interface IOrganizationService {
      * Creates a link between records.
      *
      * @param string $entityName
-     * @param Guid $entityId
+     * @param string $entityId Record ID.
      * @param Relationship $relationship
      * @param EntityReference[] $relatedEntities
      *
      * @return void
      */
-    public function Associate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities );
+    public function Associate( string $entityName, $entityId, Relationship $relationship, $relatedEntities );
 
     /**
      * Creates a record.
      *
      * @param Entity $entity
      *
-     * @return Guid
+     * @return string ID of the new record.
      */
-    public function Create( Entity $entity ) : Guid;
+    public function Create( Entity $entity );
 
     /**
      * Deletes a record.
      *
      * @param string $entityName
-     * @param Guid $entityId
+     * @param string $entityId Record ID.
      *
      * @return void
      */
-    public function Delete( string $entityName, Guid $entityId );
+    public function Delete( string $entityName, $entityId );
 
     /**
      * Deletes a link between records.
      *
      * @param string $entityName
-     * @param Guid $entityId
+     * @param string $entityId Record ID.
      * @param Relationship $relationship
      * @param EntityReference[] $relatedEntities
      *
      * @return void
      */
-    public function Disassociate( string $entityName, Guid $entityId, Relationship $relationship, $relatedEntities );
+    public function Disassociate( string $entityName, $entityId, Relationship $relationship, $relatedEntities );
 
     /**
      * Executes a function or action formed as a request.
@@ -65,12 +63,12 @@ interface IOrganizationService {
      * Retrieves a record,
      *
      * @param string $entityName
-     * @param Guid $entityId
+     * @param string $entityId Record ID.
      * @param ColumnSet $columnSet
      *
      * @return Entity
      */
-    public function Retrieve( string $entityName, Guid $entityId, ColumnSet $columnSet ) : Entity;
+    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity;
 
     /**
      * Retrieves a collection of records.

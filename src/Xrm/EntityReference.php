@@ -2,8 +2,6 @@
 
 namespace AlexaCRM\Xrm;
 
-use Ramsey\Uuid\UuidInterface as Guid;
-
 /**
  * Identifies a record in Dynamics 365.
  */
@@ -12,7 +10,7 @@ class EntityReference {
     /**
      * Unique ID of the record.
      *
-     * @var Guid
+     * @var string
      */
     public $Id;
 
@@ -46,19 +44,17 @@ class EntityReference {
      * or with entity name, key name and key value specified.
      *
      * @param string $entityName
-     * @param Guid|KeyAttributeCollection|string $entityId Record ID, KeyAttributeCollection, or key name
+     * @param string|KeyAttributeCollection $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value
      */
     public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
         if ( $entityName === null ) {
-            return; // other properties cannot be set without a concrete entityName value
+            return;
         }
 
         $this->LogicalName = $entityName;
 
-        if ( $entityId instanceof Guid ) {
-            $this->Id = $entityId;
-
+        if ( $entityId === null && $keyValue === null ) {
             return;
         }
 
@@ -69,11 +65,15 @@ class EntityReference {
             return;
         }
 
-        if ( is_string( $entityId ) && $keyValue !== null ) {
-            $this->KeyAttributes = new KeyAttributeCollection();
-            $keyName = $entityId;
-            $this->KeyAttributes->Add( $keyName, $keyValue );
+        if ( is_string( $entityId ) && $keyValue === null ) {
+            $this->Id = $entityId;
+
+            return;
         }
+
+        $this->KeyAttributes = new KeyAttributeCollection();
+        $keyName = $entityId;
+        $this->KeyAttributes->Add( $keyName, $keyValue );
     }
 
 }

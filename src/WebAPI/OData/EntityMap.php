@@ -76,7 +76,7 @@ class EntityMap {
              */
             $map->inboundMap[$propertyName] = $concretePropertyName;
 
-            /**
+            /*
              * Build the outbound map.
              *
              * As-is properties by default.
@@ -97,6 +97,10 @@ class EntityMap {
                 $navType = $metadata->stripNamespace( $navigationProperty->getAttribute( 'Type' ) );
 
                 $map->outboundMap[$concretePropertyName][$navType] = $navigationProperty->getAttribute( 'Name' );
+
+                /*
+                 * Resolve possible abstract types into concrete types. E.g. principal => systemuser, team.
+                 */
                 if ( array_key_exists( $navType, $metadata->parentTypesMap ) ) {
                     foreach ( $metadata->parentTypesMap[$navType] as $concreteType ) {
                         $map->outboundMap[$concretePropertyName][$concreteType] = $navigationProperty->getAttribute( 'Name' );

@@ -163,14 +163,16 @@ class Client {
 
     private function BuildQueryHeaders( $queryOptions = null ) {
         $headers = [];
+        $prefer = [];
+
         if ( $queryOptions != null ) {
-            if ( isset( $queryOptions['FormattedValues'] ) ) {
-                $headers['odata.include-annotations'] = 'OData.Community.Display.V1.FormattedValue';
-            }
             if ( isset( $queryOptions['MaxPageSize'] ) ) {
-                $headers['Prefer'] = 'odata.maxpagesize=' . $queryOptions['MaxPageSize'];
+                $prefer[] = 'odata.maxpagesize=' . $queryOptions['MaxPageSize'];
             }
         }
+
+        $prefer[] = 'odata.include-annotations="*"';
+        $headers['Prefer'] = implode( ',', $prefer );
 
         return $headers;
     }
@@ -238,9 +240,8 @@ class Client {
             $id     = $res->getHeader( 'OData-EntityId' )[0];
             $id     = explode( '(', $id )[1];
             $id     = str_replace( ')', '', $id );
-            $result = $id;
 
-            return $result;
+            return $id;
         } else {
             throw new \Exception( $res->getBody(), $res->getStatusCode() );
         }

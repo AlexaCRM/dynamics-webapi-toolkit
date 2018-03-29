@@ -12,14 +12,14 @@ class ColumnSet {
      *
      * @var bool
      */
-    public $AllColumns;
+    public $AllColumns = false;
 
     /**
      * Collection of attribute names to be retrieved.
      *
      * @var string[]
      */
-    public $Columns;
+    public $Columns = [];
 
     /**
      * ColumnSet constructor.
@@ -27,6 +27,13 @@ class ColumnSet {
      * @param string[]|bool $columns If the parameter is boolean, ColumnSet::$AllColumns is set.
      */
     public function __construct( $columns = [] ) {
+        if ( is_bool( $columns ) && $columns === true ) {
+            $this->AllColumns = true;
+
+            return;
+        }
+
+        $this->Columns = $columns;
     }
 
     /**
@@ -40,6 +47,7 @@ class ColumnSet {
         }
 
         $this->Columns[] = $column;
+        $this->Columns = array_unique( $this->Columns );
     }
 
     /**
