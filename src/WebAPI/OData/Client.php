@@ -294,7 +294,7 @@ class Client {
     }
 
     public function DeleteAssociation( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
-        $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->config['APIUrl'], $toEntityCollection, $toEntityId );
+        $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
         $res = $this->GetHttpRequest( 'DELETE', $url );
         if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
             $result = true;

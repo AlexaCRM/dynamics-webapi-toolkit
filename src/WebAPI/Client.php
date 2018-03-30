@@ -31,7 +31,15 @@ class Client implements IOrganizationService {
      * @return void
      */
     public function Associate( string $entityName, $entityId, Relationship $relationship, $relatedEntities ) {
-        // TODO: Implement Associate() method.
+        $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->entitySetMap[$entityName];
+
+        foreach ( $relatedEntities as $ref ) {
+            $associatedCollectionName = $metadata->entitySetMap[$ref->LogicalName];
+
+            // TODO: execute in one request with a batch request
+            $this->client->Associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+        }
     }
 
     /**
@@ -103,7 +111,15 @@ class Client implements IOrganizationService {
      * @return void
      */
     public function Disassociate( string $entityName, $entityId, Relationship $relationship, $relatedEntities ) {
-        // TODO: Implement Disassociate() method.
+        $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->entitySetMap[$entityName];
+
+        foreach ( $relatedEntities as $ref ) {
+            $associatedCollectionName = $metadata->entitySetMap[$ref->LogicalName];
+
+            // TODO: execute in one request with a batch request
+            $this->client->DeleteAssociation( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+        }
     }
 
     /**
