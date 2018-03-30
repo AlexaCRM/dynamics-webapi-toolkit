@@ -16,6 +16,12 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      */
     protected $attributes;
 
+    public function reset() {
+        foreach ( $this->attributes as $attribute => &$state ) {
+            $state = false;
+        }
+    }
+
     /**
      * Whether a offset exists
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php

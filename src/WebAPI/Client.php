@@ -73,6 +73,8 @@ class Client implements IOrganizationService {
 
         $responseId = $this->client->Create( $collectionName, $translatedData );
 
+        $entity->getAttributeState()->reset();
+
         return $responseId;
     }
 
@@ -126,10 +128,22 @@ class Client implements IOrganizationService {
      */
     public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity {
         $metadata = $this->client->getMetadata();
+        $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
         $collectionName = $metadata->entitySetMap[$entityName]; // TODO: throw typed exception if no entity set found
 
-        $response = $this->client->Get( $collectionName, $entityId );
-        $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
+        $options = [];
+        if ( $columnSet->AllColumns !== true ) {
+            $options['Select'] = [];
+            $columnMapping = array_flip( $entityMap );
+            foreach ( $columnSet->Columns as $column ) {
+                if ( !array_key_exists( $column, $columnMapping ) ) {
+                    continue;
+                }
+
+                $options['Select'][] = $columnMapping[$column];
+            }
+        }
+        $response = $this->client->Get( $collectionName, $entityId, $options );
 
         $entity = new Entity( $entityName, $entityId );
 
@@ -152,6 +166,9 @@ class Client implements IOrganizationService {
             }
 
             $entity->Attributes[$targetField] = $value; // TODO: convert to OptionSetValue if required acc. to Metadata
+            if ( array_key_exists( $formattedValueField, $response ) ) {
+                $entity->FormattedValues[$targetField] = $response[$formattedValueField];
+            }
         }
 
 
@@ -177,7 +194,38 @@ class Client implements IOrganizationService {
      * @return void
      */
     public function Update( Entity $entity ) {
-        // TODO: Implement Update() method.
+        $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->entitySetMap[$entity->LogicalName];
+
+        $data = [];
+        foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
+            $data[$fieldName] = $entity[$fieldName];
+        }
+
+        $outboundMap = $metadata->entityMaps[$entity->LogicalName]->outboundMap;
+        $translatedData = [];
+        foreach ( $data as $field => $value ) {
+            $outboundMapping = $outboundMap[$field];
+            if ( is_string( $outboundMapping ) ) {
+                $translatedData[$outboundMapping] = $value;
+                continue;
+            }
+
+            if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
+                $logicalName = $value->LogicalName;
+                if ( !array_key_exists( $logicalName, $outboundMapping) ) {
+                    continue; // TODO: throw a typed exception
+                }
+
+                $fieldCollectionName = $metadata->entitySetMap[$logicalName];
+
+                $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
+            }
+        }
+
+        $this->client->Update( $collectionName, $entity->Id, $translatedData );
+
+        $entity->getAttributeState()->reset();
     }
 
     public function getClient() : ODataClient {

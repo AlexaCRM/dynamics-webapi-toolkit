@@ -17,14 +17,14 @@ class ColumnSet {
     /**
      * Collection of attribute names to be retrieved.
      *
-     * @var string[]
+     * @var array
      */
     public $Columns = [];
 
     /**
      * ColumnSet constructor.
      *
-     * @param string[]|bool $columns If the parameter is boolean, ColumnSet::$AllColumns is set.
+     * @param array|bool $columns If the parameter is boolean, ColumnSet::$AllColumns is set.
      */
     public function __construct( $columns = [] ) {
         if ( is_bool( $columns ) && $columns === true ) {
