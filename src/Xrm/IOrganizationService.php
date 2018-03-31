@@ -2,6 +2,8 @@
 
 namespace AlexaCRM\Xrm;
 
+use AlexaCRM\Xrm\Query\QueryBase;
+
 /**
  * Describes how Dynamics 365 is accessed.
  */
@@ -73,11 +75,11 @@ interface IOrganizationService {
     /**
      * Retrieves a collection of records.
      *
-     * @param $query
+     * @param QueryBase $query
      *
      * @return mixed
      */
-    public function RetrieveMultiple( $query );
+    public function RetrieveMultiple( QueryBase $query );
 
     /**
      * Updates an existing record.

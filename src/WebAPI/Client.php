@@ -4,8 +4,11 @@ namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\Xrm\ColumnSet;
 use AlexaCRM\Xrm\Entity;
+use AlexaCRM\Xrm\EntityCollection;
 use AlexaCRM\Xrm\EntityReference;
 use AlexaCRM\Xrm\IOrganizationService;
+use AlexaCRM\Xrm\Query\FetchExpression;
+use AlexaCRM\Xrm\Query\QueryBase;
 use AlexaCRM\Xrm\Relationship;
 use AlexaCRM\WebAPI\OData\Client as ODataClient;
 
@@ -194,12 +197,16 @@ class Client implements IOrganizationService {
     /**
      * Retrieves a collection of records.
      *
-     * @param $query
+     * @param QueryBase $query A query that determines the set of records to retrieve.
      *
-     * @return mixed
+     * @return EntityCollection
      */
-    public function RetrieveMultiple( $query ) {
-        // TODO: Implement RetrieveMultiple() method.
+    public function RetrieveMultiple( QueryBase $query ) {
+        if ( $query instanceof FetchExpression ) {
+            return $this->retrieveViaFetchXML( $query );
+        }
+
+        return new EntityCollection();
     }
 
     /**
@@ -247,4 +254,106 @@ class Client implements IOrganizationService {
     public function getClient() : ODataClient {
         return $this->client;
     }
+
+    /**
+     * @param FetchExpression $query
+     *
+     * @return EntityCollection
+     */
+    protected function retrieveViaFetchXML( FetchExpression $query ) {
+        $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
+        $fetchDOM->loadXML( $query->Query );
+        $x = new \DOMXPath( $fetchDOM );
+
+        $attrToEntity = [];
+        $fetchAttributes = $x->query( '//attribute' );
+        foreach ( $fetchAttributes as $attr ) {
+            /**
+             * @var \DOMElement $attr
+             */
+            $targetField = $attr->getAttribute( 'name' );
+            if ( $attr->parentNode->nodeName === 'link-entity' ) {
+                $targetField = $attr->parentNode->getAttribute( 'alias' ) . '.' . $targetField;
+            }
+            if ( $attr->hasAttribute( 'alias' ) ) {
+                $targetField = $attr->getAttribute( 'alias' );
+            }
+            $attrToEntity[$targetField] = $attr->parentNode->getAttribute( 'name' );
+        }
+
+        $entityName = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 )->getAttribute( 'name' );
+
+        $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->entitySetMap[$entityName];
+        $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
+
+        $response = $this->client->GetList( $collectionName, [
+            'FetchXml' => $query->Query,
+        ] );
+
+        $collection = new EntityCollection();
+        $collection->EntityName = $entityName;
+        $collection->MoreRecords = false;
+
+        if ( !$response->Count ) {
+            return $collection;
+        }
+
+        /*
+         * Unmarshal all fields as usual.
+         *
+         * If the value looks like GUID and has a FormattedValue annotation but no lookuplogicalname,
+         * it's a lookup from a linked entity. Look up its logical name in FetchXML.
+         * If any x002e are found, replace the divider with dot (.).
+         */
+        foreach ( $response->List as $item ) {
+            $record = new Entity( $entityName );
+            $recordKey = $metadata->entityMaps[$entityName]->key;
+            if ( array_key_exists( $recordKey, $item ) ) {
+                $record->Id = $item->{$recordKey};
+            }
+
+            foreach ( $item as $key => $value ) {
+                if ( $key === '@odata.etag' || strpos( $key, '@Microsoft' ) !== false || strpos( $key, '@OData' ) !== false ) {
+                    continue;
+                }
+
+                $targetField = array_key_exists( $key, $entityMap )? $entityMap[$key] : $key;
+                $lookupField = $key . '@Microsoft.Dynamics.CRM.lookuplogicalname';
+                $formattedField = $key . '@OData.Community.Display.V1.FormattedValue';
+                $targetValue = $value;
+
+                if ( strpos( $targetField, '_x002e_' ) !== false ) {
+                    $targetField = str_replace( '_x002e_', '.', $targetField );
+                }
+
+                if ( array_key_exists( $lookupField, $item ) ) {
+                    $targetValue = new EntityReference( $item->{$lookupField}, $value );
+                    $targetValue->Name = $item->{$formattedField};
+                } elseif ( preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value ) && array_key_exists( $formattedField, $item ) ) {
+                    // might be an aliased entity reference
+                    if ( array_key_exists( $targetField, $attrToEntity ) ) {
+                        $targetValue = new EntityReference( $attrToEntity[$targetField], $value );
+                        $targetValue->Name = $item->{$formattedField};
+                    }
+                }
+
+                $formattedValue = null;
+                if ( array_key_exists( $formattedField, $item ) ) {
+                    $formattedValue = $item->{$formattedField};
+                }
+
+                $record->Attributes[$targetField] = $targetValue;
+
+                if ( $formattedValue !== null ) {
+                    $record->FormattedValues[$targetField] = $formattedValue;
+                }
+            }
+
+            $collection->Entities[] = $record;
+        }
+
+        return $collection;
+    }
+
 }
