@@ -9,6 +9,7 @@ use AlexaCRM\Xrm\EntityReference;
 use AlexaCRM\Xrm\IOrganizationService;
 use AlexaCRM\Xrm\Query\FetchExpression;
 use AlexaCRM\Xrm\Query\QueryBase;
+use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
 use AlexaCRM\WebAPI\OData\Client as ODataClient;
 
@@ -204,6 +205,8 @@ class Client implements IOrganizationService {
     public function RetrieveMultiple( QueryBase $query ) {
         if ( $query instanceof FetchExpression ) {
             return $this->retrieveViaFetchXML( $query );
+        } elseif ( $query instanceof QueryByAttribute ) {
+            return $this->retrieveViaQueryByAttribute( $query );
         }
 
         return new EntityCollection();
@@ -336,6 +339,105 @@ class Client implements IOrganizationService {
                         $targetValue = new EntityReference( $attrToEntity[$targetField], $value );
                         $targetValue->Name = $item->{$formattedField};
                     }
+                }
+
+                $formattedValue = null;
+                if ( array_key_exists( $formattedField, $item ) ) {
+                    $formattedValue = $item->{$formattedField};
+                }
+
+                $record->Attributes[$targetField] = $targetValue;
+
+                if ( $formattedValue !== null ) {
+                    $record->FormattedValues[$targetField] = $formattedValue;
+                }
+            }
+
+            $collection->Entities[] = $record;
+        }
+
+        return $collection;
+    }
+
+    protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
+        $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->entitySetMap[$query->EntityName];
+        $entityMap = $metadata->entityMaps[$query->EntityName]->inboundMap;
+        $columnMap = array_flip( $entityMap );
+
+        $queryData = [];
+        $filterQuery = [];
+        foreach ( $query->Attributes as $attributeName => $value ) {
+            $queryAttributeName = $columnMap[$attributeName];
+            switch ( true ) {
+                case is_string( $value ):
+                    $queryValue ="'{$value}'"; break;
+                case is_bool( $value):
+                    $queryValue = $value? 'true' : 'false'; break;
+                case $value === null:
+                    $queryValue = 'null'; break;
+                default:
+                    $queryValue = $value;
+            }
+
+            $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
+        }
+        if ( count( $filterQuery ) ) {
+            $queryData['Filter'] = implode( ' and ', $filterQuery );
+        }
+
+        if ( $query->ColumnSet instanceof ColumnSet && !$query->ColumnSet->AllColumns ) {
+            foreach ( $query->ColumnSet->Columns as $column ) {
+                if ( !array_key_exists( $column, $columnMap ) ) {
+                    continue;
+                }
+
+                $queryData['Select'][] = $columnMap[$column];
+            }
+        }
+
+        foreach ( $query->Orders as $attributeName => $orderType ) {
+            if ( !array_key_exists( $attributeName, $columnMap ) ) {
+                continue;
+            }
+
+            $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderType;
+        }
+
+        if ( $query->TopCount > 0 ) {
+            $queryData['Top'] = $query->TopCount;
+        }
+
+        $response = $this->client->GetList( $collectionName, $queryData );
+
+        $collection = new EntityCollection();
+        $collection->EntityName = $query->EntityName;
+        $collection->MoreRecords = false;
+
+        if ( !$response->Count ) {
+            return $collection;
+        }
+
+        foreach ( $response->List as $item ) {
+            $record = new Entity( $query->EntityName );
+            $recordKey = $metadata->entityMaps[$query->EntityName]->key;
+            if ( array_key_exists( $recordKey, $item ) ) {
+                $record->Id = $item->{$recordKey};
+            }
+
+            foreach ( $item as $key => $value ) {
+                if ( $key === '@odata.etag' || strpos( $key, '@Microsoft' ) !== false || strpos( $key, '@OData' ) !== false ) {
+                    continue;
+                }
+
+                $targetField = array_key_exists( $key, $entityMap )? $entityMap[$key] : $key;
+                $lookupField = $key . '@Microsoft.Dynamics.CRM.lookuplogicalname';
+                $formattedField = $key . '@OData.Community.Display.V1.FormattedValue';
+                $targetValue = $value;
+
+                if ( array_key_exists( $lookupField, $item ) ) {
+                    $targetValue = new EntityReference( $item->{$lookupField}, $value );
+                    $targetValue->Name = $item->{$formattedField};
                 }
 
                 $formattedValue = null;
