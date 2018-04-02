@@ -2,6 +2,9 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+/**
+ * Represents Web API OData service metadata.
+ */
 class Metadata {
 
     const NS_EDMX = 'http://docs.oasis-open.org/odata/ns/edmx';
@@ -83,6 +86,9 @@ class Metadata {
         foreach ( $baseTypes as $baseType ) {
             $typeChildren = $x->query( "/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityType[@BaseType='mscrm.{$baseType}']" );
             foreach ( $typeChildren as $typeChild ) {
+                /**
+                 * @var \DOMElement $typeChild
+                 */
                 $metadata->parentTypesMap[$baseType][] = $typeChild->getAttribute( 'Name' );
             }
         }
@@ -137,6 +143,9 @@ class Metadata {
          */
         $entitySetsList = $x->query( '/edmx:Edmx/edmx:DataServices/edm:Schema/edm:EntityContainer/edm:EntitySet' );
         foreach ( $entitySetsList as $entitySet ) {
+            /**
+             * @var \DOMElement $entitySet
+             */
             $entityType = $metadata->stripNamespace( $entitySet->getAttribute( 'EntityType' ) );
             $metadata->entitySetMap[$entityType] = $entitySet->getAttribute( 'Name' );
         }

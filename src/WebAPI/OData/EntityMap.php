@@ -32,13 +32,38 @@ class EntityMap {
      */
     public $baseEntity;
 
+    /**
+     * Map of field names coming from Web API into concrete field names.
+     *
+     * Allows addressing read-only navigation properties (_field_value)
+     * by their real name.
+     *
+     * @var array
+     *
+     * @see \AlexaCRM\WebAPI\Client::Retrieve() Used for entity unmarshalling and ColumnSet marshalling.
+     * @see \AlexaCRM\WebAPI\Client::RetrieveMultiple() Used for entity unmarshalling.
+     */
     public $inboundMap;
 
+    /**
+     * Map of concrete field names into OData basic / navigation property names.
+     *
+     * For basic properties, the mapping is [ concreteFieldName => ODataFieldName ], which is identical.
+     *
+     * For navigation properties, the mapping is [ concreteFieldName => [ type => ODataFieldName ] ].
+     * The rationale is that some concrete field names may be represented as multiple navigation property,
+     * e.g. customerid converting to customerid_account for 'account' records, and customerid_contact
+     * for 'contact' records.
+     *
+     * @var array
+     */
     public $outboundMap;
 
     /**
-     * @param \DOMElement $element
-     * @param Metadata $metadata
+     * Creates an entity map from an CSDL EntityType node.
+     *
+     * @param \DOMElement $element EntityType DOM node.
+     * @param Metadata $metadata OData metadata object.
      *
      * @return static
      */
@@ -59,9 +84,6 @@ class EntityMap {
         $map->baseEntity = $element->hasAttribute( 'BaseType' )? $metadata->stripNamespace( $element->getAttribute( 'BaseType' ) ) : null;
 
         $propertiesList = $x->query( 'edm:Property', $element );
-
-
-        $map->inboundMap = $map->outboundMap = [];
         foreach ( $propertiesList as $propertyElement ) {
             /**
              * @var \DOMElement $propertyElement
@@ -108,7 +130,6 @@ class EntityMap {
                 }
             }
         }
-
 
         return $map;
     }
