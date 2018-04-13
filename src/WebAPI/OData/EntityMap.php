@@ -43,7 +43,7 @@ class EntityMap {
      * @see \AlexaCRM\WebAPI\Client::Retrieve() Used for entity unmarshalling and ColumnSet marshalling.
      * @see \AlexaCRM\WebAPI\Client::RetrieveMultiple() Used for entity unmarshalling.
      */
-    public $inboundMap;
+    public $inboundMap = [];
 
     /**
      * Map of concrete field names into OData basic / navigation property names.
@@ -57,7 +57,7 @@ class EntityMap {
      *
      * @var array
      */
-    public $outboundMap;
+    public $outboundMap = [];
 
     /**
      * Creates an entity map from an CSDL EntityType node.
