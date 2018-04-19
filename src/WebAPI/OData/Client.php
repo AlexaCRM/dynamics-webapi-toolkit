@@ -27,7 +27,6 @@ namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\RequestOptions;
 
 /**
  * Dynamics 365 Web API client.
