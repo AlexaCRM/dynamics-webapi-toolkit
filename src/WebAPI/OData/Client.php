@@ -27,7 +27,6 @@ namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\RequestOptions;
 
 /**
  * Dynamics 365 Web API client.
@@ -313,11 +312,7 @@ class Client {
         if ( $parameters != null ) {
             foreach ( $parameters as $key => $value ) {
                 $paramvars[] = sprintf( "%s=@p%s", $key, $paramcount );
-                if ( is_string( $value ) ) {
-                    $paramvalues[] = sprintf( "@p%s='%s'", $paramcount, $value );
-                } else {
-                    $paramvalues[] = sprintf( "@p%s=%s", $paramcount, $value );
-                }
+                $paramvalues[] = sprintf( "@p%s=%s", $paramcount, $value );
                 $paramcount ++;
             }
             $url = sprintf( '%s%s(%s)?%s', $this->settings->getEndpointURI(), $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
