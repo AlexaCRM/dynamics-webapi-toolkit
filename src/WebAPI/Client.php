@@ -185,7 +185,7 @@ class Client implements IOrganizationService {
                 continue;
             }
 
-            $entity->Attributes[$targetField] = $value; // TODO: convert to OptionSetValue if required acc. to Metadata
+            $entity->Attributes[$targetField] = $value; // TODO: convert to OptionSetValue if required per Metadata
             if ( array_key_exists( $formattedValueField, $response ) ) {
                 $entity->FormattedValues[$targetField] = $response[$formattedValueField];
             }
