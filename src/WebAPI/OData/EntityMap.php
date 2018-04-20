@@ -71,8 +71,8 @@ class EntityMap {
         $map = new static();
 
         $x = new \DOMXPath( $element->ownerDocument );
-        $x->registerNamespace( 'edmx', 'http://docs.oasis-open.org/odata/ns/edmx' );
-        $x->registerNamespace( 'edm', 'http://docs.oasis-open.org/odata/ns/edm' );
+        $x->registerNamespace( 'edmx', Metadata::NS_EDMX );
+        $x->registerNamespace( 'edm', Metadata::NS_EDM );
 
         $map->name = $element->getAttribute( 'Name' );
         $map->key = $x->evaluate( 'string(edm:Key/edm:PropertyRef/@Name)', $element );
