@@ -2,10 +2,15 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+/**
+ * Describes an interface to provide authentication middleware.
+ */
 interface AuthMiddlewareInterface {
 
     /**
      * Returns a Guzzle-compliant middleware.
+     *
+     * The middleware must augment the request by adding required authorization credentials.
      *
      * @return callable
      *

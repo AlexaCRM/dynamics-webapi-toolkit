@@ -6,6 +6,9 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as HttpClientException;
 use Psr\Http\Message\RequestInterface;
 
+/**
+ * Represents the Dynamics 365 (online) authentication middleware.
+ */
 class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
     /**
@@ -22,16 +25,21 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      */
     protected $token;
 
+    /**
+     * OnlineAuthMiddleware constructor.
+     *
+     * @param OnlineSettings $settings
+     */
     public function __construct( OnlineSettings $settings ) {
         $this->settings = $settings;
     }
 
     /**
-     * Detects instance tenant ID by probing the API without authorization.
+     * Detects the instance tenant ID by probing the API without authorization.
      *
      * @param string $endpointUri
      *
-     * @return string
+     * @return string Tenant ID of the queried instance.
      */
     protected function detectTenantId( $endpointUri ) {
         $httpClient = new HttpClient( [ 'verify' => false ] );
@@ -47,7 +55,15 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         return $tenantMatch[1];
     }
 
+    /**
+     * Acquires the Bearer token via client credentials OAuth2 flow
+     * and stores it in OnlineAuthMiddleware::$token for further usage.
+     */
     protected function acquireToken() {
+        if ( $this->token instanceof Token && $this->token->isValid() ) {
+            return; // Token already acquired and is not expired.
+        }
+
         $settings = $this->settings;
 
         $tenantId = $this->detectTenantId( $settings->endpointURI );

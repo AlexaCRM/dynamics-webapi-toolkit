@@ -2,6 +2,9 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+/**
+ * Contains Dynamics 365 credentials.
+ */
 abstract class Settings {
 
     /**

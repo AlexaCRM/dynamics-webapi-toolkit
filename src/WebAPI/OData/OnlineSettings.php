@@ -2,6 +2,9 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+/**
+ * Contains Dynamics 365 (online) credentials.
+ */
 class OnlineSettings extends Settings {
 
     /**
@@ -35,7 +38,7 @@ class OnlineSettings extends Settings {
             return $this->endpointURI;
         }
 
-        $this->endpointURI = trim( $this->instanceURI, '/' ) . '/api/data/v8.2/';
+        $this->endpointURI = trim( $this->instanceURI, '/' ) . '/api/data/v' . Client::API_VERSION . '/';
 
         return $this->endpointURI;
     }

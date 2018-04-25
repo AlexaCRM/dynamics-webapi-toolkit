@@ -26,19 +26,19 @@
 namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 
 /**
- * Dynamics 365 Web API client.
+ * Dynamics 365 Web API OData client.
  */
 class Client {
 
-    const API_VERSION = '8.2';
-
     /**
-     * @var array
+     * Web API version.
      */
-    protected $config;
+    const API_VERSION = '8.2';
 
     /**
      * @var Settings
@@ -46,11 +46,15 @@ class Client {
     protected $settings;
 
     /**
+     * Guzzle HTTP Client.
+     *
      * @var HttpClient
      */
     protected $httpClient;
 
     /**
+     * OData service metadata storage.
+     *
      * @var Metadata
      */
     protected $metadata;
@@ -80,14 +84,31 @@ class Client {
         ] );
     }
 
+    /**
+     * Retrieves OData Service Metadata.
+     *
+     * @return Metadata
+     * @throws AuthenticationException
+     * @throws ODataException
+     */
     public function getMetadata() {
         if ( $this->metadata instanceof Metadata ) {
             return $this->metadata;
         }
 
-        $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
-            'headers' => [ 'Accept' => 'application/xml' ],
-        ] );
+        try {
+            $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
+                'headers' => [ 'Accept' => 'application/xml' ],
+            ] );
+        } catch ( RequestException $e ) {
+            if ( $e->getResponse()->getStatusCode() === 401 ) {
+                throw new AuthenticationException();
+            }
+
+            $response = json_decode( $e->getResponse()->getBody()->getContents() );
+            throw new ODataException( $response->error, $e );
+        }
+
         $metadataXML = $resp->getBody()->getContents();
 
         $this->metadata = Metadata::createFromXML( $metadataXML );
@@ -102,6 +123,8 @@ class Client {
      * @param array $headers
      *
      * @return mixed|\Psr\Http\Message\ResponseInterface
+     * @throws ODataException
+     * @throws AuthenticationException
      */
     private function GetHttpRequest( $method, $url, $data = null, array $headers = [] ) {
         if ( $headers == null ) {
@@ -112,10 +135,21 @@ class Client {
             $headers['Content-Type'] = 'application/json';
         }
 
-        return $this->httpClient->request( $method, $url, [
-            'headers' => $headers,
-            'json' => $data,
-        ] );
+        try {
+            return $this->httpClient->request( $method, $url, [
+                'headers' => $headers,
+                'json' => $data,
+            ] );
+        } catch ( RequestException $e ) {
+            if ( $e->getResponse()->getStatusCode() === 401 ) {
+                throw new AuthenticationException();
+            }
+
+            $response = json_decode( $e->getResponse()->getBody()->getContents() );
+            throw new ODataException( $response->error, $e );
+        } catch ( GuzzleException $e ) {
+            throw new ODataException( (object)[ 'message' => $e->getMessage() ], $e );
+        }
     }
 
     /**
@@ -177,76 +211,100 @@ class Client {
         return $headers;
     }
 
+    /**
+     * @param $uri
+     * @param null $queryOptions
+     *
+     * @return \stdClass
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function GetList( $uri, $queryOptions = null ) {
         $url = $this->BuildQueryURL( $uri, $queryOptions );
         $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
 
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $data          = json_decode( $res->getBody() );
-            $result        = new \stdClass();
-            $result->List  = $data->value;
-            $result->Count = count( $data->value );
+        $data          = json_decode( $res->getBody() );
+        $result        = new \stdClass();
+        $result->List  = $data->value;
+        $result->Count = count( $data->value );
 
-            $nl       = '@odata.nextLink';
-            $nextLink = isset( $data->$nl )? $data->$nl : null;
-            while ( $nextLink != null ) {
-                $res = $this->GetHttpRequest( 'GET', $nextLink, null, $this->BuildQueryHeaders( $queryOptions ) );
+        $nl       = '@odata.nextLink';
+        $nextLink = isset( $data->$nl )? $data->$nl : null;
+        while ( $nextLink != null ) {
+            $res = $this->GetHttpRequest( 'GET', $nextLink, null, $this->BuildQueryHeaders( $queryOptions ) );
 
-                $nextLink = null;
-                if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-                    $data         = json_decode( $res->getBody() );
-                    $result->List = array_merge( $result->List, $data->value );
-                    $nextLink     = $data->$nl;
+            $nextLink = null;
+            $data         = json_decode( $res->getBody() );
+            $result->List = array_merge( $result->List, $data->value );
+            $nextLink     = $data->$nl;
 
-                    $result->Count = count( $result->List );
-                }
-            }
-
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
+            $result->Count = count( $result->List );
         }
+
+        return $result;
     }
 
+    /**
+     * @param $entityCollection
+     * @param $entityId
+     * @param null $queryOptions
+     *
+     * @return mixed
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function Get( $entityCollection, $entityId, $queryOptions = null ) {
         $url = $this->BuildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
         $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
+        $result = json_decode( $res->getBody() );
 
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = json_decode( $res->getBody() );
-
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $result;
     }
 
+    /**
+     * @param $uri
+     * @param null $queryOptions
+     *
+     * @return mixed
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function GetCount( $uri, $queryOptions = null ) {
         $url = $this->BuildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
         $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = json_decode( $res->getBody() );
+        $result = json_decode( $res->getBody() );
 
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $result;
     }
 
+    /**
+     * @param $entityCollection
+     * @param $data
+     *
+     * @return mixed
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function Create( $entityCollection, $data ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $entityCollection );
         $res = $this->GetHttpRequest( 'POST', $url, $data );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $id     = $res->getHeader( 'OData-EntityId' )[0];
-            $id     = explode( '(', $id )[1];
-            $id     = str_replace( ')', '', $id );
+        $id = $res->getHeader( 'OData-EntityId' )[0];
+        $id = explode( '(', $id )[1];
+        $id = str_replace( ')', '', $id );
 
-            return $id;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $id;
     }
 
+    /**
+     * @param $entityCollection
+     * @param $key
+     * @param $data
+     * @param bool $upsert
+     *
+     * @return \stdClass
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function Update( $entityCollection, $key, $data, $upsert = false ) {
         $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
         $headers = [];
@@ -254,56 +312,68 @@ class Client {
             $headers['If-Match'] = '*';
         }
         $res = $this->GetHttpRequest( 'PATCH', $url, $data, $headers );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $id               = $res->getHeader( 'OData-EntityId' )[0];
-            $id               = explode( '(', $id )[1];
-            $id               = str_replace( ')', '', $id );
-            $result           = new \stdClass();
-            $result->EntityId = $id;
+        $id = $res->getHeader( 'OData-EntityId' )[0];
+        $id = explode( '(', $id )[1];
+        $id = str_replace( ')', '', $id );
+        $result = new \stdClass();
+        $result->EntityId = $id;
 
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $result;
     }
 
+    /**
+     * @param $entityCollection
+     * @param $entityId
+     *
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function Delete( $entityCollection, $entityId ) {
         $url = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $entityId );
-        $res = $this->GetHttpRequest( 'DELETE', $url );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = true;
-
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        $this->GetHttpRequest( 'DELETE', $url );
     }
 
+    /**
+     * @param $fromEntityCollection
+     * @param $fromEntityId
+     * @param $navProperty
+     * @param $toEntityCollection
+     * @param $toEntityId
+     *
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function Associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ '@odata.id' => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
-        $res  = $this->GetHttpRequest( 'POST', $url, $data );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = true;
-
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        $this->GetHttpRequest( 'POST', $url, $data );
     }
 
+    /**
+     * @param $fromEntityCollection
+     * @param $fromEntityId
+     * @param $navProperty
+     * @param $toEntityCollection
+     * @param $toEntityId
+     *
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function DeleteAssociation( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
-        $res = $this->GetHttpRequest( 'DELETE', $url );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = true;
-
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        $this->GetHttpRequest( 'DELETE', $url );
     }
 
+    /**
+     * @param $functionName
+     * @param null $parameters
+     * @param null $entityCollection
+     * @param null $entityId
+     *
+     * @return mixed
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function ExecuteFunction( $functionName, $parameters = null, $entityCollection = null, $entityId = null ) {
         $paramvars   = [];
         $paramvalues = [];
@@ -327,16 +397,22 @@ class Client {
         }
 
         $res = $this->GetHttpRequest( 'GET', $url );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = json_decode( $res->getBody() );
-            unset( $result->{'@odata.context'} );
+        $result = json_decode( $res->getBody() );
+        unset( $result->{'@odata.context'} );
 
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $result;
     }
 
+    /**
+     * @param $actionName
+     * @param null $data
+     * @param null $entityCollection
+     * @param null $entityId
+     *
+     * @return mixed
+     * @throws ODataException
+     * @throws AuthenticationException
+     */
     public function ExecuteAction( $actionName, $data = null, $entityCollection = null, $entityId = null ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $actionName );
         if ( $entityCollection != null ) {
@@ -344,14 +420,10 @@ class Client {
         }
 
         $res = $this->GetHttpRequest( 'POST', $url, $data );
-        if ( ( $res->getStatusCode() >= 200 ) && ( $res->getStatusCode() < 300 ) ) {
-            $result = json_decode( $res->getBody() );
-            unset( $result->{'@odata.context'} );
+        $result = json_decode( $res->getBody() );
+        unset( $result->{'@odata.context'} );
 
-            return $result;
-        } else {
-            throw new \Exception( $res->getBody(), $res->getStatusCode() );
-        }
+        return $result;
     }
 
     /**
