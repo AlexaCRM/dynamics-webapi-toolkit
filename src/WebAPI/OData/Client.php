@@ -154,7 +154,7 @@ class Client {
 
     /**
      * @param $uri
-     * @param null $queryOptions
+     * @param array $queryOptions
      *
      * @return string
      */
@@ -162,10 +162,10 @@ class Client {
         $fullurl = $this->settings->getEndpointURI() . $uri;
         $qs      = [];
         if ( $queryOptions != null ) {
-            if ( isset( $queryOptions['Select'] ) ) {
+            if ( isset( $queryOptions['Select'] ) && count( $queryOptions['Select'] ) ) {
                 $qs['$select'] = implode( ',', $queryOptions['Select'] );
             }
-            if ( isset( $queryOptions['OrderBy'] ) ) {
+            if ( isset( $queryOptions['OrderBy'] ) && count( $queryOptions['OrderBy'] ) ) {
                 $qs['$orderby'] = implode( ',', $queryOptions['OrderBy'] );
             }
             if ( isset( $queryOptions['Filter'] ) ) {
