@@ -203,6 +203,10 @@ class Client implements IOrganizationService {
         $options = [];
         if ( $columnSet->AllColumns !== true ) {
             $options['Select'] = [];
+
+            // $select must not be empty. Add primary key.
+            $options['Select'][] = $metadata->entityMaps[$entityName]->key;
+
             $columnMapping = array_flip( $entityMap );
             foreach ( $columnSet->Columns as $column ) {
                 if ( !array_key_exists( $column, $columnMapping ) ) {
