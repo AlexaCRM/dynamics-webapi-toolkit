@@ -2,6 +2,9 @@
 
 namespace AlexaCRM\Xrm\Query;
 
+/**
+ * Contains a query expressed in FetchXML.
+ */
 class FetchExpression extends QueryBase {
 
     /**

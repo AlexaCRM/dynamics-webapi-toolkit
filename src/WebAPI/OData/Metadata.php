@@ -25,6 +25,10 @@ class Metadata {
     public $alias;
 
     /**
+     * Collection of entity type maps, covering incoming and outgoing field conversions.
+     *
+     * It is assumed that this collection contains AT LEAST entities listed in Metadata::$entitySetMap.
+     *
      * @var EntityMap[]
      */
     public $entityMaps;
@@ -151,6 +155,24 @@ class Metadata {
         }
 
         return $metadata;
+    }
+
+    /**
+     * Returns an entity set name corresponding to the given entity name.
+     *
+     * Throws a typed exception if the entity doesn't have its own entity set.
+     *
+     * @param string $entityName
+     *
+     * @return string
+     * @throws EntityNotSupportedException
+     */
+    public function getEntitySetName( string $entityName ) {
+        if ( !array_key_exists( $entityName, $this->entitySetMap ) ) {
+            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported in Web API" );
+        }
+
+        return $this->entitySetMap[$entityName];
     }
 
     /**

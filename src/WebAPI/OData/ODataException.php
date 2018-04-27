@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 /**
  * Represents an exception triggered by a non-succeeding response from the OData service.
  */
-class ODataException extends \AlexaCRM\WebAPI\Exception {
+class ODataException extends Exception {
 
     /**
      * Underlying Guzzle-generated exception with relevant request and response objects.
@@ -27,13 +27,13 @@ class ODataException extends \AlexaCRM\WebAPI\Exception {
      * ODataException constructor.
      *
      * @param object $response OData error response object
-     * @param RequestException $previous
+     * @param RequestException $inner
      */
-    public function __construct( $response, RequestException $previous = null ) {
+    public function __construct( $response, RequestException $inner = null ) {
         $this->message = $response;
-        if ( $previous !== null ) {
-            $guzzleRequest = $previous->getRequest();
-            $guzzleResponse = $previous->getResponse();
+        if ( $inner !== null ) {
+            $guzzleRequest = $inner->getRequest();
+            $guzzleResponse = $inner->getResponse();
 
             $level = (int) floor($guzzleResponse->getStatusCode() / 100);
             if ($level === 4) {
@@ -58,7 +58,7 @@ class ODataException extends \AlexaCRM\WebAPI\Exception {
         }
 
         $this->response = $response;
-        $this->innerException = $previous;
+        $this->innerException = $inner;
     }
 
     /**

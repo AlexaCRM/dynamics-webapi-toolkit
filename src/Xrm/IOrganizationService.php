@@ -19,7 +19,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Associate( string $entityName, $entityId, Relationship $relationship, $relatedEntities );
+    public function Associate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities );
 
     /**
      * Creates a record.
@@ -50,7 +50,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Disassociate( string $entityName, $entityId, Relationship $relationship, $relatedEntities );
+    public function Disassociate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities );
 
     /**
      * Executes a function or action formed as a request.

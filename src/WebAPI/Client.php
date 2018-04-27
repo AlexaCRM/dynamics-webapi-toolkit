@@ -2,6 +2,10 @@
 
 namespace AlexaCRM\WebAPI;
 
+use AlexaCRM\WebAPI\OData\AuthenticationException;
+use AlexaCRM\WebAPI\OData\InaccessibleMetadataException;
+use AlexaCRM\WebAPI\OData\ODataException;
+use AlexaCRM\WebAPI\OData\EntityNotSupportedException;
 use AlexaCRM\Xrm\ColumnSet;
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityCollection;
@@ -13,6 +17,9 @@ use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
 use AlexaCRM\WebAPI\OData\Client as ODataClient;
 
+/**
+ * Represents the Organization-compatible Dynamics 365 Web API client.
+ */
 class Client implements IOrganizationService {
 
     /**
@@ -20,6 +27,11 @@ class Client implements IOrganizationService {
      */
     protected $client;
 
+    /**
+     * Client constructor.
+     *
+     * @param ODataClient $client
+     */
     public function __construct( ODataClient $client ) {
         $this->client = $client;
     }
@@ -33,16 +45,24 @@ class Client implements IOrganizationService {
      * @param EntityReference[] $relatedEntities
      *
      * @return void
+     * @throws Exception
+     * @throws AuthenticationException
+     * @throws InaccessibleMetadataException
+     * @throws EntityNotSupportedException
      */
-    public function Associate( string $entityName, $entityId, Relationship $relationship, $relatedEntities ) {
+    public function Associate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$entityName];
+        $collectionName = $metadata->getEntitySetName( $entityName );
 
-        foreach ( $relatedEntities as $ref ) {
-            $associatedCollectionName = $metadata->entitySetMap[$ref->LogicalName];
+        try {
+            foreach ( $relatedEntities as $ref ) {
+                $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
-            // TODO: execute in one request with a batch request
-            $this->client->Associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+                // TODO: execute in one request with a batch request
+                $this->client->Associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+            }
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Associate request failed: ' . $e->getMessage(), $e );
         }
     }
 
@@ -52,11 +72,15 @@ class Client implements IOrganizationService {
      * @param Entity $entity
      *
      * @return string ID of the new record.
+     * @throws AuthenticationException
+     * @throws Exception
+     * @throws InaccessibleMetadataException
+     * @throws EntityNotSupportedException
      */
     public function Create( Entity $entity ) {
         $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->getEntitySetName( $entity->LogicalName );
 
-        $collectionName = $metadata->entitySetMap[$entity->LogicalName];
         $data = [];
         foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
             $data[$fieldName] = $entity[$fieldName];
@@ -77,13 +101,17 @@ class Client implements IOrganizationService {
                     continue; // TODO: throw a typed exception
                 }
 
-                $fieldCollectionName = $metadata->entitySetMap[$logicalName];
+                $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
                 $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
             }
         }
 
-        $responseId = $this->client->Create( $collectionName, $translatedData );
+        try {
+            $responseId = $this->client->Create( $collectionName, $translatedData );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Create request failed: ' . $e->getMessage(), $e );
+        }
 
         $entity->getAttributeState()->reset();
 
@@ -97,11 +125,20 @@ class Client implements IOrganizationService {
      * @param string $entityId Record ID.
      *
      * @return void
+     * @throws InaccessibleMetadataException
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws Exception
      */
     public function Delete( string $entityName, $entityId ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$entityName]; // TODO: throw typed exception if no entity set found
-        $this->client->Delete( $collectionName, $entityId );
+        $collectionName = $metadata->getEntitySetName( $entityName );
+
+        try {
+            $this->client->Delete( $collectionName, $entityId );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Delete request failed: '. $e->getMessage(), $e );
+        }
     }
 
     /**
@@ -113,16 +150,24 @@ class Client implements IOrganizationService {
      * @param EntityReference[] $relatedEntities
      *
      * @return void
+     * @throws InaccessibleMetadataException
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws Exception
      */
-    public function Disassociate( string $entityName, $entityId, Relationship $relationship, $relatedEntities ) {
+    public function Disassociate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$entityName];
+        $collectionName = $metadata->getEntitySetName( $entityName );
 
-        foreach ( $relatedEntities as $ref ) {
-            $associatedCollectionName = $metadata->entitySetMap[$ref->LogicalName];
+        try {
+            foreach ( $relatedEntities as $ref ) {
+                $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
-            // TODO: execute in one request with a batch request
-            $this->client->DeleteAssociation( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+                // TODO: execute in one request with a batch request
+                $this->client->DeleteAssociation( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+            }
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Disassociate request failed: ' . $e->getMessage(), $e );
         }
     }
 
@@ -145,11 +190,15 @@ class Client implements IOrganizationService {
      * @param ColumnSet $columnSet
      *
      * @return Entity
+     * @throws InaccessibleMetadataException
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws Exception
      */
     public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity {
         $metadata = $this->client->getMetadata();
+        $collectionName = $metadata->getEntitySetName( $entityName );
         $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
-        $collectionName = $metadata->entitySetMap[$entityName]; // TODO: throw typed exception if no entity set found
 
         $options = [];
         if ( $columnSet->AllColumns !== true ) {
@@ -163,7 +212,12 @@ class Client implements IOrganizationService {
                 $options['Select'][] = $columnMapping[$column];
             }
         }
-        $response = $this->client->Get( $collectionName, $entityId, $options );
+
+        try {
+            $response = $this->client->Get( $collectionName, $entityId, $options );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Retrieve request failed: ' . $e->getMessage(), $e );
+        }
 
         $entity = new Entity( $entityName, $entityId );
 
@@ -201,6 +255,10 @@ class Client implements IOrganizationService {
      * @param QueryBase $query A query that determines the set of records to retrieve.
      *
      * @return EntityCollection
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws InaccessibleMetadataException
+     * @throws Exception
      */
     public function RetrieveMultiple( QueryBase $query ) {
         if ( $query instanceof FetchExpression ) {
@@ -218,10 +276,14 @@ class Client implements IOrganizationService {
      * @param Entity $entity
      *
      * @return void
+     * @throws InaccessibleMetadataException
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws Exception
      */
     public function Update( Entity $entity ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$entity->LogicalName];
+        $collectionName = $metadata->getEntitySetName( $entity->LogicalName );
 
         $data = [];
         foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
@@ -243,13 +305,17 @@ class Client implements IOrganizationService {
                     continue; // TODO: throw a typed exception
                 }
 
-                $fieldCollectionName = $metadata->entitySetMap[$logicalName];
+                $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
                 $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
             }
         }
 
-        $this->client->Update( $collectionName, $entity->Id, $translatedData );
+        try {
+            $this->client->Update( $collectionName, $entity->Id, $translatedData );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Update request failed: ' . $e->getMessage(), $e );
+        }
 
         $entity->getAttributeState()->reset();
     }
@@ -262,6 +328,10 @@ class Client implements IOrganizationService {
      * @param FetchExpression $query
      *
      * @return EntityCollection
+     * @throws InaccessibleMetadataException
+     * @throws AuthenticationException
+     * @throws EntityNotSupportedException
+     * @throws Exception
      */
     protected function retrieveViaFetchXML( FetchExpression $query ) {
         $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
@@ -287,12 +357,16 @@ class Client implements IOrganizationService {
         $entityName = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 )->getAttribute( 'name' );
 
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$entityName];
+        $collectionName = $metadata->getEntitySetName( $entityName );
         $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
 
-        $response = $this->client->GetList( $collectionName, [
-            'FetchXml' => $query->Query,
-        ] );
+        try {
+            $response = $this->client->GetList( $collectionName, [
+                'FetchXml' => $query->Query,
+            ] );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'Retrieve (FetchXML) request failed: ' . $e->getMessage(), $e );
+        }
 
         $collection = new EntityCollection();
         $collection->EntityName = $entityName;
@@ -359,9 +433,18 @@ class Client implements IOrganizationService {
         return $collection;
     }
 
+    /**
+     * @param QueryByAttribute $query
+     *
+     * @return EntityCollection
+     * @throws AuthenticationException
+     * @throws InaccessibleMetadataException
+     * @throws EntityNotSupportedException
+     * @throws Exception
+     */
     protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->entitySetMap[$query->EntityName];
+        $collectionName = $metadata->getEntitySetName( $query->EntityName );
         $entityMap = $metadata->entityMaps[$query->EntityName]->inboundMap;
         $columnMap = array_flip( $entityMap );
 
@@ -408,7 +491,11 @@ class Client implements IOrganizationService {
             $queryData['Top'] = $query->TopCount;
         }
 
-        $response = $this->client->GetList( $collectionName, $queryData );
+        try {
+            $response = $this->client->GetList( $collectionName, $queryData );
+        } catch ( ODataException $e ) {
+            throw new Exception( 'RetrieveMultiple (QueryByAttribute) request failed: ' . $e->getMessage(), $e );
+        }
 
         $collection = new EntityCollection();
         $collection->EntityName = $query->EntityName;

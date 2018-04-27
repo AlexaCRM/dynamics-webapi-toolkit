@@ -2,6 +2,9 @@
 
 namespace AlexaCRM\Xrm;
 
+/**
+ * Contains a collection of entity instances.
+ */
 class EntityCollection {
 
     /**

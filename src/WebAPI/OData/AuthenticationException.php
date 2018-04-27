@@ -2,15 +2,9 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-class AuthenticationException extends Exception {
-
-    /**
-     * AuthenticationException constructor.
-     *
-     * @param string $message
-     */
-    public function __construct( $message = '' ) {
-        $this->message = $message;
-    }
-
-}
+/**
+ * AuthenticationException is thrown if Dynamics 365 rejects the access token.
+ *
+ * In Dynamics 365 (online) the exception is thrown if Azure AD doesn't issue a new access token.
+ */
+class AuthenticationException extends Exception {}

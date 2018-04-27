@@ -14,7 +14,7 @@ class KeyAttributeCollection implements \Iterator {
      */
     protected $keys = [];
 
-    public function Add( string $key, $value ) : void {
+    public function Add( string $key, $value ) {
         $this->keys[ $key ] = $value;
     }
 

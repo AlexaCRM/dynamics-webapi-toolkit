@@ -4,6 +4,7 @@ namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as HttpClientException;
+use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -58,6 +59,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     /**
      * Acquires the Bearer token via client credentials OAuth2 flow
      * and stores it in OnlineAuthMiddleware::$token for further usage.
+     * @throws AuthenticationException
      */
     protected function acquireToken() {
         if ( $this->token instanceof Token && $this->token->isValid() ) {
@@ -69,15 +71,21 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $tenantId = $this->detectTenantId( $settings->endpointURI );
         $tokenEndpoint = 'https://login.microsoftonline.com/' . $tenantId . '/oauth2/token';
 
-        $httpClient = new HttpClient( [ 'verify' => false ] );
-        $tokenResponse = $httpClient->post( $tokenEndpoint, [
-            'form_params' => [
-                'grant_type' => 'client_credentials',
-                'client_id' => $settings->applicationID,
-                'client_secret' => $settings->applicationSecret,
-                'resource' => $settings->instanceURI,
-            ],
-        ] );
+        $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
+        try {
+            $tokenResponse = $httpClient->post( $tokenEndpoint, [
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $settings->applicationID,
+                    'client_secret' => $settings->applicationSecret,
+                    'resource' => $settings->instanceURI,
+                ],
+            ] );
+        } catch ( RequestException $e ) {
+            $response = json_decode( $e->getResponse()->getBody()->getContents() );
+            $errorDescription = $response->error_description;
+            throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
+        }
 
         $token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
 

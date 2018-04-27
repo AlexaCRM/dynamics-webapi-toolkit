@@ -9,6 +9,7 @@ class Token {
 
     /**
      * Token type, usually `Bearer`.
+     *
      * @var string
      */
     public $token_type;

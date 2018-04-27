@@ -26,6 +26,7 @@
 namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
@@ -89,7 +90,7 @@ class Client {
      *
      * @return Metadata
      * @throws AuthenticationException
-     * @throws ODataException
+     * @throws InaccessibleMetadataException
      */
     public function getMetadata() {
         if ( $this->metadata instanceof Metadata ) {
@@ -100,13 +101,15 @@ class Client {
             $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
                 'headers' => [ 'Accept' => 'application/xml' ],
             ] );
+        } catch ( ConnectException $e ) {
+            throw $e;
         } catch ( RequestException $e ) {
             if ( $e->getResponse()->getStatusCode() === 401 ) {
-                throw new AuthenticationException();
+                throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
-            $response = json_decode( $e->getResponse()->getBody()->getContents() );
-            throw new ODataException( $response->error, $e );
+            $responseCode = $e->getResponse()->getStatusCode();
+            throw new InaccessibleMetadataException( 'Metadata request returned a ' . $responseCode . ' code', $e );
         }
 
         $metadataXML = $resp->getBody()->getContents();
@@ -142,7 +145,7 @@ class Client {
             ] );
         } catch ( RequestException $e ) {
             if ( $e->getResponse()->getStatusCode() === 401 ) {
-                throw new AuthenticationException();
+                throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
             $response = json_decode( $e->getResponse()->getBody()->getContents() );

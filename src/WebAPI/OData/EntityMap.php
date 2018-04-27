@@ -2,6 +2,10 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+/**
+ * Represents an OData EntityType, including its key, type hierarchy,
+ * and incoming/outgoing attribute maps.
+ */
 class EntityMap {
 
     /**
