@@ -59,7 +59,7 @@ class Client implements IOrganizationService {
                 $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
                 // TODO: execute in one request with a batch request
-                $this->client->Associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+                $this->client->associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
             }
         } catch ( ODataException $e ) {
             throw new Exception( 'Associate request failed: ' . $e->getMessage(), $e );
@@ -108,7 +108,7 @@ class Client implements IOrganizationService {
         }
 
         try {
-            $responseId = $this->client->Create( $collectionName, $translatedData );
+            $responseId = $this->client->create( $collectionName, $translatedData );
         } catch ( ODataException $e ) {
             throw new Exception( 'Create request failed: ' . $e->getMessage(), $e );
         }
@@ -135,7 +135,7 @@ class Client implements IOrganizationService {
         $collectionName = $metadata->getEntitySetName( $entityName );
 
         try {
-            $this->client->Delete( $collectionName, $entityId );
+            $this->client->delete( $collectionName, $entityId );
         } catch ( ODataException $e ) {
             throw new Exception( 'Delete request failed: '. $e->getMessage(), $e );
         }
@@ -164,7 +164,7 @@ class Client implements IOrganizationService {
                 $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
                 // TODO: execute in one request with a batch request
-                $this->client->DeleteAssociation( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
+                $this->client->disassociate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
             }
         } catch ( ODataException $e ) {
             throw new Exception( 'Disassociate request failed: ' . $e->getMessage(), $e );
@@ -219,7 +219,7 @@ class Client implements IOrganizationService {
         }
 
         try {
-            $response = $this->client->Get( $collectionName, $entityId, $options );
+            $response = $this->client->getRecord( $collectionName, $entityId, $options );
         } catch ( ODataException $e ) {
             throw new Exception( 'Retrieve request failed: ' . $e->getMessage(), $e );
         }
@@ -317,7 +317,7 @@ class Client implements IOrganizationService {
         }
 
         try {
-            $this->client->Update( $collectionName, $entity->Id, $translatedData );
+            $this->client->update( $collectionName, $entity->Id, $translatedData );
         } catch ( ODataException $e ) {
             throw new Exception( 'Update request failed: ' . $e->getMessage(), $e );
         }
@@ -371,7 +371,7 @@ class Client implements IOrganizationService {
         $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
 
         try {
-            $response = $this->client->GetList( $collectionName, [
+            $response = $this->client->getList( $collectionName, [
                 'FetchXml' => $query->Query,
             ] );
         } catch ( ODataException $e ) {
@@ -502,7 +502,7 @@ class Client implements IOrganizationService {
         }
 
         try {
-            $response = $this->client->GetList( $collectionName, $queryData );
+            $response = $this->client->getList( $collectionName, $queryData );
         } catch ( ODataException $e ) {
             throw new Exception( 'RetrieveMultiple (QueryByAttribute) request failed: ' . $e->getMessage(), $e );
         }

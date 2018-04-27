@@ -2,7 +2,7 @@
 
 /**
  * Copyright (c) 2016 David Yack
- * Copyright (c) 2017 AlexaCRM
+ * Copyright (c) 2017, 2018 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -129,7 +129,7 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    private function GetHttpRequest( $method, $url, $data = null, array $headers = [] ) {
+    private function doRequest( $method, $url, $data = null, array $headers = [] ) {
         if ( $headers == null ) {
             $headers = [];
         }
@@ -156,49 +156,58 @@ class Client {
     }
 
     /**
-     * @param $uri
+     * Builds the URL with request parameters specified in the query string.
+     *
+     * @param string $uri Request URI relative to the service endpoint.
      * @param array $queryOptions
      *
      * @return string
      */
-    private function BuildQueryURL( $uri, $queryOptions = null ) {
-        $fullurl = $this->settings->getEndpointURI() . $uri;
-        $qs      = [];
+    private function buildQueryURL( $uri, $queryOptions = null ) {
+        $endpointURI = $this->settings->getEndpointURI() . $uri;
+        $queryParameters = [];
         if ( $queryOptions != null ) {
             if ( isset( $queryOptions['Select'] ) && count( $queryOptions['Select'] ) ) {
-                $qs['$select'] = implode( ',', $queryOptions['Select'] );
+                $queryParameters['$select'] = implode( ',', $queryOptions['Select'] );
             }
             if ( isset( $queryOptions['OrderBy'] ) && count( $queryOptions['OrderBy'] ) ) {
-                $qs['$orderby'] = implode( ',', $queryOptions['OrderBy'] );
+                $queryParameters['$orderby'] = implode( ',', $queryOptions['OrderBy'] );
             }
             if ( isset( $queryOptions['Filter'] ) ) {
-                $qs['$filter'] = $queryOptions['Filter'];
+                $queryParameters['$filter'] = $queryOptions['Filter'];
             }
             if ( isset( $queryOptions['IncludeCount'] ) ) {
-                $qs['$count'] = 'true';
+                $queryParameters['$count'] = 'true';
             }
             if ( isset( $queryOptions['Skip'] ) ) {
-                $qs['$skip'] = $queryOptions['Skip'];
+                $queryParameters['$skip'] = $queryOptions['Skip'];
             }
             if ( isset( $queryOptions['Top'] ) ) {
-                $qs['$top'] = $queryOptions['Top'];
+                $queryParameters['$top'] = $queryOptions['Top'];
             }
             if ( isset( $queryOptions['SystemQuery'] ) ) {
-                $qs['savedQuery'] = $queryOptions['SystemQuery'];
+                $queryParameters['savedQuery'] = $queryOptions['SystemQuery'];
             }
             if ( isset( $queryOptions['UserQuery'] ) ) {
-                $qs['userQuery'] = $queryOptions['UserQuery'];
+                $queryParameters['userQuery'] = $queryOptions['UserQuery'];
             }
             if ( isset( $queryOptions['FetchXml'] ) ) {
-                $qs['fetchXml'] = $queryOptions['FetchXml'];
+                $queryParameters['fetchXml'] = $queryOptions['FetchXml'];
             }
-            $fullurl .= '?' . http_build_query( $qs );
+            $endpointURI .= '?' . http_build_query( $queryParameters );
         }
 
-        return $fullurl;
+        return $endpointURI;
     }
 
-    private function BuildQueryHeaders( $queryOptions = null ) {
+    /**
+     * Creates a collection of request headers from the query options.
+     *
+     * @param array $queryOptions
+     *
+     * @return array
+     */
+    private function buildQueryHeaders( $queryOptions = null ) {
         $headers = [];
         $prefer = [];
 
@@ -222,9 +231,9 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function GetList( $uri, $queryOptions = null ) {
-        $url = $this->BuildQueryURL( $uri, $queryOptions );
-        $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
+    public function getList( $uri, $queryOptions = null ) {
+        $url = $this->buildQueryURL( $uri, $queryOptions );
+        $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
         $data          = json_decode( $res->getBody() );
         $result        = new \stdClass();
@@ -234,7 +243,7 @@ class Client {
         $nl       = '@odata.nextLink';
         $nextLink = isset( $data->$nl )? $data->$nl : null;
         while ( $nextLink != null ) {
-            $res = $this->GetHttpRequest( 'GET', $nextLink, null, $this->BuildQueryHeaders( $queryOptions ) );
+            $res = $this->doRequest( 'GET', $nextLink, null, $this->buildQueryHeaders( $queryOptions ) );
 
             $nextLink = null;
             $data         = json_decode( $res->getBody() );
@@ -256,9 +265,9 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function Get( $entityCollection, $entityId, $queryOptions = null ) {
-        $url = $this->BuildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
-        $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
+    public function getRecord( $entityCollection, $entityId, $queryOptions = null ) {
+        $url = $this->buildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
+        $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
         $result = json_decode( $res->getBody() );
 
         return $result;
@@ -272,9 +281,9 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function GetCount( $uri, $queryOptions = null ) {
-        $url = $this->BuildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
-        $res = $this->GetHttpRequest( 'GET', $url, null, $this->BuildQueryHeaders( $queryOptions ) );
+    public function getCount( $uri, $queryOptions = null ) {
+        $url = $this->buildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
+        $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
         $result = json_decode( $res->getBody() );
 
         return $result;
@@ -288,9 +297,9 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function Create( $entityCollection, $data ) {
+    public function create( $entityCollection, $data ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $entityCollection );
-        $res = $this->GetHttpRequest( 'POST', $url, $data );
+        $res = $this->doRequest( 'POST', $url, $data );
         $id = $res->getHeader( 'OData-EntityId' )[0];
         $id = explode( '(', $id )[1];
         $id = str_replace( ')', '', $id );
@@ -308,13 +317,13 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function Update( $entityCollection, $key, $data, $upsert = false ) {
+    public function update( $entityCollection, $key, $data, $upsert = false ) {
         $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
         $headers = [];
         if ( $upsert ) {
             $headers['If-Match'] = '*';
         }
-        $res = $this->GetHttpRequest( 'PATCH', $url, $data, $headers );
+        $res = $this->doRequest( 'PATCH', $url, $data, $headers );
         $id = $res->getHeader( 'OData-EntityId' )[0];
         $id = explode( '(', $id )[1];
         $id = str_replace( ')', '', $id );
@@ -331,9 +340,9 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function Delete( $entityCollection, $entityId ) {
+    public function delete( $entityCollection, $entityId ) {
         $url = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $entityId );
-        $this->GetHttpRequest( 'DELETE', $url );
+        $this->doRequest( 'DELETE', $url );
     }
 
     /**
@@ -346,10 +355,10 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function Associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
+    public function associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ '@odata.id' => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
-        $this->GetHttpRequest( 'POST', $url, $data );
+        $this->doRequest( 'POST', $url, $data );
     }
 
     /**
@@ -362,22 +371,24 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function DeleteAssociation( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
+    public function disassociate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
-        $this->GetHttpRequest( 'DELETE', $url );
+        $this->doRequest( 'DELETE', $url );
     }
 
     /**
-     * @param $functionName
-     * @param null $parameters
-     * @param null $entityCollection
-     * @param null $entityId
+     * Executes a Web API function.
+     *
+     * @param string $functionName Function name.
+     * @param array $parameters Function parameters.
+     * @param string $entityCollection For bound functions -- entity set name.
+     * @param string $entityId For bound functions -- entity record ID.
      *
      * @return mixed
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function ExecuteFunction( $functionName, $parameters = null, $entityCollection = null, $entityId = null ) {
+    public function executeFunction( $functionName, $parameters = null, $entityCollection = null, $entityId = null ) {
         $paramvars   = [];
         $paramvalues = [];
         $paramcount  = 1;
@@ -399,7 +410,7 @@ class Client {
             }
         }
 
-        $res = $this->GetHttpRequest( 'GET', $url );
+        $res = $this->doRequest( 'GET', $url );
         $result = json_decode( $res->getBody() );
         unset( $result->{'@odata.context'} );
 
@@ -407,22 +418,24 @@ class Client {
     }
 
     /**
-     * @param $actionName
-     * @param null $data
-     * @param null $entityCollection
-     * @param null $entityId
+     * Executes a Web API action.
+     *
+     * @param string $actionName Action name.
+     * @param array $parameters Action parameters.
+     * @param string $entityCollection For bound actions -- entity set name.
+     * @param string $entityId For bound actions -- entity record ID.
      *
      * @return mixed
      * @throws ODataException
      * @throws AuthenticationException
      */
-    public function ExecuteAction( $actionName, $data = null, $entityCollection = null, $entityId = null ) {
+    public function executeAction( $actionName, $parameters = null, $entityCollection = null, $entityId = null ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $actionName );
         if ( $entityCollection != null ) {
             $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $actionName );
         }
 
-        $res = $this->GetHttpRequest( 'POST', $url, $data );
+        $res = $this->doRequest( 'POST', $url, $parameters );
         $result = json_decode( $res->getBody() );
         unset( $result->{'@odata.context'} );
 
@@ -430,6 +443,8 @@ class Client {
     }
 
     /**
+     * Returns the Settings instance.
+     *
      * @return Settings
      */
     public function getSettings() {
