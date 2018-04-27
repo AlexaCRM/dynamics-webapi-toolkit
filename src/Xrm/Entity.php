@@ -161,8 +161,8 @@ class Entity implements \ArrayAccess {
     public function ToEntityReference() {
         $ref = new EntityReference( $this->LogicalName );
 
-        if ( $this->Id instanceof Guid ) {
-            $ref->Id = clone $this->Id;
+        if ( $this->Id !== null ) {
+            $ref->Id = $this->Id;
 
             return $ref;
         }
