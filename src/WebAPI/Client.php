@@ -172,14 +172,15 @@ class Client implements IOrganizationService {
     }
 
     /**
-     * Executes a function or action formed as a request.
+     * Executes a function or action formed as a request. Not implemented.
+     *
+     * Use \AlexaCRM\WebAPI\OData\Client::ExecuteFunction() and \AlexaCRM\WebAPI\OData\Client::ExecuteAction() instead.
+     * Access to \AlexaCRM\WebAPI\OData\Client is provided via Client::getClient().
      *
      * @param $request
-     *
-     * @return mixed
      */
     public function Execute( $request ) {
-        return $this->client->ExecuteFunction( $request );
+        throw new \BadMethodCallException( 'Execute request not implemented' );
     }
 
     /**
@@ -324,6 +325,11 @@ class Client implements IOrganizationService {
         $entity->getAttributeState()->reset();
     }
 
+    /**
+     * Returns an instance of ODataClient for direct access to OData service and underlying transport.
+     *
+     * @return ODataClient
+     */
     public function getClient() : ODataClient {
         return $this->client;
     }
