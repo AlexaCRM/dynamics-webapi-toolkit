@@ -1,8 +1,10 @@
 <?php
 
 /**
+ * This file contains substantial portions of Xrm.Tools.CRMWebAPI by David Yack.
+ * https://github.com/davidyack/Xrm.Tools.CRMWebAPI/tree/e454cd2c9f0c1fc96421f06753bd804db19ce73a/php
+ *
  * Copyright (c) 2016 David Yack
- * Copyright (c) 2017, 2018 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
