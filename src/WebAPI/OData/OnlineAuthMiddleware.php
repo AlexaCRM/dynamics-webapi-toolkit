@@ -60,7 +60,8 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         preg_match( '~/([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})/~', $probeResponse->getHeader( 'WWW-Authenticate' )[0], $tenantMatch );
 
         $tenantID = $tenantMatch[1];
-        $this->settings->cachePool->save( $cache->set( $tenantID ) );
+        $expirationDuration = new \DateInterval( 'P30D' ); // Cache the tenant ID for 30 days.
+        $this->settings->cachePool->save( $cache->set( $tenantID )->expiresAfter( $expirationDuration ) );
 
         return $tenantID;
     }
