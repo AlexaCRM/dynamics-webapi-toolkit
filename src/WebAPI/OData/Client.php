@@ -41,11 +41,6 @@ use Psr\Cache\InvalidArgumentException;
 class Client {
 
     /**
-     * Web API version.
-     */
-    const API_VERSION = '8.2';
-
-    /**
      * @var Settings
      */
     protected $settings;

@@ -91,7 +91,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             }
         }
 
-        $tenantId = $this->detectTenantID( $settings->endpointURI );
+        $tenantId = $this->detectTenantID( $settings->getEndpointURI() );
         $tokenEndpoint = 'https://login.microsoftonline.com/' . $tenantId . '/oauth2/token';
 
         $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings

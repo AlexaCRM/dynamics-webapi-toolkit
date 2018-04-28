@@ -8,13 +8,6 @@ namespace AlexaCRM\WebAPI\OData;
 class OnlineSettings extends Settings {
 
     /**
-     * URI of the Web API endpoint.
-     *
-     * @var string
-     */
-    public $endpointURI;
-
-    /**
      * Azure AD application ID.
      *
      * @var string
@@ -34,12 +27,6 @@ class OnlineSettings extends Settings {
      * @return string
      */
     public function getEndpointURI() {
-        if ( $this->endpointURI !== null ) {
-            return $this->endpointURI;
-        }
-
-        $this->endpointURI = trim( $this->instanceURI, '/' ) . '/api/data/v' . Client::API_VERSION . '/';
-
-        return $this->endpointURI;
+        return trim( $this->instanceURI, '/' ) . '/api/data/v' . $this->apiVersion . '/';
     }
 }

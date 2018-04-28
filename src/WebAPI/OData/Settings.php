@@ -11,6 +11,11 @@ use WildWolf\Psr6MemoryCache;
 abstract class Settings {
 
     /**
+     * Web API version.
+     */
+    public $apiVersion = '8.2';
+
+    /**
      * Dynamics 365 organization address.
      *
      * @var string
