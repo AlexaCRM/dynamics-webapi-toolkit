@@ -10,15 +10,30 @@ namespace AlexaCRM\Xrm;
 class KeyAttributeCollection implements \Iterator {
 
     /**
+     * Collection of key attributes and values.
+     *
      * @var array
      */
     protected $keys = [];
 
-    public function Add( string $key, $value ) {
+    /**
+     * Adds a key attribute value to the collection.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function Add( $key, $value ) {
         $this->keys[ $key ] = $value;
     }
 
-    public function Remove( string $key ) : bool {
+    /**
+     * Removes a key attribute from the collection.
+     *
+     * @param string $key
+     *
+     * @return bool
+     */
+    public function Remove( $key ) : bool {
         if ( !array_key_exists( $key, $this->keys ) ) {
             return false;
         }
