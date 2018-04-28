@@ -32,6 +32,8 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 
 /**
  * Dynamics 365 Web API OData client.
@@ -99,6 +101,13 @@ class Client {
             return $this->metadata;
         }
 
+        $cache = $this->getCachePool()->getItem( 'msdynwebapi.metadata' );
+        if ( $cache->isHit() ) {
+            $this->metadata = $cache->get();
+
+            return $this->metadata;
+        }
+
         try {
             $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
                 'headers' => [ 'Accept' => 'application/xml' ],
@@ -117,6 +126,7 @@ class Client {
         $metadataXML = $resp->getBody()->getContents();
 
         $this->metadata = Metadata::createFromXML( $metadataXML );
+        $this->getCachePool()->save( $cache->set( $this->metadata ) );
 
         return $this->metadata;
     }
@@ -451,6 +461,13 @@ class Client {
      */
     public function getSettings() {
         return $this->settings;
+    }
+
+    /**
+     * @return CacheItemPoolInterface
+     */
+    public function getCachePool() {
+        return $this->settings->cachePool;
     }
 
 }

@@ -42,8 +42,14 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      *
      * @return string Tenant ID of the queried instance.
      */
-    protected function detectTenantId( $endpointUri ) {
-        $httpClient = new HttpClient( [ 'verify' => false ] );
+    protected function detectTenantID( $endpointUri ) {
+        $cacheKey = 'msdynwebapi.tenant.' . sha1( $endpointUri );
+        $cache = $this->settings->cachePool->getItem( $cacheKey );
+        if ( $cache->isHit() ) {
+            return $cache->get();
+        }
+
+        $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
 
         try {
             $probeResponse = $httpClient->get( $endpointUri );
@@ -53,22 +59,38 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
         preg_match( '~/([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})/~', $probeResponse->getHeader( 'WWW-Authenticate' )[0], $tenantMatch );
 
-        return $tenantMatch[1];
+        $tenantID = $tenantMatch[1];
+        $this->settings->cachePool->save( $cache->set( $tenantID ) );
+
+        return $tenantID;
     }
 
     /**
-     * Acquires the Bearer token via client credentials OAuth2 flow
-     * and stores it in OnlineAuthMiddleware::$token for further usage.
+     * Acquires the Bearer token via client credentials OAuth2 flow.
+     *
      * @throws AuthenticationException
      */
     protected function acquireToken() {
         if ( $this->token instanceof Token && $this->token->isValid() ) {
-            return; // Token already acquired and is not expired.
+            return $this->token; // Token already acquired and is not expired.
         }
 
         $settings = $this->settings;
 
-        $tenantId = $this->detectTenantId( $settings->endpointURI );
+        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
+        $cache = $settings->cachePool->getItem( $cacheKey );
+        if ( $cache->isHit() ) {
+            $token = $cache->get();
+            if ( $token instanceof Token && $token->isValid() ) {
+                $this->token = $token;
+
+                return $token;
+            } else {
+                $settings->cachePool->deleteItem( $cacheKey );
+            }
+        }
+
+        $tenantId = $this->detectTenantID( $settings->endpointURI );
         $tokenEndpoint = 'https://login.microsoftonline.com/' . $tenantId . '/oauth2/token';
 
         $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
@@ -87,9 +109,12 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
         }
 
-        $token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
+        $this->token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
+        $expirationDate = new \DateTime();
+        $expirationDate->setTimestamp( $this->token->expires_on );
+        $settings->cachePool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
 
-        $this->token = $token;
+        return $this->token;
     }
 
     /**
@@ -105,10 +130,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         return function ( callable $handler ) use ( $self ) {
             $settings = $self->settings;
 
-            $self->acquireToken();
-
             return function ( RequestInterface $request, array $options ) use ( $self, $handler, $settings ) {
-                $headerValue = $self->token->token_type . ' ' . $self->token->access_token;
+                $token = $self->acquireToken();
+                $headerValue = $token->token_type . ' ' . $token->access_token;
                 $request = $request->withHeader( 'Authorization', $headerValue );
 
                 return $handler( $request, $options );

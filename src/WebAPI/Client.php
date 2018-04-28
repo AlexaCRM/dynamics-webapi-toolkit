@@ -16,6 +16,7 @@ use AlexaCRM\Xrm\Query\QueryBase;
 use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
 use AlexaCRM\WebAPI\OData\Client as ODataClient;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * Represents the Organization-compatible Dynamics 365 Web API client.
@@ -553,6 +554,13 @@ class Client implements IOrganizationService {
         }
 
         return $collection;
+    }
+
+    /**
+     * @return CacheItemPoolInterface
+     */
+    public function getCachePool() : CacheItemPoolInterface {
+        return $this->client->getCachePool();
     }
 
 }
