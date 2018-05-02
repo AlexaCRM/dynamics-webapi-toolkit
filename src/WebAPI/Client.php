@@ -238,6 +238,10 @@ class Client implements IOrganizationService {
         $entity = new Entity( $entityName, $entityId );
 
         foreach ( $response as $field => $value ) {
+            if ( stripos( $field, '@Microsoft' ) !== false || stripos( $field, '@OData' ) !== false ) {
+                continue;
+            }
+
             if ( !array_key_exists( $field, $entityMap ) || $value === null ) {
                 $this->getLogger()->warning( "Received {$entityName}[$field] from Web API which is absent in the inbound attribute map" );
                 continue;
@@ -414,7 +418,7 @@ class Client implements IOrganizationService {
             }
 
             foreach ( $item as $key => $value ) {
-                if ( $key === '@odata.etag' || strpos( $key, '@Microsoft' ) !== false || strpos( $key, '@OData' ) !== false ) {
+                if ( stripos( $key, '@Microsoft' ) !== false || stripos( $key, '@OData' ) !== false ) {
                     continue;
                 }
 
@@ -538,7 +542,7 @@ class Client implements IOrganizationService {
             }
 
             foreach ( $item as $key => $value ) {
-                if ( $key === '@odata.etag' || strpos( $key, '@Microsoft' ) !== false || strpos( $key, '@OData' ) !== false ) {
+                if ( stripos( $key, '@Microsoft' ) !== false || stripos( $key, '@OData' ) !== false ) {
                     continue;
                 }
 
