@@ -106,7 +106,7 @@ class Client implements IOrganizationService {
                 $logicalName = $value->LogicalName;
                 if ( !array_key_exists( $logicalName, $outboundMapping) ) {
                     $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
-                    continue; // TODO: throw a typed exception
+                    continue;
                 }
 
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
@@ -324,7 +324,7 @@ class Client implements IOrganizationService {
                 $logicalName = $value->LogicalName;
                 if ( !array_key_exists( $logicalName, $outboundMapping) ) {
                     $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
-                    continue; // TODO: throw a typed exception
+                    continue;
                 }
 
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
