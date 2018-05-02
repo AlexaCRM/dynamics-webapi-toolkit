@@ -84,6 +84,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             $token = $cache->get();
             if ( $token instanceof Token && $token->isValid() ) {
                 $this->token = $token;
+                $settings->logger->debug( 'Loaded a non-expired access token from cache' );
 
                 return $token;
             } else {
@@ -104,6 +105,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
                     'resource' => $settings->instanceURI,
                 ],
             ] );
+            $settings->logger->debug( 'Retrieved a new access token via ' . $tokenEndpoint );
         } catch ( RequestException $e ) {
             $response = json_decode( $e->getResponse()->getBody()->getContents() );
             $errorDescription = $response->error_description;

@@ -17,6 +17,7 @@ use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
 use AlexaCRM\WebAPI\OData\Client as ODataClient;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Represents the Organization-compatible Dynamics 365 Web API client.
@@ -89,16 +90,22 @@ class Client implements IOrganizationService {
 
         $outboundMap = $metadata->entityMaps[$entity->LogicalName]->outboundMap;
         $translatedData = [];
+
+        /*
+         * Translate CRM attribute names to Web API outbound field names,
+         * including @odata.bind annotation for lookup attributes.
+         */
         foreach ( $data as $field => $value ) {
             $outboundMapping = $outboundMap[$field];
             if ( is_string( $outboundMapping ) ) {
                 $translatedData[$outboundMapping] = $value;
-                continue;
+                continue; // Simple value mapping found.
             }
 
             if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
                 $logicalName = $value->LogicalName;
                 if ( !array_key_exists( $logicalName, $outboundMapping) ) {
+                    $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
                     continue; // TODO: throw a typed exception
                 }
 
@@ -106,6 +113,8 @@ class Client implements IOrganizationService {
 
                 $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
             }
+
+            $this->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
         }
 
         try {
@@ -212,6 +221,7 @@ class Client implements IOrganizationService {
             $columnMapping = array_flip( $entityMap );
             foreach ( $columnSet->Columns as $column ) {
                 if ( !array_key_exists( $column, $columnMapping ) ) {
+                    $this->getLogger()->warning( "No inbound attribute mapping found for {$entityName}[{$column}]" );
                     continue;
                 }
 
@@ -229,6 +239,7 @@ class Client implements IOrganizationService {
 
         foreach ( $response as $field => $value ) {
             if ( !array_key_exists( $field, $entityMap ) || $value === null ) {
+                $this->getLogger()->warning( "Received {$entityName}[$field] from Web API which is absent in the inbound attribute map" );
                 continue;
             }
 
@@ -308,6 +319,7 @@ class Client implements IOrganizationService {
             if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
                 $logicalName = $value->LogicalName;
                 if ( !array_key_exists( $logicalName, $outboundMapping) ) {
+                    $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
                     continue; // TODO: throw a typed exception
                 }
 
@@ -483,6 +495,7 @@ class Client implements IOrganizationService {
         if ( $query->ColumnSet instanceof ColumnSet && !$query->ColumnSet->AllColumns ) {
             foreach ( $query->ColumnSet->Columns as $column ) {
                 if ( !array_key_exists( $column, $columnMap ) ) {
+                    $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$column}]" );
                     continue;
                 }
 
@@ -492,6 +505,7 @@ class Client implements IOrganizationService {
 
         foreach ( $query->Orders as $attributeName => $orderType ) {
             if ( !array_key_exists( $attributeName, $columnMap ) ) {
+                $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$column}] order setting" );
                 continue;
             }
 
@@ -561,6 +575,13 @@ class Client implements IOrganizationService {
      */
     public function getCachePool() : CacheItemPoolInterface {
         return $this->client->getCachePool();
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger() : LoggerInterface {
+        return $this->client->getLogger();
     }
 
 }

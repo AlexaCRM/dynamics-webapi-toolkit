@@ -32,8 +32,11 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\Middleware;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Log\LogLevel;
 
 /**
  * Dynamics 365 Web API OData client.
@@ -67,6 +70,7 @@ class Client {
      */
     function __construct( Settings $settings, AuthMiddlewareInterface $authMiddleware ) {
         $this->settings = $settings;
+        $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [ 'settings' => $settings, 'authentication' => get_class( $authMiddleware ) ] );
 
         $headers = [
             'Accept' => 'application/json',
@@ -98,15 +102,18 @@ class Client {
 
         $cache = $this->getCachePool()->getItem( 'msdynwebapi.metadata' );
         if ( $cache->isHit() ) {
+            $this->getLogger()->debug( 'Loading OData metadata from cache' );
             $this->metadata = $cache->get();
 
             return $this->metadata;
         }
 
         try {
-            $resp = $this->httpClient->get( $this->settings->getEndpointURI() . '$metadata', [
+            $metadataURI = $this->settings->getEndpointURI() . '$metadata';
+            $resp = $this->httpClient->get( $metadataURI, [
                 'headers' => [ 'Accept' => 'application/xml' ],
             ] );
+            $this->getLogger()->debug( 'Retrieved OData metadata via ' . $metadataURI );
         } catch ( ConnectException $e ) {
             throw $e;
         } catch ( RequestException $e ) {
@@ -146,18 +153,24 @@ class Client {
         }
 
         try {
-            return $this->httpClient->request( $method, $url, [
+            $response = $this->httpClient->request( $method, $url, [
                 'headers' => $headers,
                 'json' => $data,
             ] );
+            $this->getLogger()->debug( "Completed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $response->getHeaders(), 'responseBody' => $response->getBody()->getContents() ] );
+
+            return $response;
         } catch ( RequestException $e ) {
             if ( $e->getResponse()->getStatusCode() === 401 ) {
+                $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
             $response = json_decode( $e->getResponse()->getBody()->getContents() );
+            $this->getLogger()->error( "Failed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
             throw new ODataException( $response->error, $e );
         } catch ( GuzzleException $e ) {
+            $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
             throw new ODataException( (object)[ 'message' => $e->getMessage() ], $e );
         }
     }
@@ -463,6 +476,13 @@ class Client {
      */
     public function getCachePool() {
         return $this->settings->cachePool;
+    }
+
+    /**
+     * @return \Psr\Log\LoggerInterface
+     */
+    public function getLogger() {
+        return $this->settings->logger;
     }
 
 }
