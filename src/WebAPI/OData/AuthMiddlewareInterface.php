@@ -18,4 +18,11 @@ interface AuthMiddlewareInterface {
      */
     public function getMiddleware();
 
+    /**
+     * Discards the currently used access token.
+     *
+     * @return void
+     */
+    public function discardToken();
+
 }

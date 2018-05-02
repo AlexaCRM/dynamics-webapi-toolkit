@@ -63,6 +63,13 @@ class Client {
     protected $metadata;
 
     /**
+     * Guzzle-compatible authentication middleware.
+     *
+     * @var AuthMiddlewareInterface
+     */
+    protected $authMiddleware;
+
+    /**
      * Client constructor.
      *
      * @param Settings $settings
@@ -70,6 +77,8 @@ class Client {
      */
     function __construct( Settings $settings, AuthMiddlewareInterface $authMiddleware ) {
         $this->settings = $settings;
+        $this->authMiddleware = $authMiddleware;
+
         $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [ 'settings' => $settings, 'authentication' => get_class( $authMiddleware ) ] );
 
         $headers = [
@@ -108,8 +117,8 @@ class Client {
             return $this->metadata;
         }
 
+        $metadataURI = $this->settings->getEndpointURI() . '$metadata';
         try {
-            $metadataURI = $this->settings->getEndpointURI() . '$metadata';
             $resp = $this->httpClient->get( $metadataURI, [
                 'headers' => [ 'Accept' => 'application/xml' ],
             ] );
@@ -118,10 +127,13 @@ class Client {
             throw $e;
         } catch ( RequestException $e ) {
             if ( $e->getResponse()->getStatusCode() === 401 ) {
+                $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
+                $this->authMiddleware->discardToken();
                 throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
             $responseCode = $e->getResponse()->getStatusCode();
+            $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
             throw new InaccessibleMetadataException( 'Metadata request returned a ' . $responseCode . ' code', $e );
         }
 
@@ -163,6 +175,7 @@ class Client {
         } catch ( RequestException $e ) {
             if ( $e->getResponse()->getStatusCode() === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
+                $this->authMiddleware->discardToken();
                 throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 

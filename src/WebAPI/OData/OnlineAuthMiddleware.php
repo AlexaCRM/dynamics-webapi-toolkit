@@ -121,6 +121,18 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     }
 
     /**
+     * Discards the access token from memory and cache.
+     */
+    public function discardToken() {
+        $this->token = null;
+
+        $settings = $this->settings;
+
+        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
+        $settings->cachePool->deleteItem( $cacheKey );
+    }
+
+    /**
      * Returns a Guzzle-compliant middleware.
      *
      * @return callable
