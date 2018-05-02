@@ -27,12 +27,27 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     protected $token;
 
     /**
+     * @var HttpClient
+     */
+    protected $httpClient;
+
+    /**
      * OnlineAuthMiddleware constructor.
      *
      * @param OnlineSettings $settings
      */
     public function __construct( OnlineSettings $settings ) {
         $this->settings = $settings;
+    }
+
+    protected function getHttpClient() {
+        if ( $this->httpClient instanceof HttpClient ) {
+            return $this->httpClient;
+        }
+
+        $this->httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
+
+        return $this->httpClient;
     }
 
     /**
@@ -49,7 +64,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             return $cache->get();
         }
 
-        $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
+        $httpClient = $this->getHttpClient();
 
         try {
             $probeResponse = $httpClient->get( $endpointUri );
@@ -95,7 +110,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $tenantId = $this->detectTenantID( $settings->getEndpointURI() );
         $tokenEndpoint = 'https://login.microsoftonline.com/' . $tenantId . '/oauth2/token';
 
-        $httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
+        $httpClient = $this->getHttpClient();
         try {
             $tokenResponse = $httpClient->post( $tokenEndpoint, [
                 'form_params' => [

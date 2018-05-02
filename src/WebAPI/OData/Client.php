@@ -111,8 +111,8 @@ class Client {
 
         $cache = $this->getCachePool()->getItem( 'msdynwebapi.metadata' );
         if ( $cache->isHit() ) {
-            $this->getLogger()->debug( 'Loading OData metadata from cache' );
             $this->metadata = $cache->get();
+            $this->getLogger()->debug( 'Loaded OData metadata from cache' );
 
             return $this->metadata;
         }
