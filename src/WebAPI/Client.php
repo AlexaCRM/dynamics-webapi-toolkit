@@ -509,7 +509,7 @@ class Client implements IOrganizationService {
 
         foreach ( $query->Orders as $attributeName => $orderType ) {
             if ( !array_key_exists( $attributeName, $columnMap ) ) {
-                $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$column}] order setting" );
+                $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$attributeName}] order setting" );
                 continue;
             }
 

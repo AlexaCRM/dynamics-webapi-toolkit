@@ -34,8 +34,9 @@ class ODataException extends Exception {
         if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
             $guzzleResponse = $inner->getResponse();
+            $statusCode = ( $guzzleResponse !== null )? $guzzleResponse->getStatusCode() : 0;
 
-            $level = (int) floor($guzzleResponse->getStatusCode() / 100);
+            $level = (int) floor( $statusCode / 100);
             if ($level === 4) {
                 $label = 'Client error';
             } elseif ($level === 5) {
@@ -51,8 +52,8 @@ class ODataException extends Exception {
                 $label,
                 $guzzleRequest->getMethod(),
                 $uri,
-                $guzzleResponse->getStatusCode(),
-                $guzzleResponse->getReasonPhrase(),
+                $statusCode,
+                ( $guzzleResponse !== null )? $guzzleResponse->getReasonPhrase() : '',
                 $response->message
             );
         }

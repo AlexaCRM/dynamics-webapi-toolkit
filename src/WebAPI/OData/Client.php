@@ -32,11 +32,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\MessageFormatter;
-use GuzzleHttp\Middleware;
 use Psr\Cache\CacheItemPoolInterface;
-use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LogLevel;
 
 /**
  * Dynamics 365 Web API OData client.
@@ -80,6 +76,15 @@ class Client {
         $this->authMiddleware = $authMiddleware;
 
         $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [ 'settings' => $settings, 'authentication' => get_class( $authMiddleware ) ] );
+    }
+
+    /**
+     * @return HttpClient
+     */
+    protected function getHttpClient() {
+        if ( $this->httpClient instanceof HttpClient ) {
+            return $this->httpClient;
+        }
 
         $headers = [
             'Accept' => 'application/json',
@@ -88,13 +93,15 @@ class Client {
         ];
 
         $handlerStack = HandlerStack::create();
-        $handlerStack->push( $authMiddleware->getMiddleware() );
+        $handlerStack->push( $this->authMiddleware->getMiddleware() );
 
         $this->httpClient = new HttpClient( [
             'headers' => $headers,
-            'verify' => false,
+            'verify' => $this->settings->caBundle !== null? $this->settings->caBundle : true,
             'handler' => $handlerStack,
         ] );
+
+        return $this->httpClient;
     }
 
     /**
@@ -119,13 +126,18 @@ class Client {
 
         $metadataURI = $this->settings->getEndpointURI() . '$metadata';
         try {
-            $resp = $this->httpClient->get( $metadataURI, [
+            $resp = $this->getHttpClient()->get( $metadataURI, [
                 'headers' => [ 'Accept' => 'application/xml' ],
             ] );
             $this->getLogger()->debug( 'Retrieved OData metadata via ' . $metadataURI );
         } catch ( ConnectException $e ) {
             throw $e;
         } catch ( RequestException $e ) {
+            if ( $e->getResponse() === null ) {
+                $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
+                throw new InaccessibleMetadataException( (object)[ 'message' => $e->getMessage() ], $e );
+            }
+
             if ( $e->getResponse()->getStatusCode() === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();
@@ -165,7 +177,7 @@ class Client {
         }
 
         try {
-            $response = $this->httpClient->request( $method, $url, [
+            $response = $this->getHttpClient()->request( $method, $url, [
                 'headers' => $headers,
                 'json' => $data,
             ] );
@@ -173,6 +185,11 @@ class Client {
 
             return $response;
         } catch ( RequestException $e ) {
+            if ( $e->getResponse() === null ) {
+                $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
+                throw new ODataException( (object)[ 'message' => $e->getMessage() ], $e );
+            }
+
             if ( $e->getResponse()->getStatusCode() === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();

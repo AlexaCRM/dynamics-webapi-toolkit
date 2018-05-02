@@ -26,6 +26,13 @@ abstract class Settings implements LoggerAwareInterface {
     public $instanceURI;
 
     /**
+     * Path to a custom CA bundle.
+     *
+     * @var string
+     */
+    public $caBundle;
+
+    /**
      * @var CacheItemPoolInterface
      */
     public $cachePool;

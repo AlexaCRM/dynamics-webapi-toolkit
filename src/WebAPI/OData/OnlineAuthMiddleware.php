@@ -45,7 +45,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             return $this->httpClient;
         }
 
-        $this->httpClient = new HttpClient( [ 'verify' => false ] ); // TODO: consume custom CA from settings
+        $this->httpClient = new HttpClient( [
+            'verify' => $this->settings->caBundle !== null? $this->settings->caBundle : true,
+        ] );
 
         return $this->httpClient;
     }

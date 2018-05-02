@@ -19,6 +19,7 @@ class ClientFactory {
      * @param string $instanceURI Organization URI, e.g. https://contoso.crm.dynamics.com/.
      * @param string $applicationID GUID of the Azure AD application.
      * @param string $applicationSecret Secret key of the Azure AD application.
+     * @param array $services Optional services like `logger` or `cachePool`.
      *
      * @return Client
      */
