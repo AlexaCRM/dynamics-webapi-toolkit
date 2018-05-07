@@ -10,7 +10,7 @@ use AlexaCRM\Enum\ChoiceEnum;
  * @method static Ascending() The values of the specified attribute should be sorted in ascending order, from lowest to highest.
  * @method static Descending() The values of the specified attribute should be sorted in descending order, from highest to lowest.
  */
-class OrderType extends ChoiceEnum {
+final class OrderType extends ChoiceEnum {
 
     /**
      * The values of the specified attribute should be sorted in ascending order, from lowest to highest.

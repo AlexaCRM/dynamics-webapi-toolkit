@@ -6,8 +6,11 @@ use AlexaCRM\Enum\ChoiceEnum;
 
 /**
  * Contains values to indicate the role the entity plays in a relationship.
+ *
+ * @method static Referenced() Specifies that the entity is the referenced entity.
+ * @method static Referencing() Specifies that the entity is the referencing entity.
  */
-class EntityRole extends ChoiceEnum {
+final class EntityRole extends ChoiceEnum {
 
     /**
      * Specifies that the entity is the referenced entity.
