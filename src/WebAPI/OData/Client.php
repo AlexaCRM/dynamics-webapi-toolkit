@@ -135,7 +135,7 @@ class Client {
         } catch ( RequestException $e ) {
             if ( $e->getResponse() === null ) {
                 $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
-                throw new InaccessibleMetadataException( (object)[ 'message' => $e->getMessage() ], $e );
+                throw new InaccessibleMetadataException( $e->getMessage(), $e );
             }
 
             if ( $e->getResponse()->getStatusCode() === 401 ) {
