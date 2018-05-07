@@ -79,9 +79,11 @@ class Client {
     }
 
     /**
+     * Returns the Guzzle HTTP client instance.
+     *
      * @return HttpClient
      */
-    protected function getHttpClient() {
+    public function getHttpClient() {
         if ( $this->httpClient instanceof HttpClient ) {
             return $this->httpClient;
         }
