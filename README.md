@@ -18,8 +18,8 @@ $ composer require alexacrm/dynamics-webapi-toolkit
 
 ## Built With
 
-* David Yack's [Xrm.Tools.CRMWebAPI](https://github.com/davidyack/Xrm.Tools.CRMWebAPI) -- some code was borrowed as OData helper code
-* [Guzzle](https://github.com/guzzle/guzzle) -- an extensible PHP HTTP client
+* David Yack's [Xrm.Tools.CRMWebAPI](https://github.com/davidyack/Xrm.Tools.CRMWebAPI) - some code was borrowed as OData helper code
+* [Guzzle](https://github.com/guzzle/guzzle) - an extensible PHP HTTP client
 
 ## Versioning
 
