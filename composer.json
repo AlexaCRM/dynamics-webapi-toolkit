@@ -15,7 +15,8 @@
     "guzzlehttp/guzzle": "~6",
     "psr/log": "1.0.2",
     "psr/cache": "1.0.1",
-    "wildwolf/psr-memory-cache": "~1.0"
+    "wildwolf/psr-memory-cache": "~1.0",
+    "elao/enum": "^1.0@dev"
   },
   "autoload": {
     "psr-4": {
