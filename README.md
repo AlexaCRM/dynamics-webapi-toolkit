@@ -4,8 +4,6 @@ This library facilitates connection to Microsoft Dynamics 365 via Web API in PHP
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Prerequisites
 
 The main requirement is PHP 7.0 or later. cURL is recommended but is not required. [Composer](https://getcomposer.org/) is required to install the toolkit and its dependencies.
@@ -15,6 +13,10 @@ The main requirement is PHP 7.0 or later. cURL is recommended but is not require
 ```
 $ composer require alexacrm/dynamics-webapi-toolkit
 ```
+
+### Consuming
+
+See the [Tutorial](https://github.com/AlexaCRM/dynamics-webapi-toolkit/wiki/Tutorial) to learn how to consume the library.
 
 ## Built With
 
