@@ -12,6 +12,7 @@ use AlexaCRM\Xrm\EntityCollection;
 use AlexaCRM\Xrm\EntityReference;
 use AlexaCRM\Xrm\IOrganizationService;
 use AlexaCRM\Xrm\Query\FetchExpression;
+use AlexaCRM\Xrm\Query\OrderType;
 use AlexaCRM\Xrm\Query\QueryBase;
 use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
@@ -507,13 +508,21 @@ class Client implements IOrganizationService {
             }
         }
 
+        $orderMap = [
+            0 => 'asc',
+            1 => 'desc',
+        ];
         foreach ( $query->Orders as $attributeName => $orderType ) {
             if ( !array_key_exists( $attributeName, $columnMap ) ) {
                 $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$attributeName}] order setting" );
                 continue;
             }
 
-            $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderType;
+            /**
+             * @var OrderType $orderType
+             */
+
+            $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderMap[$orderType->getValue()];
         }
 
         if ( $query->TopCount > 0 ) {

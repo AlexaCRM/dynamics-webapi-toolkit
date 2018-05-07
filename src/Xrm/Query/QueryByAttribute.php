@@ -39,8 +39,7 @@ class QueryByAttribute extends QueryBase {
      *
      * @var array
      *
-     * @see QueryByAttribute::ORDER_ASCENDING
-     * @see QueryByAttribute::ORDER_DESCENDING
+     * @see OrderType
      */
     public $Orders = [];
 
@@ -76,10 +75,9 @@ class QueryByAttribute extends QueryBase {
      * Adds an order to the orders collection.
      *
      * @param string $attributeName The logical name of the attribute.
-     * @param string $orderType The order for that attribute.
-     * One of QueryByAttribute::ORDER_ASCENDING or QueryByAttribute::ORDER_DESCENDING.
+     * @param OrderType $orderType The order for that attribute.
      */
-    public function AddOrder( string $attributeName, string $orderType ) {
+    public function AddOrder( string $attributeName, OrderType $orderType ) {
         $this->Orders[$attributeName] = $orderType;
     }
 
