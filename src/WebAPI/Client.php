@@ -6,6 +6,7 @@ use AlexaCRM\WebAPI\OData\AuthenticationException;
 use AlexaCRM\WebAPI\OData\InaccessibleMetadataException;
 use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\WebAPI\OData\EntityNotSupportedException;
+use AlexaCRM\WebAPI\OData\SerializationHelper;
 use AlexaCRM\Xrm\ColumnSet;
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityCollection;
@@ -81,42 +82,10 @@ class Client implements IOrganizationService {
      * @throws EntityNotSupportedException
      */
     public function Create( Entity $entity ) {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entity->LogicalName );
+        $serializer = new SerializationHelper( $this->client );
+        $translatedData = $serializer->serializeEntity( $entity );
 
-        $data = [];
-        foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
-            $data[$fieldName] = $entity[$fieldName];
-        }
-
-        $outboundMap = $metadata->entityMaps[$entity->LogicalName]->outboundMap;
-        $translatedData = [];
-
-        /*
-         * Translate CRM attribute names to Web API outbound field names,
-         * including @odata.bind annotation for lookup attributes.
-         */
-        foreach ( $data as $field => $value ) {
-            $outboundMapping = $outboundMap[$field];
-            if ( is_string( $outboundMapping ) ) {
-                $translatedData[$outboundMapping] = $value;
-                continue; // Simple value mapping found.
-            }
-
-            if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
-                $logicalName = $value->LogicalName;
-                if ( !array_key_exists( $logicalName, $outboundMapping) ) {
-                    $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
-                    continue;
-                }
-
-                $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
-
-                $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
-            }
-
-            $this->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
-        }
+        $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
 
         try {
             $responseId = $this->client->create( $collectionName, $translatedData );
@@ -304,35 +273,10 @@ class Client implements IOrganizationService {
      * @throws Exception
      */
     public function Update( Entity $entity ) {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entity->LogicalName );
+        $serializer = new SerializationHelper( $this->client );
+        $translatedData = $serializer->serializeEntity( $entity );
 
-        $data = [];
-        foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
-            $data[$fieldName] = $entity[$fieldName];
-        }
-
-        $outboundMap = $metadata->entityMaps[$entity->LogicalName]->outboundMap;
-        $translatedData = [];
-        foreach ( $data as $field => $value ) {
-            $outboundMapping = $outboundMap[$field];
-            if ( is_string( $outboundMapping ) ) {
-                $translatedData[$outboundMapping] = $value;
-                continue;
-            }
-
-            if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
-                $logicalName = $value->LogicalName;
-                if ( !array_key_exists( $logicalName, $outboundMapping) ) {
-                    $this->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
-                    continue;
-                }
-
-                $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
-
-                $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
-            }
-        }
+        $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
 
         try {
             $this->client->update( $collectionName, $entity->Id, $translatedData );
