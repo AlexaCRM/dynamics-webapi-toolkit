@@ -9,10 +9,6 @@ use AlexaCRM\Xrm\ColumnSet;
  */
 class QueryByAttribute extends QueryBase {
 
-    const ORDER_ASCENDING = 'asc';
-
-    const ORDER_DESCENDING = 'desc';
-
     /**
      * Map of field => value used in the query.
      *
@@ -37,9 +33,7 @@ class QueryByAttribute extends QueryBase {
     /**
      * Specifies the order in which the entity instances are returned from the query.
      *
-     * @var array
-     *
-     * @see OrderType
+     * @var OrderType[]
      */
     public $Orders = [];
 

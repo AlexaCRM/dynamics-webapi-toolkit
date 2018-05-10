@@ -205,37 +205,8 @@ class Client implements IOrganizationService {
             throw new Exception( 'Retrieve request failed: ' . $e->getMessage(), $e );
         }
 
-        $entity = new Entity( $entityName, $entityId );
-
-        foreach ( $response as $field => $value ) {
-            if ( stripos( $field, '@Microsoft' ) !== false || stripos( $field, '@OData' ) !== false ) {
-                continue;
-            }
-
-            if ( !array_key_exists( $field, $entityMap ) || $value === null ) {
-                $this->getLogger()->warning( "Received {$entityName}[$field] from Web API which is absent in the inbound attribute map" );
-                continue;
-            }
-
-            $targetField = $entityMap[$field];
-            $logicalNameField = $field . '@Microsoft.Dynamics.CRM.lookuplogicalname';
-            $formattedValueField = $field . '@OData.Community.Display.V1.FormattedValue';
-            if ( array_key_exists( $logicalNameField, $response ) ) {
-                $entityRefValue = new EntityReference( $response->{$logicalNameField}, $value );
-                if ( array_key_exists( $formattedValueField, $response ) ) {
-                    $entityRefValue->Name = $response->{$formattedValueField};
-                }
-
-                $entity->Attributes[$targetField] = $entityRefValue;
-                continue;
-            }
-
-            $entity->Attributes[$targetField] = $value; // TODO: convert to OptionSetValue if required per Metadata
-            if ( array_key_exists( $formattedValueField, $response ) ) {
-                $entity->FormattedValues[$targetField] = $response[$formattedValueField];
-            }
-        }
-
+        $serializer = new SerializationHelper( $this->client );
+        $entity = $serializer->deserializeEntity( $response, new EntityReference( $entityName, $entityId ) );
 
         return $entity;
     }
@@ -308,36 +279,17 @@ class Client implements IOrganizationService {
     protected function retrieveViaFetchXML( FetchExpression $query ) {
         $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
         $fetchDOM->loadXML( $query->Query );
-        $x = new \DOMXPath( $fetchDOM );
-
-        $attrToEntity = [];
-        $fetchAttributes = $x->query( '//attribute' );
-        foreach ( $fetchAttributes as $attr ) {
-            /**
-             * @var \DOMElement $attr
-             */
-            $targetField = $attr->getAttribute( 'name' );
-            if ( $attr->parentNode->nodeName === 'link-entity' ) {
-                $targetField = $attr->parentNode->getAttribute( 'alias' ) . '.' . $targetField;
-            }
-            if ( $attr->hasAttribute( 'alias' ) ) {
-                $targetField = $attr->getAttribute( 'alias' );
-            }
-            $attrToEntity[$targetField] = $attr->parentNode->getAttribute( 'name' );
-        }
-
         $entityName = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 )->getAttribute( 'name' );
 
         $metadata = $this->client->getMetadata();
         $collectionName = $metadata->getEntitySetName( $entityName );
-        $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
 
         try {
             $response = $this->client->getList( $collectionName, [
                 'FetchXml' => $query->Query,
             ] );
         } catch ( ODataException $e ) {
-            throw new Exception( 'Retrieve (FetchXML) request failed: ' . $e->getMessage(), $e );
+            throw new Exception( 'RetrieveMultiple (FetchXML) request failed: ' . $e->getMessage(), $e );
         }
 
         $collection = new EntityCollection();
@@ -348,6 +300,9 @@ class Client implements IOrganizationService {
             return $collection;
         }
 
+        $serializer = new SerializationHelper( $this->client );
+        $entityRefTypeMap = $serializer->getFetchXMLAliasedLookupTypes( $query->Query );
+
         /*
          * Unmarshal all fields as usual.
          *
@@ -356,48 +311,13 @@ class Client implements IOrganizationService {
          * If any x002e are found, replace the divider with dot (.).
          */
         foreach ( $response->List as $item ) {
-            $record = new Entity( $entityName );
+            $ref = new EntityReference( $entityName );
             $recordKey = $metadata->entityMaps[$entityName]->key;
             if ( array_key_exists( $recordKey, $item ) ) {
-                $record->Id = $item->{$recordKey};
+                $ref->Id = $item->{$recordKey};
             }
 
-            foreach ( $item as $key => $value ) {
-                if ( stripos( $key, '@Microsoft' ) !== false || stripos( $key, '@OData' ) !== false ) {
-                    continue;
-                }
-
-                $targetField = array_key_exists( $key, $entityMap )? $entityMap[$key] : $key;
-                $lookupField = $key . '@Microsoft.Dynamics.CRM.lookuplogicalname';
-                $formattedField = $key . '@OData.Community.Display.V1.FormattedValue';
-                $targetValue = $value;
-
-                if ( strpos( $targetField, '_x002e_' ) !== false ) {
-                    $targetField = str_replace( '_x002e_', '.', $targetField );
-                }
-
-                if ( array_key_exists( $lookupField, $item ) ) {
-                    $targetValue = new EntityReference( $item->{$lookupField}, $value );
-                    $targetValue->Name = $item->{$formattedField};
-                } elseif ( preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value ) && array_key_exists( $formattedField, $item ) ) {
-                    // might be an aliased entity reference
-                    if ( array_key_exists( $targetField, $attrToEntity ) ) {
-                        $targetValue = new EntityReference( $attrToEntity[$targetField], $value );
-                        $targetValue->Name = $item->{$formattedField};
-                    }
-                }
-
-                $formattedValue = null;
-                if ( array_key_exists( $formattedField, $item ) ) {
-                    $formattedValue = $item->{$formattedField};
-                }
-
-                $record->Attributes[$targetField] = $targetValue;
-
-                if ( $formattedValue !== null ) {
-                    $record->FormattedValues[$targetField] = $formattedValue;
-                }
-            }
+            $record = $serializer->deserializeEntity( $item, $ref, $entityRefTypeMap );
 
             $collection->Entities[] = $record;
         }
@@ -416,7 +336,6 @@ class Client implements IOrganizationService {
      */
     protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
         $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $query->EntityName );
         $entityMap = $metadata->entityMaps[$query->EntityName]->inboundMap;
         $columnMap = array_flip( $entityMap );
 
@@ -462,10 +381,6 @@ class Client implements IOrganizationService {
                 continue;
             }
 
-            /**
-             * @var OrderType $orderType
-             */
-
             $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderMap[$orderType->getValue()];
         }
 
@@ -473,6 +388,7 @@ class Client implements IOrganizationService {
             $queryData['Top'] = $query->TopCount;
         }
 
+        $collectionName = $metadata->getEntitySetName( $query->EntityName );
         try {
             $response = $this->client->getList( $collectionName, $queryData );
         } catch ( ODataException $e ) {
@@ -487,39 +403,16 @@ class Client implements IOrganizationService {
             return $collection;
         }
 
+        $serializer = new SerializationHelper( $this->client );
+
         foreach ( $response->List as $item ) {
-            $record = new Entity( $query->EntityName );
+            $ref = new EntityReference( $query->EntityName );
             $recordKey = $metadata->entityMaps[$query->EntityName]->key;
             if ( array_key_exists( $recordKey, $item ) ) {
-                $record->Id = $item->{$recordKey};
+                $ref->Id = $item->{$recordKey};
             }
 
-            foreach ( $item as $key => $value ) {
-                if ( stripos( $key, '@Microsoft' ) !== false || stripos( $key, '@OData' ) !== false ) {
-                    continue;
-                }
-
-                $targetField = array_key_exists( $key, $entityMap )? $entityMap[$key] : $key;
-                $lookupField = $key . '@Microsoft.Dynamics.CRM.lookuplogicalname';
-                $formattedField = $key . '@OData.Community.Display.V1.FormattedValue';
-                $targetValue = $value;
-
-                if ( array_key_exists( $lookupField, $item ) ) {
-                    $targetValue = new EntityReference( $item->{$lookupField}, $value );
-                    $targetValue->Name = $item->{$formattedField};
-                }
-
-                $formattedValue = null;
-                if ( array_key_exists( $formattedField, $item ) ) {
-                    $formattedValue = $item->{$formattedField};
-                }
-
-                $record->Attributes[$targetField] = $targetValue;
-
-                if ( $formattedValue !== null ) {
-                    $record->FormattedValues[$targetField] = $formattedValue;
-                }
-            }
+            $record = $serializer->deserializeEntity( $item, $ref );
 
             $collection->Entities[] = $record;
         }
