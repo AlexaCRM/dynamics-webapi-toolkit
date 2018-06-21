@@ -13,7 +13,7 @@ use AlexaCRM\Xrm\EntityCollection;
 use AlexaCRM\Xrm\EntityReference;
 use AlexaCRM\Xrm\IOrganizationService;
 use AlexaCRM\Xrm\Query\FetchExpression;
-use AlexaCRM\Xrm\Query\OrderType;
+use AlexaCRM\Xrm\Query\PagingInfo;
 use AlexaCRM\Xrm\Query\QueryBase;
 use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
@@ -384,8 +384,22 @@ class Client implements IOrganizationService {
             $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderMap[$orderType->getValue()];
         }
 
+        if ( $query->TopCount > 0 && $query->PageInfo instanceof PagingInfo ) {
+            throw new \InvalidArgumentException( 'QueryByAttribute cannot have both TopCount and PageInfo properties set' );
+        }
+
         if ( $query->TopCount > 0 ) {
             $queryData['Top'] = $query->TopCount;
+        }
+
+        if ( $query->PageInfo instanceof PagingInfo ) {
+            if ( $query->PageInfo->Count > 0 ) {
+                $queryData['MaxPageSize'] = $query->PageInfo->Count;
+            }
+
+            if ( isset( $query->PageInfo->PagingCookie ) ) {
+                $queryData['SkipToken'] = $query->PageInfo->PagingCookie;
+            }
         }
 
         $collectionName = $metadata->getEntitySetName( $query->EntityName );
@@ -401,6 +415,11 @@ class Client implements IOrganizationService {
 
         if ( !$response->Count ) {
             return $collection;
+        }
+
+        if ( isset( $response->SkipToken ) ) {
+            $collection->PagingCookie = $response->SkipToken;
+            $collection->MoreRecords = true;
         }
 
         $serializer = new SerializationHelper( $this->client );

@@ -237,6 +237,9 @@ class Client {
             if ( isset( $queryOptions['Top'] ) ) {
                 $queryParameters['$top'] = $queryOptions['Top'];
             }
+            if ( isset( $queryOptions['SkipToken'] ) ) {
+                $queryParameters['$skiptoken'] = $queryOptions['SkipToken'];
+            }
             if ( isset( $queryOptions['SystemQuery'] ) ) {
                 $queryParameters['savedQuery'] = $queryOptions['SystemQuery'];
             }
@@ -279,7 +282,7 @@ class Client {
      * @param $uri
      * @param null $queryOptions
      *
-     * @return \stdClass
+     * @return ListResponse
      * @throws ODataException
      * @throws AuthenticationException
      */
@@ -288,21 +291,32 @@ class Client {
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
         $data          = json_decode( $res->getBody() );
-        $result        = new \stdClass();
+        $result        = new ListResponse();
         $result->List  = $data->value;
         $result->Count = count( $data->value );
+        if ( isset( $data->{'@odata.nextLink'} ) ) {
+            $nlParts = parse_url( $data->{'@odata.nextLink'} );
+            $queryParts = [];
+            parse_str( $nlParts['query'], $queryParts );
+            $result->SkipToken = $queryParts['$skiptoken'];
+        }
 
-        $nl       = '@odata.nextLink';
-        $nextLink = isset( $data->$nl )? $data->$nl : null;
-        while ( $nextLink != null ) {
-            $res = $this->doRequest( 'GET', $nextLink, null, $this->buildQueryHeaders( $queryOptions ) );
+        // TODO: if there is no paging info in QueryOptions and the next link is still there
+        // TODO: then we hit the 5000 limit and let's fetch it all ffs
+        if ( !isset( $queryOptions['MaxPageSize'] ) && isset( $data->{'@odata.nextLink'} ) ) {
+            $nextLink = $data->{'@odata.nextLink'};
+            while ( $nextLink != null ) {
+                $res = $this->doRequest( 'GET', $nextLink, null, $this->buildQueryHeaders( $queryOptions ) );
 
-            $nextLink = null;
-            $data         = json_decode( $res->getBody() );
-            $result->List = array_merge( $result->List, $data->value );
-            $nextLink     = $data->$nl;
+                $nextLink = null;
+                $data         = json_decode( $res->getBody() );
+                $result->List = array_merge( $result->List, $data->value );
+                $result->Count = count( $result->List );
 
-            $result->Count = count( $result->List );
+                $nextLink     = $data->{'@odata.nextLink'};
+            }
+
+            unset( $result->SkipToken );
         }
 
         return $result;

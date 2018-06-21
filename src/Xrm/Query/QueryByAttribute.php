@@ -38,6 +38,13 @@ class QueryByAttribute extends QueryBase {
     public $Orders = [];
 
     /**
+     * The number of pages and the number of entity instances per page returned from the query.
+     *
+     * @var PagingInfo
+     */
+    public $PageInfo;
+
+    /**
      * The number of rows to be returned.
      *
      * @var int
