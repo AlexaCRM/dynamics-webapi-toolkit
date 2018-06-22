@@ -299,6 +299,8 @@ class Client {
             $queryParts = [];
             parse_str( $nlParts['query'], $queryParts );
             $result->SkipToken = $queryParts['$skiptoken'];
+        } elseif ( isset( $data->{'@Microsoft.Dynamics.CRM.fetchxmlpagingcookie'} ) ) {
+            $result->SkipToken = $data->{'@Microsoft.Dynamics.CRM.fetchxmlpagingcookie'};
         }
 
         // TODO: if there is no paging info in QueryOptions and the next link is still there

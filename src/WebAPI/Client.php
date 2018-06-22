@@ -300,6 +300,12 @@ class Client implements IOrganizationService {
             return $collection;
         }
 
+        if ( isset( $response->SkipToken ) ) {
+            preg_match( '~pagingcookie="(.*?)"~', $response->SkipToken, $tokenMatch );
+            $collection->PagingCookie = urldecode( urldecode( $tokenMatch[1] ) );
+            $collection->MoreRecords = true;
+        }
+
         $serializer = new SerializationHelper( $this->client );
         $entityRefTypeMap = $serializer->getFetchXMLAliasedLookupTypes( $query->Query );
 
