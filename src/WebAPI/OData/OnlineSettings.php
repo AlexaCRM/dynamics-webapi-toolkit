@@ -22,6 +22,15 @@ class OnlineSettings extends Settings {
     public $applicationSecret;
 
     /**
+     * Azure AD tenant ID.
+     *
+     * Optional, allows skipping tenant detection.
+     *
+     * @var string
+     */
+    public $tenantID;
+
+    /**
      * Returns Web API endpoint URI.
      *
      * @return string

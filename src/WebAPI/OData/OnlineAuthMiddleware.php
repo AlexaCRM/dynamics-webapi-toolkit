@@ -60,6 +60,10 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      * @return string Tenant ID of the queried instance.
      */
     protected function detectTenantID( $endpointUri ) {
+        if ( isset( $this->settings->tenantID ) ) {
+            return $this->settings->tenantID;
+        }
+
         $cacheKey = 'msdynwebapi.tenant.' . sha1( $endpointUri );
         $cache = $this->settings->cachePool->getItem( $cacheKey );
         if ( $cache->isHit() ) {
@@ -75,8 +79,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         }
 
         preg_match( '~/([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})/~', $probeResponse->getHeader( 'WWW-Authenticate' )[0], $tenantMatch );
-
         $tenantID = $tenantMatch[1];
+        $this->settings->logger->debug( "Probed {$endpointUri} for tenant ID {{$tenantID}}" );
+
         $expirationDuration = new \DateInterval( 'P30D' ); // Cache the tenant ID for 30 days.
         $this->settings->cachePool->save( $cache->set( $tenantID )->expiresAfter( $expirationDuration ) );
 
