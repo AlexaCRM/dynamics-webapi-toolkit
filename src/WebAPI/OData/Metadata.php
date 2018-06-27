@@ -177,6 +177,22 @@ class Metadata {
     }
 
     /**
+     * Returns an OData entity map.
+     *
+     * @param string $entityName
+     *
+     * @return EntityMap
+     * @throws EntityNotSupportedException
+     */
+    public function getEntityMap( string $entityName ) {
+        if ( !array_key_exists( $entityName, $this->entityMaps ) ) {
+            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported in Web API" );
+        }
+
+        return $this->entityMaps[$entityName];
+    }
+
+    /**
      * Returns an entity set name corresponding to the given entity name.
      *
      * Throws a typed exception if the entity doesn't have its own entity set.

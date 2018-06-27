@@ -25,7 +25,6 @@ use AlexaCRM\WebAPI\OData\AuthenticationException;
 use AlexaCRM\WebAPI\OData\InaccessibleMetadataException;
 use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\WebAPI\OData\EntityNotSupportedException;
-use AlexaCRM\WebAPI\OData\SerializationHelper;
 use AlexaCRM\Xrm\ColumnSet;
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityCollection;
@@ -198,16 +197,17 @@ class Client implements IOrganizationService {
     public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity {
         $metadata = $this->client->getMetadata();
         $collectionName = $metadata->getEntitySetName( $entityName );
-        $entityMap = $metadata->entityMaps[$entityName]->inboundMap;
+        $entityMap = $metadata->getEntityMap( $entityName );
+        $inboundMap = $entityMap->inboundMap;
 
         $options = [];
         if ( $columnSet->AllColumns !== true ) {
             $options['Select'] = [];
 
             // $select must not be empty. Add primary key.
-            $options['Select'][] = $metadata->entityMaps[$entityName]->key;
+            $options['Select'][] = $entityMap->key;
 
-            $columnMapping = array_flip( $entityMap );
+            $columnMapping = array_flip( $inboundMap );
             foreach ( $columnSet->Columns as $column ) {
                 if ( !array_key_exists( $column, $columnMapping ) ) {
                     $this->getLogger()->warning( "No inbound attribute mapping found for {$entityName}[{$column}]" );
@@ -302,6 +302,7 @@ class Client implements IOrganizationService {
 
         $metadata = $this->client->getMetadata();
         $collectionName = $metadata->getEntitySetName( $entityName );
+        $entityMap = $metadata->getEntityMap( $entityName );
 
         try {
             $response = $this->client->getList( $collectionName, [
@@ -329,7 +330,7 @@ class Client implements IOrganizationService {
         $entityRefTypeMap = $serializer->getFetchXMLAliasedLookupTypes( $query->Query );
 
         /*
-         * Unmarshal all fields as usual.
+         * Deserialize all fields as usual.
          *
          * If the value looks like GUID and has a FormattedValue annotation but no lookuplogicalname,
          * it's a lookup from a linked entity. Look up its logical name in FetchXML.
@@ -337,7 +338,7 @@ class Client implements IOrganizationService {
          */
         foreach ( $response->List as $item ) {
             $ref = new EntityReference( $entityName );
-            $recordKey = $metadata->entityMaps[$entityName]->key;
+            $recordKey = $entityMap->key;
             if ( array_key_exists( $recordKey, $item ) ) {
                 $ref->Id = $item->{$recordKey};
             }
@@ -361,8 +362,9 @@ class Client implements IOrganizationService {
      */
     protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
         $metadata = $this->client->getMetadata();
-        $entityMap = $metadata->entityMaps[$query->EntityName]->inboundMap;
-        $columnMap = array_flip( $entityMap );
+        $entityMap = $metadata->getEntityMap( $query->EntityName );
+        $inboundMap = $entityMap->inboundMap;
+        $columnMap = array_flip( $inboundMap );
 
         $queryData = [];
         $filterQuery = [];
@@ -451,7 +453,7 @@ class Client implements IOrganizationService {
 
         foreach ( $response->List as $item ) {
             $ref = new EntityReference( $query->EntityName );
-            $recordKey = $metadata->entityMaps[$query->EntityName]->key;
+            $recordKey = $entityMap->key;
             if ( array_key_exists( $recordKey, $item ) ) {
                 $ref->Id = $item->{$recordKey};
             }

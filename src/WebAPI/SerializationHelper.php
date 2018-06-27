@@ -19,7 +19,7 @@
  *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityReference;
@@ -30,16 +30,16 @@ use AlexaCRM\Xrm\EntityReference;
 class SerializationHelper {
 
     /**
-     * @var Client
+     * @var OData\Client
      */
     protected $client;
 
     /**
      * SerializationHelper constructor.
      *
-     * @param Client $client
+     * @param OData\Client $client
      */
-    public function __construct( Client $client ) {
+    public function __construct( OData\Client $client ) {
         $this->client = $client;
     }
 
@@ -50,19 +50,21 @@ class SerializationHelper {
      * @param Entity $entity
      *
      * @return array
-     * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws InaccessibleMetadataException
+     * @throws OData\AuthenticationException
+     * @throws OData\EntityNotSupportedException
+     * @throws OData\InaccessibleMetadataException
      */
     public function serializeEntity( Entity $entity ) {
         $metadata = $this->client->getMetadata();
+
+        $entityMap = $metadata->getEntityMap( $entity->LogicalName );
+        $outboundMap = $entityMap->outboundMap;
 
         $touchedFields = [];
         foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
             $touchedFields[$fieldName] = $entity[$fieldName];
         }
 
-        $outboundMap = $metadata->entityMaps[$entity->LogicalName]->outboundMap;
         $translatedData = [];
 
         /*
@@ -93,31 +95,40 @@ class SerializationHelper {
     }
 
     /**
+     * Creates a new Entity instance from the OData entity object.
+     *
+     * $attributeToEntityMap is used to create proper EntityReference instances
+     * for FetchXML results with aliased lookups - Web API loses lookup information for these
+     * and doesn't produce appropriate annotations.
+     *
      * @param mixed $rawEntity Output from the OData Client.
      * @param EntityReference $reference A reference containing the logical name and ID of the processed record.
      * @param array $attributeToEntityMap
      *
      * @return Entity
-     * @throws AuthenticationException
-     * @throws InaccessibleMetadataException
+     * @throws OData\AuthenticationException
+     * @throws OData\EntityNotSupportedException
+     * @throws OData\InaccessibleMetadataException
      */
     public function deserializeEntity( $rawEntity, EntityReference $reference, $attributeToEntityMap = null ) {
+        $metadata = $this->client->getMetadata();
+        $entityMap = $metadata->getEntityMap( $reference->LogicalName );
+
         $targetEntity = new Entity( $reference->LogicalName, $reference->Id );
 
-        $metadata = $this->client->getMetadata();
-        $entityMap = $metadata->entityMaps[$targetEntity->LogicalName]->inboundMap;
+        $inboundMap = $entityMap->inboundMap;
 
         foreach ( $rawEntity as $field => $value ) {
             if ( stripos( $field, '@Microsoft' ) !== false || stripos( $field, '@OData' ) !== false ) {
                 continue;
             }
 
-            if ( $attributeToEntityMap === null && ( !array_key_exists( $field, $entityMap ) || $value === null ) ) {
-                $this->client->getLogger()->warning( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map" );
+            if ( $attributeToEntityMap === null && ( !array_key_exists( $field, $inboundMap ) || $value === null ) ) {
+                $this->client->getLogger()->warning( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map", [ 'inboundMap' => $inboundMap ] );
                 continue;
             }
 
-            $targetField = array_key_exists( $field, $entityMap )? $entityMap[$field] : $field;
+            $targetField = array_key_exists( $field, $inboundMap )? $inboundMap[$field] : $field;
             $logicalNameField = $field . '@Microsoft.Dynamics.CRM.lookuplogicalname';
             $formattedValueField = $field . '@OData.Community.Display.V1.FormattedValue';
             $targetValue = $value;
