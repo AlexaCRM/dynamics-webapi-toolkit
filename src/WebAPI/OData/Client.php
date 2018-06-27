@@ -303,8 +303,6 @@ class Client {
             $result->SkipToken = $data->{'@Microsoft.Dynamics.CRM.fetchxmlpagingcookie'};
         }
 
-        // TODO: if there is no paging info in QueryOptions and the next link is still there
-        // TODO: then we hit the 5000 limit and let's fetch it all ffs
         if ( !isset( $queryOptions['MaxPageSize'] ) && isset( $data->{'@odata.nextLink'} ) ) {
             $nextLink = $data->{'@odata.nextLink'};
             while ( $nextLink != null ) {
