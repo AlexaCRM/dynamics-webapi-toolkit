@@ -6,6 +6,8 @@ Create, read, update and delete CRM records easily via the [IOrganizationService
 
 See [the tutorial](https://github.com/AlexaCRM/dynamics-webapi-toolkit/wiki/Tutorial) for the sample code to instantiate the connection, create, retrieve, update and delete records.
 
+This toolkit supports **only** Dynamics 365 Web API. For PHP implementation of the Dynamics 365 SOAP interface, see [php-crm-toolkit project](https://github.com/AlexaCRM/php-crm-toolkit).
+
 ## Features & Limitations
 
 The current release of the library does not support the following features (supported features and scenarios are mentioned along the way):
