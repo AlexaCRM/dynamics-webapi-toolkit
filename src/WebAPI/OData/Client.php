@@ -178,6 +178,10 @@ class Client {
             $headers['Content-Type'] = 'application/json';
         }
 
+        if ( $this->settings->callerID !== null ) {
+            $headers['MSCRMCallerID'] = $this->settings->callerID;
+        }
+
         try {
             $response = $this->getHttpClient()->request( $method, $url, [
                 'headers' => $headers,

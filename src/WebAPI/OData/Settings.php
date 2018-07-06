@@ -62,6 +62,15 @@ abstract class Settings implements LoggerAwareInterface {
     public $logger;
 
     /**
+     * ID of the user to impersonate during calls.
+     *
+     * Null value means no user is impersonated.
+     *
+     * @var string
+     */
+    public $callerID;
+
+    /**
      * Settings constructor.
      */
     public function __construct() {
