@@ -15,7 +15,6 @@ The current release of the library does not support the following features (supp
 - Authentication support for IFD and On-Premises (AD) deployments. Support for IFD (Internet Facing Deployment) is on the [roadmap](https://github.com/AlexaCRM/dynamics-webapi-toolkit/projects/1), On-Premises deployments (using AD) are under consideration.
 - Execute method of IOrganizationService interface is not supported yet. Means for executing functions and actions, both bound and unbound, are provided though.
 - Batch requests are not supported yet. That means, associating/disassociating multiple records is executed in multiple separate requests which may affect the performance.
-- User impersonation is not supported yet but it is on the roadmap.
 - Organization metadata (entities and attributes, global option sets, etc.) is not supported yet, although can be retrieved manually via the built-in OData helper client or via the HTTP client.
 - Most of the record attribute values are returned as-is from Web API. That means, at this point you must expect integers in place of OptionSetValue objects for picklist values, Status/State attributes, booleans for "Two Options" attributes, and floats for decimal and Money attributes. Lookup attribute values are rendered as EntityReference objects. The same applies when you set values in the Entity, including EntityReferences. This is likely to change once organization metadata is integrated into the toolkit.
 
