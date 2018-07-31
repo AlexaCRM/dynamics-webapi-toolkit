@@ -377,7 +377,7 @@ class Client implements IOrganizationService {
         foreach ( $query->Attributes as $attributeName => $value ) {
             $queryAttributeName = $columnMap[$attributeName];
             switch ( true ) {
-                case is_string( $value ):
+                case (is_string( $value ) && !preg_match('/^\{?[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}\}?$/', $value)):
                     $queryValue ="'{$value}'"; break;
                 case is_bool( $value):
                     $queryValue = $value? 'true' : 'false'; break;
