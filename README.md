@@ -27,7 +27,7 @@ The main requirement is PHP 7.0 or later. cURL is recommended but is not require
 ### Installing
 
 ```
-$ composer require alexacrm/dynamics-webapi-toolkit
+$ composer require healthierjacobsen/dynamics-webapi-toolkit
 ```
 
 ### Consuming
