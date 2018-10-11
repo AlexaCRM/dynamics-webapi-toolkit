@@ -148,7 +148,7 @@ class Client {
 
             $responseCode = $e->getResponse()->getStatusCode();
             $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
-            throw new InaccessibleMetadataException( 'Metadata request returned a ' . $responseCode . ' code', $e );
+            throw new InaccessibleMetadataException( 'Metadata request ' . $metadataURI . ' returned a ' . $responseCode . ' code', $e );
         }
 
         $metadataXML = $resp->getBody()->getContents();
