@@ -298,7 +298,13 @@ class Client implements IOrganizationService {
     protected function retrieveViaFetchXML( FetchExpression $query ) {
         $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
         $fetchDOM->loadXML( $query->Query );
-        $entityName = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 )->getAttribute( 'name' );
+
+        $entityTag = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 );
+        if ( !( $entityTag instanceof \DOMElement ) || !$entityTag->hasAttribute( 'name' ) ) {
+            throw new Exception( 'Malformed FetchXML query: could not locate the <entity/> element or entity name not specified' );
+        }
+
+        $entityName = $entityTag->getAttribute( 'name' );
 
         $metadata = $this->client->getMetadata();
         $collectionName = $metadata->getEntitySetName( $entityName );
