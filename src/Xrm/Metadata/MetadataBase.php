@@ -16,35 +16,20 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Specifies the base class for classes that contains metadata information.
  */
-class ListResponse {
+abstract class MetadataBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
-
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * A unique identifier for the metadata item.
      *
      * @var string
      */
-    public $SkipToken;
+    public $MetadataId;
 
 }

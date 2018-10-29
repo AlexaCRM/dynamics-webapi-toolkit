@@ -16,35 +16,35 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Indicates the type of option set.
  */
-class ListResponse {
+class OptionSetType extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * The option set provides a list of options.
      */
-    public $List;
+    const Picklist = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * The option set represents state options for a StateAttributeMetadata attribute.
      */
-    public $Count;
+    const State = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * The option set represents status options for a StatusAttributeMetadata attribute.
      */
-    public $SkipToken;
+    const Status = 2;
+
+    /**
+     * The option set provides two options for a BooleanAttributeMetadata attribute.
+     */
+    const Boolean = 3;
 
 }

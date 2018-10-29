@@ -16,35 +16,21 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Internal use.
  */
-class ListResponse {
+class ManagedPropertyAttributeMetadata extends AttributeMetadata {
 
-    /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
+    public $ManagedPropertyLogicalName;
 
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
+    public $ParentAttributeName;
 
-    /**
-     * The info used to page large result sets.
-     *
-     * @var string
-     */
-    public $SkipToken;
+    public $ParentComponentType;
+
+    public $ValueAttributeTypeCode;
 
 }

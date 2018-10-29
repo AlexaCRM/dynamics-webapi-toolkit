@@ -16,35 +16,28 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Describes the formatting of a DateTimeAttributeMetadata attribute.
+ *
+ * @method static DateAndTime() Display the date and time.
+ * @method static DateOnly() Display the date only.
  */
-class ListResponse {
+class DateTimeFormat extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Display the date and time.
      */
-    public $List;
+    const DateAndTime = 1;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Display the date only.
      */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
-     *
-     * @var string
-     */
-    public $SkipToken;
+    const DateOnly = 0;
 
 }

@@ -16,35 +16,73 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Xrm\Label;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Defines how the associated records are displayed for an entity relationship.
  */
-class ListResponse {
+class AssociatedMenuConfiguration {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The behavior of the associated menu for an entity relationship.
      *
-     * @var object[]
+     * @var AssociatedMenuBehavior
      */
-    public $List;
+    public $Behavior;
 
     /**
-     * The number of records returned.
+     * The group for the associated menu for an entity relationship.
+     *
+     * @var AssociatedMenuGroup
+     */
+    public $Group;
+
+    /**
+     * The order for the associated menu.
      *
      * @var int
      */
-    public $Count;
+    public $Order;
 
     /**
-     * The info used to page large result sets.
-     *
+     * @var bool
+     */
+    public $IsCustomizable;
+
+    /**
      * @var string
      */
-    public $SkipToken;
+    public $Icon;
+
+    /**
+     * @var string
+     */
+    public $ViewId;
+
+    /**
+     * @var bool
+     */
+    public $AvailableOffline;
+
+    /**
+     * @var string
+     */
+    public $MenuId;
+
+    /**
+     * @var string
+     */
+    public $QueryApi;
+
+    /**
+     * The label for the associated menu.
+     *
+     * @var Label
+     */
+    public $Label;
 
 }

@@ -16,35 +16,28 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Specifies the behavior of a DateTimeAttributeMetadata attribute using the DateTimeBehavior property.
  */
-class ListResponse {
+class DateTimeBehavior extends ConstantsBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Stores the date value with the time value as 12:00 AM (00:00:00) without the time zone information. Value = 2.
      */
-    public $List;
+    const DateOnly = 'DateOnly';
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Stores the date and time values without the time zone information. Value = 3.
      */
-    public $Count;
+    const TimeZoneIndependent = 'TimeZoneIndependent';
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * Stores the date and time value with current user local time zone information. Value = 1.
      */
-    public $SkipToken;
+    const UserLocal = 'UserLocal';
 
 }

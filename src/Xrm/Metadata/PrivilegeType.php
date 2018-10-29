@@ -16,35 +16,70 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Describes the type of operation for the privilege.
+ *
+ * @method static None() Specifies no privilege.
+ * @method static Create() The create privilege.
+ * @method static Read() The read privilege.
+ * @method static Write() The write privilege.
+ * @method static Delete() The delete privilege.
+ * @method static Assign() The assign privilege.
+ * @method static Share() The share privilege.
+ * @method static Append() The append privilege.
+ * @method static AppendTo() The append to privilege.
  */
-class ListResponse {
+class PrivilegeType extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Specifies no privilege.
      */
-    public $List;
+    const None = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * The create privilege.
      */
-    public $Count;
+    const Create = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * The read privilege.
      */
-    public $SkipToken;
+    const Read = 2;
+
+    /**
+     * The write privilege.
+     */
+    const Write = 3;
+
+    /**
+     * The delete privilege.
+     */
+    const Delete = 4;
+
+    /**
+     * The assign privilege.
+     */
+    const Assign = 5;
+
+    /**
+     * The share privilege.
+     */
+    const Share = 6;
+
+    /**
+     * The append privilege.
+     */
+    const Append = 7;
+
+    /**
+     * The append to privilege.
+     */
+    const AppendTo = 8;
 
 }

@@ -16,35 +16,29 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains a collection of translations for a label.
  */
-class ListResponse {
+class Label {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The collection of localized labels.
      *
-     * @var object[]
+     * Language code is used as the key.
+     *
+     * @var LocalizedLabel[]
      */
-    public $List;
+    public $LocalizedLabels = [];
 
     /**
-     * The number of records returned.
+     * The label for the language of the current user.
      *
-     * @var int
+     * @var LocalizedLabel
      */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
-     *
-     * @var string
-     */
-    public $SkipToken;
+    public $UserLocalizedLabel;
 
 }

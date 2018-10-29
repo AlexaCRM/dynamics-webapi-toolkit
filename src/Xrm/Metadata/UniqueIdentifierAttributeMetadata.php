@@ -16,35 +16,22 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Represents the unique identifier attribute metadata.
  */
-class ListResponse {
+class UniqueIdentifierAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * UniqueIdentifierAttributeMetadata constructor.
      *
-     * @var object[]
+     * @param string|null $schemaName
      */
-    public $List;
-
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
-     *
-     * @var string
-     */
-    public $SkipToken;
+    public function __construct( string $schemaName = null ) {
+        $this->SchemaName = $schemaName;
+    }
 
 }

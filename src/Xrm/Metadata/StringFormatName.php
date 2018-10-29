@@ -16,35 +16,53 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Specifies the format of a StringAttributeMetadata attribute using the FormatName property.
  */
-class ListResponse {
+class StringFormatName extends ConstantsBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Specifies to display the StringAttributeMetadata as an email address.
      */
-    public $List;
+    const Email = 'Email';
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Specifies to display the StringAttributeMetadata as an phone number.
      */
-    public $Count;
+    const Phone = 'Phone';
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * Specifies to display the StringAttributeMetadata as an phonetic guide.
      */
-    public $SkipToken;
+    const PhoneticGuide = 'PhoneticGuide';
+
+    /**
+     * Specifies to display the StringAttributeMetadata as text.
+     */
+    const Text = 'Text';
+
+    /**
+     * Specifies to display the StringAttributeMetadata as a text area.
+     */
+    const TextArea = 'TextArea';
+
+    /**
+     * Specifies to display the StringAttributeMetadata as a ticker symbol.
+     */
+    const TickerSymbol = 'TickerSymbol';
+
+    /**
+     * Specifies to display the StringAttributeMetadata as a URL.
+     */
+    const Url = 'Url';
+
+    /**
+     * Specifies to display the StringAttributeMetadata as a version number.
+     */
+    const VersionNumber = 'VersionNumber';
 
 }

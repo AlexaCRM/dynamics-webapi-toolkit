@@ -16,35 +16,34 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Represents a managed property.
  */
-class ListResponse {
+class ManagedProperty {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * Whether the managed property value can be changed.
      *
-     * @var object[]
+     * @var bool
      */
-    public $List;
+    public $CanBeChanged;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * The logical name for the managed property.
      *
      * @var string
      */
-    public $SkipToken;
+    public $ManagedPropertyLogicalName;
+
+    /**
+     * The value of the managed property.
+     *
+     * @var mixed
+     */
+    public $Value;
 
 }

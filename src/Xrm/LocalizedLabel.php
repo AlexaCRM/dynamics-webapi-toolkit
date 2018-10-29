@@ -16,35 +16,48 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm;
+
+use AlexaCRM\Xrm\Metadata\MetadataBase;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains a localized label, including the label string and the language code.
  */
-class ListResponse {
+class LocalizedLabel extends MetadataBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * Whether the label is managed.
      *
-     * @var object[]
+     * @var bool
      */
-    public $List;
+    public $IsManaged;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * The localized label string.
      *
      * @var string
      */
-    public $SkipToken;
+    public $Label;
+
+    /**
+     * The language code for the label.
+     *
+     * @var int
+     * @see https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912047(v=winembedded.10)
+     */
+    public $LanguageCode;
+
+    /**
+     * LocalizedLabel constructor.
+     *
+     * @param string $label The localized label string.
+     * @param int $languageCode The language code for the label.
+     */
+    public function __construct( string $label = null, int $languageCode = null ) {
+        $this->Label = $label;
+        $this->LanguageCode = $languageCode;
+    }
 
 }

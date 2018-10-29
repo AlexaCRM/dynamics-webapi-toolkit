@@ -16,35 +16,50 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for the attribute type Memo.
  */
-class ListResponse {
+class MemoAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The format options for the memo attribute.
      *
-     * @var object[]
+     * @var StringFormat
      */
-    public $List;
+    public $Format;
 
     /**
-     * The number of records returned.
+     * The input method editor (IME) mode for the attribute.
+     *
+     * @var ImeMode
+     */
+    public $ImeMode;
+
+    /**
+     * Whether the attribute supports localizable values.
+     *
+     * @var bool
+     */
+    public $IsLocalizable;
+
+    /**
+     * The maximum length for the attribute.
      *
      * @var int
      */
-    public $Count;
+    public $MaxLength;
 
     /**
-     * The info used to page large result sets.
+     * MemoAttributeMetadata constructor.
      *
-     * @var string
+     * @param string|null $schemaName
      */
-    public $SkipToken;
+    public function __construct( string $schemaName = null ) {
+        $this->SchemaName = $schemaName;
+    }
 
 }

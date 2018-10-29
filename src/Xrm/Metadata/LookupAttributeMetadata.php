@@ -16,35 +16,34 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute of type lookup.
  */
-class ListResponse {
+class LookupAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * @var LookupFormat
      */
-    public $List;
+    public $Format;
 
     /**
-     * The number of records returned.
+     * The target entity types for the lookup.
      *
-     * @var int
+     * @var string[]
      */
-    public $Count;
+    public $Targets;
 
     /**
-     * The info used to page large result sets.
+     * LookupAttributeMetadata constructor.
      *
-     * @var string
+     * @param LookupFormat|null $format
      */
-    public $SkipToken;
+    public function __construct( LookupFormat $format = null ) {
+        $this->Format = $format;
+    }
 
 }

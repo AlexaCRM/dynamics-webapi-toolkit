@@ -16,35 +16,72 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata that describes a security privilege for access to an entity.
  */
-class ListResponse {
+final class SecurityPrivilegeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * Gets whether the privilege can be basic access level.
      *
-     * @var object[]
+     * @var bool
      */
-    public $List;
+    public $CanBeBasic;
 
     /**
-     * The number of records returned.
+     * Gets whether the privilege can be deep access level.
      *
-     * @var int
+     * @var bool
      */
-    public $Count;
+    public $CanBeDeep;
 
     /**
-     * The info used to page large result sets.
+     * @var bool
+     */
+    public $CanBeEntityReference;
+
+    /**
+     * Gets whether the privilege can be global access level.
+     *
+     * @var bool
+     */
+    public $CanBeGlobal;
+
+    /**
+     * Gets whether the privilege can be local access level.
+     *
+     * @var bool
+     */
+    public $CanBeLocal;
+
+    /**
+     * @var bool
+     */
+    public $CanBeParentEntityReference;
+
+    /**
+     * Gets the name of the privilege.
      *
      * @var string
      */
-    public $SkipToken;
+    public $Name;
+
+    /**
+     * Gets the ID of the privilege.
+     *
+     * @var string
+     */
+    public $PrivilegeId;
+
+    /**
+     * Gets the type of the privilege.
+     *
+     * @var PrivilegeType
+     */
+    public $PrivilegeType;
 
 }

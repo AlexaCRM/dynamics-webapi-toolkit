@@ -16,35 +16,40 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Describes the group in which to display the associated menu for an entity relationship.
+ *
+ * @method static Details() Show the associated menu in the details group.
+ * @method static Sales() Show the associated menu in the sales group.
+ * @method static Service() Show the associated menu in the service group.
+ * @method static Marketing() Show the associated menu in the marketing group.
  */
-class ListResponse {
+class AssociatedMenuGroup extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Show the associated menu in the details group.
      */
-    public $List;
+    const Details = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Show the associated menu in the sales group.
      */
-    public $Count;
+    const Sales = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * Show the associated menu in the service group.
      */
-    public $SkipToken;
+    const Service = 2;
+
+    /**
+     * Show the associated menu in the marketing group.
+     */
+    const Marketing = 3;
 
 }

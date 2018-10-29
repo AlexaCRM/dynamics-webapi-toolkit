@@ -16,35 +16,38 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute of type Boolean.
  */
-class ListResponse {
+class BooleanOptionSetMetadata extends OptionSetMetadataBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The option displayed when the attribute is false.
      *
-     * @var object[]
+     * @var OptionMetadata
      */
-    public $List;
+    public $FalseOption;
 
     /**
-     * The number of records returned.
+     * The option displayed when the attribute is true.
      *
-     * @var int
+     * @var OptionMetadata
      */
-    public $Count;
+    public $TrueOption;
 
     /**
-     * The info used to page large result sets.
+     * BooleanOptionSetMetadata constructor.
      *
-     * @var string
+     * @param OptionMetadata|null $trueOption
+     * @param OptionMetadata|null $falseOption
      */
-    public $SkipToken;
+    public function __construct( OptionMetadata $trueOption = null, OptionMetadata $falseOption = null ) {
+        $this->TrueOption = $trueOption;
+        $this->FalseOption = $falseOption;
+    }
 
 }

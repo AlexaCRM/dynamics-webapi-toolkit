@@ -16,35 +16,36 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute type Picklist.
  */
-class ListResponse {
+class PicklistAttributeMetadata extends EnumAttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
-
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * The formula definition for calculated and rollup attributes.
      *
      * @var string
      */
-    public $SkipToken;
+    public $FormulaDefinition;
+
+    /**
+     * The bitmask value that describes the sources of data used in a calculated attribute or whether the data sources are invalid.
+     *
+     * @var int
+     */
+    public $SourceTypeMask;
+
+    /**
+     * PicklistAttributeMetadata constructor.
+     *
+     * @param string|null $schemaName
+     */
+    public function __construct( string $schemaName = null ) {
+        $this->SchemaName = $schemaName;
+    }
 
 }

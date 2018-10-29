@@ -16,35 +16,40 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Represents the enumerator for the entity key status when the index creation job is in progress.
+ *
+ * @method static Pending() Specifies that the key index creation is pending.
+ * @method static InProgress() Specifies that the key index creation is in progress.
+ * @method static Active() Specifies that the key index creation is active.
+ * @method static Failed() Specifies that the key index creation failed.
  */
-class ListResponse {
+class EntityKeyIndexStatus extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Specifies that the key index creation is pending.
      */
-    public $List;
+    const Pending = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Specifies that the key index creation is in progress.
      */
-    public $Count;
+    const InProgress = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * Specifies that the key index creation is active.
      */
-    public $SkipToken;
+    const Active = 2;
+
+    /**
+     * Specifies that the key index creation failed.
+     */
+    const Failed = 3;
 
 }

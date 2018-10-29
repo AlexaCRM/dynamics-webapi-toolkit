@@ -16,35 +16,45 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute type Image.
  */
-class ListResponse {
+class ImageAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * Whether the attribute is the primary image for the entity.
      *
-     * @var object[]
+     * @var bool
      */
-    public $List;
+    public $IsPrimaryImage;
 
     /**
-     * The number of records returned.
+     * The maximum height of the image.
      *
      * @var int
      */
-    public $Count;
+    public $MaxHeight;
 
     /**
-     * The info used to page large result sets.
+     * The maximum width of the image.
      *
-     * @var string
+     * @var int
      */
-    public $SkipToken;
+    public $MaxWidth;
+
+    /**
+     * ImageAttributeMetadata constructor.
+     *
+     * @param string|null $schemaName
+     */
+    public function __construct( string $schemaName = null ) {
+        if ( $schemaName !== null ) {
+            $this->SchemaName = $schemaName;
+        }
+    }
 
 }

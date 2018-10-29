@@ -16,35 +16,40 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Describes the input method editor mode.
+ *
+ * @method static Active() Specifies that the IME mode is active.
+ * @method static Auto() Specifies that the IME mode is chosen automatically.
+ * @method static Disabled() Specifies that the IME mode is disabled.
+ * @method static Inactive() Specifies that the IME mode is inactive.
  */
-class ListResponse {
+class ImeMode extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * Specifies that the IME mode is active.
      */
-    public $List;
+    const Active = 2;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * Specifies that the IME mode is chosen automatically.
      */
-    public $Count;
+    const Auto = 0;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * Specifies that the IME mode is disabled.
      */
-    public $SkipToken;
+    const Disabled = 3;
+
+    /**
+     * Specifies that the IME mode is inactive.
+     */
+    const Inactive = 1;
 
 }

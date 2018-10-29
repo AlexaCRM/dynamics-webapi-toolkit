@@ -16,35 +16,27 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute type BigInt.
  */
-class ListResponse {
+class BigIntAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
-
-    /**
-     * The number of records returned.
+     * The maximum value for the attribute.
      *
      * @var int
      */
-    public $Count;
+    public $MaxValue;
 
     /**
-     * The info used to page large result sets.
+     * The minimum value for the attribute.
      *
-     * @var string
+     * @var int
      */
-    public $SkipToken;
+    public $MinValue;
 
 }

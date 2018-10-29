@@ -59,6 +59,11 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $this->settings = $settings;
     }
 
+    /**
+     * Constructs an HTTP client for the middleware.
+     *
+     * @return HttpClient
+     */
     protected function getHttpClient() {
         if ( $this->httpClient instanceof HttpClient ) {
             return $this->httpClient;

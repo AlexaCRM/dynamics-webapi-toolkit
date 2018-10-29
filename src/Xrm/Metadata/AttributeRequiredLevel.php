@@ -16,35 +16,40 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Describes the requirement level for an attribute.
+ *
+ * @method static None() No requirements are specified.
+ * @method static SystemRequired() The attribute is required to have a value.
+ * @method static ApplicationRequired() The attribute is required to have a value.
+ * @method static Recommended() It is recommended that the attribute has a value.
  */
-class ListResponse {
+class AttributeRequiredLevel extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * No requirements are specified.
      */
-    public $List;
+    const None = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * The attribute is required to have a value.
      */
-    public $Count;
+    const SystemRequired = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * The attribute is required to have a value.
      */
-    public $SkipToken;
+    const ApplicationRequired = 2;
+
+    /**
+     * It is recommended that the attribute has a value.
+     */
+    const Recommended = 3;
 
 }

@@ -16,35 +16,59 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute type Integer.
  */
-class ListResponse {
+class IntegerAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The format options for the integer attribute.
      *
-     * @var object[]
+     * @var IntegerFormat
      */
-    public $List;
+    public $Format;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * The formula definition for calculated and rollup attributes.
      *
      * @var string
      */
-    public $SkipToken;
+    public $FormulaDefinition;
+
+    /**
+     * The maximum value for the attribute.
+     *
+     * @var int
+     */
+    public $MaxValue;
+
+    /**
+     * The minimum value for the attribute.
+     *
+     * @var int
+     */
+    public $MinValue;
+
+    /**
+     * The bitmask value that describes the sources of data used in a calculated attribute or whether the data sources are invalid.
+     *
+     * @var int
+     */
+    public $SourceTypeMask;
+
+    /**
+     * IntegerAttributeMetadata constructor.
+     *
+     * @param string|null $schemaName
+     */
+    public function __construct( string $schemaName = null ) {
+        if ( $schemaName !== null ) {
+            $this->SchemaName = $schemaName;
+        }
+    }
 
 }

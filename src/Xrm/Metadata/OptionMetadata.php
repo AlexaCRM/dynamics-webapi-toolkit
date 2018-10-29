@@ -16,35 +16,68 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Xrm\Label;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains metadata representing an option within an Option set.
  */
-class ListResponse {
+class OptionMetadata extends MetadataBase {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
-
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
-
-    /**
-     * The info used to page large result sets.
+     * The hexadecimal value set to assign a color for the option.
      *
      * @var string
      */
-    public $SkipToken;
+    public $Color;
+
+    /**
+     * The label containing the description for the option.
+     *
+     * @var Label
+     */
+    public $Description;
+
+    /**
+     * Whether the option is part of a managed solution.
+     *
+     * @var bool
+     */
+    public $IsManaged;
+
+    /**
+     * The label containing the text for the option.
+     *
+     * @var Label
+     */
+    public $Label;
+
+    /**
+     * The value of the option.
+     *
+     * @var int
+     */
+    public $Value;
+
+    /**
+     * OptionMetadata constructor.
+     *
+     * @param Label|int $label Option label or value.
+     * @param int $value Option value. (Specified if the first argument is a label.)
+     */
+    public function __construct( $label = null, $value = null ) {
+        if ( $label instanceof Label ) {
+            $this->Label = $label;
+
+            if ( $value !== null ) {
+                $this->Value = $value;
+            }
+        } elseif ( is_int( $label ) ) {
+            $this->Value = $label;
+        }
+    }
 
 }

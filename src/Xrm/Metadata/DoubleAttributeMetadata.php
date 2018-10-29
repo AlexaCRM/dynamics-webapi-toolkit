@@ -16,35 +16,50 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Contains the metadata for an attribute type Double.
  */
-class ListResponse {
+class DoubleAttributeMetadata extends AttributeMetadata {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
+     * The input method editor (IME) mode for the attribute.
      *
-     * @var object[]
+     * @var ImeMode
      */
-    public $List;
+    public $ImeMode;
 
     /**
-     * The number of records returned.
+     * The maximum value for the attribute.
+     *
+     * @var int|float
+     */
+    public $MaxValue;
+
+    /**
+     * The minimum value for the attribute.
+     *
+     * @var int|float
+     */
+    public $MinValue;
+
+    /**
+     * The precision for the attribute.
      *
      * @var int
      */
-    public $Count;
+    public $Precision;
 
     /**
-     * The info used to page large result sets.
+     * DoubleAttributeMetadata constructor.
      *
-     * @var string
+     * @param string|null $schemaName
      */
-    public $SkipToken;
+    public function __construct( string $schemaName = null ) {
+        $this->SchemaName = $schemaName;
+    }
 
 }

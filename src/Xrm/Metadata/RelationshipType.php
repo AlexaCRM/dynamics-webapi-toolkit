@@ -16,35 +16,34 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
-namespace AlexaCRM\WebAPI\OData;
+namespace AlexaCRM\Xrm\Metadata;
+
+use AlexaCRM\Enum\ChoiceEnum;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Specifies the type of entity relationship.
+ *
+ * @method static Default() The default value. Equivalent to OneToManyRelationship.
+ * @method static ManyToManyRelationship() The entity relationship is a Many-to-Many relationship.
+ * @method static OneToManyRelationship() The entity relationship is a One-to-Many relationship.
  */
-class ListResponse {
+class RelationshipType extends ChoiceEnum {
 
     /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
+     * The default value. Equivalent to OneToManyRelationship.
      */
-    public $List;
+    const Default = 0;
 
     /**
-     * The number of records returned.
-     *
-     * @var int
+     * The entity relationship is a Many-to-Many relationship.
      */
-    public $Count;
+    const ManyToManyRelationship = 1;
 
     /**
-     * The info used to page large result sets.
-     *
-     * @var string
+     * The entity relationship is a One-to-Many relationship.
      */
-    public $SkipToken;
+    const OneToManyRelationship = 0;
 
 }
