@@ -21,11 +21,11 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+use AlexaCRM\Cache\NullAdapter;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use WildWolf\Psr6MemoryCache;
 
 /**
  * Contains Dynamics 365 credentials.
@@ -74,7 +74,7 @@ abstract class Settings implements LoggerAwareInterface {
      * Settings constructor.
      */
     public function __construct() {
-        $this->cachePool = Psr6MemoryCache::instance();
+        $this->cachePool = new NullAdapter();
         $this->logger = new NullLogger();
     }
 

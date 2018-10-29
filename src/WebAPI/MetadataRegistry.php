@@ -20,12 +20,12 @@
 
 namespace AlexaCRM\WebAPI;
 
+use AlexaCRM\Cache\NullAdapter;
 use AlexaCRM\WebAPI\Client as WebAPIClient;
 use AlexaCRM\WebAPI\OData\Client;
 use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\Xrm\Metadata\EntityMetadata;
 use Psr\Cache\CacheItemPoolInterface;
-use WildWolf\Psr6MemoryCache;
 
 /**
  * Provides access to Dynamics 365 organization metadata.
@@ -57,7 +57,7 @@ class MetadataRegistry {
     public function __construct( WebAPIClient $client ) {
         $this->client = $client->getClient();
 
-        $this->storage = clone Psr6MemoryCache::instance();
+        $this->storage = new NullAdapter();
         $this->storage->clear();
 
         $this->ttl = new \DateInterval( 'P7D' );
