@@ -55,6 +55,8 @@ class ODataException extends Exception {
             $guzzleResponse = $inner->getResponse();
             $statusCode = ( $guzzleResponse !== null )? $guzzleResponse->getStatusCode() : 0;
 
+            $this->code = (int)$statusCode;
+
             $level = (int) floor( $statusCode / 100);
             if ($level === 4) {
                 $label = 'Client error';
