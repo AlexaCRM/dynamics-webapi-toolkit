@@ -232,6 +232,9 @@ class Client {
             if ( isset( $queryOptions['Filter'] ) ) {
                 $queryParameters['$filter'] = $queryOptions['Filter'];
             }
+            if ( isset( $queryOptions['Expand'] ) ) {
+                $queryParameters['$expand'] = $queryOptions['Expand'];
+            }
             if ( isset( $queryOptions['IncludeCount'] ) ) {
                 $queryParameters['$count'] = 'true';
             }
