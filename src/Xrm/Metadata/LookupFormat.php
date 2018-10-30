@@ -20,14 +20,31 @@
 
 namespace AlexaCRM\Xrm\Metadata;
 
+use AlexaCRM\Enum\ChoiceEnum;
+
 /**
- * Represents a constant value.
+ * Describes the lookup.
  */
-class ConstantsBase {
+class LookupFormat extends ChoiceEnum {
 
     /**
-     * @var mixed
+     * Connection.
      */
-    public $Value;
+    const Connection = 1;
+
+    /**
+     * None.
+     */
+    const None = 0;
+
+    /**
+     * Regarding.
+     */
+    const Regarding = 2;
+
+    /**
+     * Text.
+     */
+    const Text = 3;
 
 }

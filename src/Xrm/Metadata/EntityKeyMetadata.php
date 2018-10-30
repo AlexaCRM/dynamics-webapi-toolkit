@@ -20,6 +20,7 @@
 
 namespace AlexaCRM\Xrm\Metadata;
 
+use AlexaCRM\Xrm\EntityKeyIndexStatus;
 use AlexaCRM\Xrm\EntityReference;
 use AlexaCRM\Xrm\Label;
 use AlexaCRM\Xrm\ManagedProperty;

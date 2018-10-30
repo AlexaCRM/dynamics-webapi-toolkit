@@ -20,14 +20,36 @@
 
 namespace AlexaCRM\Xrm\Metadata;
 
+use AlexaCRM\Enum\ChoiceEnum;
+
 /**
- * Represents a constant value.
+ * Describes the formatting of an integer attribute.
  */
-class ConstantsBase {
+class IntegerFormat extends ChoiceEnum {
 
     /**
-     * @var mixed
+     * Specifies to display the integer as a drop down list of durations.
      */
-    public $Value;
+    const Duration = 1;
+
+    /**
+     * Specifies the display the integer as a drop down list of installed languages.
+     */
+    const Language = 3;
+
+    /**
+     * Specifies a locale.
+     */
+    const Locale = 4;
+
+    /**
+     * Specifies to display an edit field for an integer.
+     */
+    const None = 0;
+
+    /**
+     * Specifies to display the integer as a drop down list of time zones.
+     */
+    const TimeZone = 2;
 
 }

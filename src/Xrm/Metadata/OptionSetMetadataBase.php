@@ -26,7 +26,7 @@ use AlexaCRM\Xrm\ManagedProperty;
 /**
  * Contains data that defines a set of options.
  */
-class OptionSetMetadataBase extends MetadataBase {
+abstract class OptionSetMetadataBase extends MetadataBase {
 
     /**
      * Gets or sets a description for the option set.

@@ -21,13 +21,24 @@
 namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Represents a constant value.
+ * Contains metadata that defines a set of options.
  */
-class ConstantsBase {
+class OptionSetMetadata extends OptionSetMetadataBase {
 
     /**
-     * @var mixed
+     * The options available in the option set.
+     *
+     * @var OptionMetadata[]
      */
-    public $Value;
+    public $Options = [];
+
+    /**
+     * OptionSetMetadata constructor.
+     *
+     * @param OptionMetadata[] $optionMetadataCollection
+     */
+    public function __construct( $optionMetadataCollection = [] ) {
+        $this->Options = $optionMetadataCollection;
+    }
 
 }

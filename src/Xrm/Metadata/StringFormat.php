@@ -20,14 +20,51 @@
 
 namespace AlexaCRM\Xrm\Metadata;
 
+use AlexaCRM\Enum\ChoiceEnum;
+
 /**
- * Represents a constant value.
+ * Describes the formatting of a string attribute for the StringAttributeMetadata::$Format property.
  */
-class ConstantsBase {
+class StringFormat extends ChoiceEnum {
 
     /**
-     * @var mixed
+     * Specifies to display the string as an e-mail.
      */
-    public $Value;
+    const Email = 0;
+
+    /**
+     * For internal use only.
+     */
+    const Phone = 7;
+
+    /**
+     * Specifies to display the string as a phonetic guide.
+     */
+    const PhoneticGuide = 5;
+
+    /**
+     * Specifies to display the string as text.
+     */
+    const Text = 1;
+
+    /**
+     * Specifies to display the string as a text area.
+     */
+    const TextArea = 2;
+
+    /**
+     * Specifies to display the string as a ticker symbol.
+     */
+    const TickerSymbol = 4;
+
+    /**
+     * Specifies to display the string as a URL.
+     */
+    const Url = 3;
+
+    /**
+     * Specifies to display the string as a version number.
+     */
+    const VersionNumber = 6;
 
 }

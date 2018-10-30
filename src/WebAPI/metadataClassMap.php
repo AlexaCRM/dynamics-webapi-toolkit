@@ -116,7 +116,6 @@ return [
         'OneToManyRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' ) )->makeMap( 'SchemaName' ),
         'OwnershipType' => new Reference( 'AlexaCRM\Xrm\Metadata\OwnershipTypes' ),
         'Privileges' => ( new Reference( 'AlexaCRM\Xrm\Metadata\SecurityPrivilegeMetadata' ) )->makeMap( 'Name' ),
-
     ],
     'AlexaCRM\Xrm\Metadata\AssociatedMenuConfiguration' => [
         'Behavior' => new Reference( 'AlexaCRM\Xrm\Metadata\AssociatedMenuBehavior' ),
@@ -137,6 +136,13 @@ return [
         'IsValidForAdvancedFind' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'RequiredLevel' => ( new Reference( 'AlexaCRM\Xrm\ManagedProperty' ) )->addFieldCast( 'Value', new Reference( 'AlexaCRM\Xrm\Metadata\AttributeRequiredLevel' ) ),
     ],
+    'AlexaCRM\Xrm\Metadata\BooleanAttributeMetadata' => [
+        'OptionSet' => new Reference( 'AlexaCRM\Xrm\Metadata\BooleanOptionSetMetadata' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\BooleanOptionSetMetadata' => [
+        'FalseOption' => new Reference( 'AlexaCRM\Xrm\Metadata\OptionMetadata' ),
+        'TrueOption' => new Reference( 'AlexaCRM\Xrm\Metadata\OptionMetadata' ),
+    ],
     'AlexaCRM\Xrm\Metadata\CascadeConfiguration' => [
         'Assign' => new Reference( 'AlexaCRM\Xrm\Metadata\CascadeType' ),
         'Delete' => new Reference( 'AlexaCRM\Xrm\Metadata\CascadeType' ),
@@ -152,24 +158,64 @@ return [
         'Format' => new Reference( 'AlexaCRM\Xrm\Metadata\DateTimeFormat' ),
         'ImeMode' => new Reference( 'AlexaCRM\Xrm\Metadata\ImeMode' ),
     ],
+    'AlexaCRM\Xrm\Metadata\DecimalAttributeMetadata' => [
+        'ImeMode' => new Reference( 'AlexaCRM\Xrm\Metadata\ImeMode' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\DoubleAttributeMetadata' => [
+        'ImeMode' => new Reference( 'AlexaCRM\Xrm\Metadata\ImeMode' ),
+    ],
     'AlexaCRM\Xrm\Metadata\EntityKeyMetadata' => [
         'DisplayName' => new Reference( 'AlexaCRM\Xrm\Label' ),
+        'EntityKeyIndexStatus' => new Reference( 'AlexaCRM\Xrm\EntityKeyIndexStatus' ),
         'IsCustomizable' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\EnumAttributeMetadata' => [
+        'OptionSet' => new Reference( 'AlexaCRM\Xrm\Metadata\OptionSetMetadata' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\IntegerAttributeMetadata' => [
+        'Format' => new Reference( 'AlexaCRM\Xrm\Metadata\IntegerFormat' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\LookupAttributeMetadata' => [
+        'Format' => new Reference( 'AlexaCRM\Xrm\Metadata\LookupFormat' ),
     ],
     'AlexaCRM\Xrm\Metadata\ManyToManyRelationshipMetadata' => [
         'Entity1AssociatedMenuConfiguration' => new Reference( 'AlexaCRM\Xrm\Metadata\AssociatedMenuConfiguration' ),
         'Entity2AssociatedMenuConfiguration' => new Reference( 'AlexaCRM\Xrm\Metadata\AssociatedMenuConfiguration' ),
     ],
+    'AlexaCRM\Xrm\Metadata\MemoAttributeMetadata' => [
+        'Format' => new Reference( 'AlexaCRM\Xrm\Metadata\StringFormat' ),
+        'ImeMode' => new Reference( 'AlexaCRM\Xrm\Metadata\ImeMode' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\MoneyAttributeMetadata' => [
+        'ImeMode' => new Reference( 'AlexaCRM\Xrm\Metadata\ImeMode' ),
+    ],
     'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' => [
         'AssociatedMenuConfiguration' => new Reference( 'AlexaCRM\Xrm\Metadata\AssociatedMenuConfiguration' ),
         'CascadeConfiguration' => new Reference( 'AlexaCRM\Xrm\Metadata\CascadeConfiguration' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\OptionMetadata' => [
+        'Description' => new Reference( 'AlexaCRM\Xrm\Label' ),
+        'Label' => new Reference( 'AlexaCRM\Xrm\Label' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\OptionSetMetadata' => [
+        'Options' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OptionMetadata' ) )->makeMap( 'Value' ),
+    ],
+    'AlexaCRM\Xrm\Metadata\OptionSetMetadataBase' => [
+        'Description' => new Reference( 'AlexaCRM\Xrm\Label' ),
+        'DisplayName' => new Reference( 'AlexaCRM\Xrm\Label' ),
+        'IsCustomizable' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
+        'OptionSetType' => new Reference( 'AlexaCRM\Xrm\Metadata\OptionSetType' ),
     ],
     'AlexaCRM\Xrm\Metadata\RelationshipMetadataBase' => [
         'IsCustomizable' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'RelationshipType' => new Reference( 'AlexaCRM\Xrm\Metadata\RelationshipType' ),
         'SecurityTypes' => new Reference( 'AlexaCRM\Xrm\Metadata\SecurityTypes' ),
     ],
+    'AlexaCRM\Xrm\Metadata\SecurityPrivilegeMetadata' => [
+        'PrivilegeType' => new Reference( 'AlexaCRM\Xrm\Metadata\PrivilegeType' ),
+    ],
     'AlexaCRM\Xrm\Metadata\StringAttributeMetadata' => [
+        'Format' => new Reference( 'AlexaCRM\Xrm\Metadata\StringFormat' ),
         'FormatName' => new Reference( 'AlexaCRM\Xrm\Metadata\StringFormatName' ),
     ],
 ];
