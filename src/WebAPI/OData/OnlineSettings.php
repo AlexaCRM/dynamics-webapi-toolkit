@@ -50,6 +50,24 @@ class OnlineSettings extends Settings {
     public $tenantID;
 
     /**
+     * Azure AD username.
+     *
+     * Optional, only to be used where user/password authentication is required.
+     *
+     * @var string
+     */
+    public $username;
+
+    /**
+     * Azure AD password.
+     *
+     * Optional, only to be used where user/password authentication is required.
+     *
+     * @var string
+     */
+    public $password;
+
+    /**
      * Returns Web API endpoint URI.
      *
      * @return string
