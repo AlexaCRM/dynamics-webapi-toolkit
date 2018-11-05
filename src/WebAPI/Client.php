@@ -376,8 +376,18 @@ class Client implements IOrganizationService {
         $filterQuery = [];
         foreach ( $query->Attributes as $attributeName => $value ) {
             $queryAttributeName = $columnMap[$attributeName];
+
+            $attributeType = '';
+            if ( array_key_exists( $attributeName, $entityMap->fieldTypes ) ) {
+                $attributeType = $entityMap->fieldTypes[ $attributeName ];
+            }
+
             switch ( true ) {
-                case (is_string( $value ) && !preg_match('/^\{?[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}\}?$/', $value)):
+                /*
+                 * GUIDs may be stored as strings,
+                 * but GUIDs in UniqueIdentifier attributes must not be enclosed in quotes.
+                 */
+                case ( is_string( $value ) && $attributeType !== 'Edm.Guid' ):
                     $queryValue ="'{$value}'"; break;
                 case is_bool( $value):
                     $queryValue = $value? 'true' : 'false'; break;
