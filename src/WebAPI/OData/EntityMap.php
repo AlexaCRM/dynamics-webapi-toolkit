@@ -83,6 +83,13 @@ class EntityMap {
     public $outboundMap = [];
 
     /**
+     * Map of CRM fields mapped to their EDM types.
+     *
+     * @var array
+     */
+    public $fieldTypes = [];
+
+    /**
      * Creates an entity map from an CSDL EntityType node.
      *
      * @param \DOMElement $element EntityType DOM node.
@@ -120,6 +127,11 @@ class EntityMap {
              * As-is properties by default, _(.*)_value => $1
              */
             $map->inboundMap[$propertyName] = $concretePropertyName;
+
+            /**
+             * Build the field type map. Mapped are the real CRM field names.
+             */
+            $map->fieldTypes[$concretePropertyName] = $propertyElement->getAttribute( 'Type' );
 
             /*
              * Build the outbound map.
