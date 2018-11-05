@@ -46,7 +46,7 @@ class Entity implements \ArrayAccess {
     /**
      * Key attributes of the record.
      *
-     * @var string[string]
+     * @var KeyAttributeCollection
      */
     public $KeyAttributes;
 
@@ -55,14 +55,14 @@ class Entity implements \ArrayAccess {
      *
      * @var array
      */
-    public $Attributes;
+    public $Attributes = [];
 
     /**
      * Collection of formatted values for the entity attributes.
      *
      * @var array
      */
-    public $FormattedValues;
+    public $FormattedValues = [];
 
     /**
      * Collection of attributes' states.
