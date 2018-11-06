@@ -146,7 +146,7 @@ class SerializationHelper {
                 }
             }
 
-            $targetEntity->Attributes[$targetField] = $targetValue; // TODO: convert to OptionSetValue if required per Organization Metadata
+            $targetEntity->Attributes[$targetField] = $targetValue;
 
             // Import formatted value.
             if ( array_key_exists( $formattedValueField, $rawEntity ) ) {
