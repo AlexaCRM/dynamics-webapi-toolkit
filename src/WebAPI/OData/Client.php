@@ -169,7 +169,7 @@ class Client {
      * @throws ODataException
      * @throws AuthenticationException
      */
-    private function doRequest( $method, $url, $data = null, array $headers = [] ) {
+    public function doRequest( $method, $url, $data = null, array $headers = [] ) {
         if ( $headers == null ) {
             $headers = [];
         }
