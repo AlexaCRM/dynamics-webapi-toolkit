@@ -301,17 +301,28 @@ class Client {
         $result        = new ListResponse();
         $result->List  = $data->value;
         $result->Count = count( $data->value );
-        if ( isset( $data->{'@odata.nextLink'} ) ) {
-            $nlParts = parse_url( $data->{'@odata.nextLink'} );
+
+        $result->TotalRecordCount = -1;
+        if ( isset( $data->{Annotation::CRM_TOTALRECORDCOUNT} ) ) {
+            $result->TotalRecordCount = $data->{Annotation::CRM_TOTALRECORDCOUNT};
+        }
+
+        $result->TotalRecordCountLimitExceeded = false;
+        if ( isset( $data->{Annotation::CRM_TOTALRECORDCOUNTLIMITEXCEEDED} ) ) {
+            $result->TotalRecordCountLimitExceeded = $data->{Annotation::CRM_TOTALRECORDCOUNTLIMITEXCEEDED};
+        }
+
+        if ( isset( $data->{Annotation::ODATA_NEXTLINK} ) ) {
+            $nlParts = parse_url( $data->{Annotation::ODATA_NEXTLINK} );
             $queryParts = [];
             parse_str( $nlParts['query'], $queryParts );
             $result->SkipToken = $queryParts['$skiptoken'];
-        } elseif ( isset( $data->{'@Microsoft.Dynamics.CRM.fetchxmlpagingcookie'} ) ) {
-            $result->SkipToken = $data->{'@Microsoft.Dynamics.CRM.fetchxmlpagingcookie'};
+        } elseif ( isset( $data->{Annotation::CRM_FETCHXMLPAGINGCOOKIE} ) ) {
+            $result->SkipToken = $data->{Annotation::CRM_FETCHXMLPAGINGCOOKIE};
         }
 
-        if ( !isset( $queryOptions['MaxPageSize'] ) && isset( $data->{'@odata.nextLink'} ) ) {
-            $nextLink = $data->{'@odata.nextLink'};
+        if ( !isset( $queryOptions['MaxPageSize'] ) && isset( $data->{Annotation::ODATA_NEXTLINK} ) ) {
+            $nextLink = $data->{Annotation::ODATA_NEXTLINK};
             while ( $nextLink != null ) {
                 $res = $this->doRequest( 'GET', $nextLink, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -320,7 +331,7 @@ class Client {
                 $result->List = array_merge( $result->List, $data->value );
                 $result->Count = count( $result->List );
 
-                $nextLink     = $data->{'@odata.nextLink'};
+                $nextLink     = $data->{Annotation::ODATA_NEXTLINK};
             }
 
             unset( $result->SkipToken );
@@ -430,7 +441,7 @@ class Client {
      */
     public function associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
-        $data = [ '@odata.id' => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
+        $data = [ Annotation::ODATA_ID => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
         $this->doRequest( 'POST', $url, $data );
     }
 
@@ -485,7 +496,7 @@ class Client {
 
         $res = $this->doRequest( 'GET', $url );
         $result = json_decode( $res->getBody() );
-        unset( $result->{'@odata.context'} );
+        unset( $result->{Annotation::ODATA_CONTEXT} );
 
         return $result;
     }
@@ -510,7 +521,7 @@ class Client {
 
         $res = $this->doRequest( 'POST', $url, $parameters );
         $result = json_decode( $res->getBody() );
-        unset( $result->{'@odata.context'} );
+        unset( $result->{Annotation::ODATA_CONTEXT} );
 
         return $result;
     }

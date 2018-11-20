@@ -321,6 +321,8 @@ class Client implements IOrganizationService {
         $collection = new EntityCollection();
         $collection->EntityName = $entityName;
         $collection->MoreRecords = false;
+        $collection->TotalRecordCount = $response->TotalRecordCount;
+        $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
 
         if ( !$response->Count ) {
             return $collection;
@@ -443,6 +445,10 @@ class Client implements IOrganizationService {
             if ( isset( $query->PageInfo->PagingCookie ) ) {
                 $queryData['SkipToken'] = $query->PageInfo->PagingCookie;
             }
+
+            if ( $query->PageInfo->ReturnTotalRecordCount ) {
+                $queryData['IncludeCount'] = true;
+            }
         }
 
         $collectionName = $metadata->getEntitySetName( $query->EntityName );
@@ -455,6 +461,8 @@ class Client implements IOrganizationService {
         $collection = new EntityCollection();
         $collection->EntityName = $query->EntityName;
         $collection->MoreRecords = false;
+        $collection->TotalRecordCount = $response->TotalRecordCount;
+        $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
 
         if ( !$response->Count ) {
             return $collection;

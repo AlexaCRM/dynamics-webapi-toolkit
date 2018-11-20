@@ -16,49 +16,31 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
 namespace AlexaCRM\WebAPI\OData;
 
 /**
- * Represents a raw object response from an OData RetrieveMultiple-like request.
+ * Enumerates some commonly used OData annotations.
  */
-class ListResponse {
+class Annotation {
 
-    /**
-     * List of JSON-deserialized objects containing entity record values and annotations.
-     *
-     * @var object[]
-     */
-    public $List;
+    const ODATA_CONTEXT = '@odata.context';
 
-    /**
-     * The number of records returned.
-     *
-     * @var int
-     */
-    public $Count;
+    const ODATA_BIND = '@odata.bind';
 
-    /**
-     * The info used to page large result sets.
-     *
-     * @var string
-     */
-    public $SkipToken;
+    const ODATA_FORMATTEDVALUE = '@OData.Community.Display.V1.FormattedValue';
 
-    /**
-     * Total number of records.
-     *
-     * @var int
-     */
-    public $TotalRecordCount;
+    const ODATA_NEXTLINK = '@odata.nextLink';
 
-    /**
-     * Whether the results of the query exceeds the total record count.
-     *
-     * @var bool
-     */
-    public $TotalRecordCountLimitExceeded;
+    const ODATA_ID = '@odata.id';
+
+    const CRM_LOOKUPLOGICALNAME = '@Microsoft.Dynamics.CRM.lookuplogicalname';
+
+    const CRM_TOTALRECORDCOUNT = '@Microsoft.Dynamics.CRM.totalrecordcount';
+
+    const CRM_TOTALRECORDCOUNTLIMITEXCEEDED = '@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded';
+
+    const CRM_FETCHXMLPAGINGCOOKIE = '@Microsoft.Dynamics.CRM.fetchxmlpagingcookie';
 
 }
