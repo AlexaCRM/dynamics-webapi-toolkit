@@ -22,6 +22,7 @@ namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\Cache\NullAdapter;
 use AlexaCRM\WebAPI\Client as WebAPIClient;
+use AlexaCRM\WebAPI\OData\Annotation;
 use AlexaCRM\WebAPI\OData\Client;
 use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\Xrm\Metadata\EntityMetadata;
@@ -97,7 +98,7 @@ class MetadataRegistry {
             $object = $this->client->getRecord( 'EntityDefinitions', "LogicalName='{$logicalName}'", [
                 'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships'
             ] );
-            unset( $object->{'@odata.context'} );
+            unset( $object->{Annotation::ODATA_CONTEXT} );
         } catch ( ODataException $e ) {
             if ( $e->getCode() === 404 ) {
                 return null;

@@ -21,6 +21,7 @@
 
 namespace AlexaCRM\WebAPI;
 
+use AlexaCRM\WebAPI\OData\Annotation;
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityReference;
 
@@ -85,7 +86,7 @@ class SerializationHelper {
 
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
-                $translatedData[$outboundMapping[$logicalName] . '@odata.bind'] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
+                $translatedData[$outboundMapping[$logicalName] . Annotation::ODATA_BIND] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
             }
 
             $this->client->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
@@ -129,8 +130,8 @@ class SerializationHelper {
             }
 
             $targetField = array_key_exists( $field, $inboundMap )? $inboundMap[$field] : $field;
-            $logicalNameField = $field . '@Microsoft.Dynamics.CRM.lookuplogicalname';
-            $formattedValueField = $field . '@OData.Community.Display.V1.FormattedValue';
+            $logicalNameField = $field . Annotation::CRM_LOOKUPLOGICALNAME;
+            $formattedValueField = $field . Annotation::ODATA_FORMATTEDVALUE;
             $targetValue = $value;
 
             if ( $attributeToEntityMap !== null && strpos( $targetField, '_x002e_' ) !== false ) {

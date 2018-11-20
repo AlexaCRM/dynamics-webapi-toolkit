@@ -62,6 +62,13 @@ class EntityCollection implements \Iterator {
     public $TotalRecordCount;
 
     /**
+     * Whether the results of the query exceeds the total record count.
+     *
+     * @var bool
+     */
+    public $TotalRecordCountLimitExceeded;
+
+    /**
      * Return the current element.
      *
      * @return mixed
