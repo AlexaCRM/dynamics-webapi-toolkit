@@ -202,11 +202,17 @@ class SerializationHelper {
      * @return array
      */
     public function getFetchXMLAliasedLookupTypes( $fetchXML ) {
+        $attrToEntity = [];
+
+        try {
+            $metadata = $this->client->getMetadata();
+        } catch ( OData\Exception $e ) {
+            return $attrToEntity;
+        }
+
         $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
         $fetchDOM->loadXML( $fetchXML );
         $x = new \DOMXPath( $fetchDOM );
-
-        $attrToEntity = [];
         $fetchAttributes = $x->query( '//attribute' );
         foreach ( $fetchAttributes as $attr ) {
             /**
@@ -214,12 +220,24 @@ class SerializationHelper {
              */
             $targetField = $attr->getAttribute( 'name' );
             $attributeEntity = $attr->parentNode->getAttribute( 'name' );
-            $attributeMap = $this->client->getMetadata()->entityMaps[$attributeEntity]->outboundMap[$targetField];
+
+            if ( !array_key_exists( $attributeEntity, $metadata->entityMaps ) ) {
+                continue;
+            }
+
+            $entityMap = $metadata->entityMaps[$attributeEntity];
+
+            if ( !array_key_exists( $targetField, $entityMap->outboundMap ) ) {
+                continue;
+            }
+
+            $attributeMap = $entityMap->outboundMap[$targetField];
             if ( !is_array( $attributeMap ) ) {
                 continue;
             }
 
-            $targetEntity = array_shift( array_keys( $attributeMap ) );
+            $attributeEntities = array_keys( $attributeMap );
+            $targetEntity = array_shift( $attributeEntities );
 
             if ( $attr->parentNode->nodeName === 'link-entity' ) {
                 $targetField = $attr->parentNode->getAttribute( 'alias' ) . '.' . $targetField;
