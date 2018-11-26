@@ -138,10 +138,39 @@ class SerializationHelper {
                 $targetField = str_replace( '_x002e_', '.', $targetField );
             }
 
+            /*
+             * CRM aliased FetchXML attribute quirk.
+             *
+             * TL;DR When querying FetchXML against CRM < 9.0(?) entity references may hold a wrong entity type
+             * if the lookup attribute is aliased or comes from a joined entity and the lookup has multiple
+             * targets.
+             *
+             * Usually, lookup attributes are accompanied by a `Microsoft.Dynamics.CRM.lookuplogicalname` annotation.
+             * Prior to CRM 9.0 (no info on when precisely it was fixed), aliased lookup attributes in FetchXML queries
+             * were only accompanied by an `OData.Community.Display.V1.FormattedValue` annotation,
+             * and entity type information was lost and had to be GUESSED.
+             *
+             * It is critical for navigation properties which can accept multiple entity types (Customer, Principal,
+             * etc.). We could have deduce the entity type from the `Microsoft.Dynamics.CRM.associatednavigationproperty`
+             * annotation, but it is not available for aliased attributes either.
+             *
+             * To make things worse, link-entity attributes are aliased all the time and get the same treatment.
+             * It means, prior to 9.0 there is absolutely no entity type information, and in 9.0+ you only get
+             * the logical name.
+             *
+             * It is why we have to make a guess and map the entity type statically to the first available
+             * entity type targeted by the lookup attribute. We could validate logical name / ID pair in CRM
+             * but it is a costly procedure, especially for lookups with a long Targets list.
+             */
             if ( array_key_exists( $logicalNameField, $rawEntity ) ) {
                 $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
-            } elseif ( $attributeToEntityMap !== null && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value ) && array_key_exists( $formattedValueField, $rawEntity ) ) {
-                // might be an aliased entity reference
+            } elseif ( $attributeToEntityMap !== null
+                       && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
+                       && array_key_exists( $formattedValueField, $rawEntity ) ) {
+                /*
+                 * Map to a static entity type if we've got a GUID and a formatted value and no entity type information.
+                 * It means we're likely in the quirk mode and have to try guessing the lookup entity type.
+                 */
                 if ( array_key_exists( $targetField, $attributeToEntityMap ) ) {
                     $targetValue = new EntityReference( $attributeToEntityMap[$targetField], $value );
                 }
