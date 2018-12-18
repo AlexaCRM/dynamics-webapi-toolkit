@@ -46,6 +46,7 @@ class MetadataSerializer {
     public function createEntityMetadata( $data ) {
         $md = $this->createPerDefinition( $data, new Reference( EntityMetadata::class ) );
 
+        /** @var EntityMetadata $md */
         return $md;
     }
 
@@ -172,24 +173,21 @@ class MetadataSerializer {
             static::$map = require 'metadataClassMap.php';
         }
 
-        $parents = class_parents( $className );
-        if ( $parents === false ) {
-            return [];
+        $classChain = class_parents( $className );
+        if ( $classChain === false ) {
+            $classChain = [];
         }
 
         $map = [];
-        $parents = array_reverse( array_values( $parents ) );
+        $classChain = array_reverse( array_values( $classChain ) );
+        array_push( $classChain, $className );
 
-        foreach ( $parents as $parentClassName ) {
-            if ( !array_key_exists( $parentClassName, static::$map ) ) {
+        foreach ( $classChain as $typeName ) {
+            if ( !array_key_exists( $typeName, static::$map ) ) {
                 continue;
             }
 
-            $map = array_merge( $parents, static::$map[$parentClassName] );
-        }
-
-        if ( array_key_exists( $className, static::$map ) ) {
-            $map = array_merge( $map, static::$map[$className] );
+            $map = array_merge( $map, static::$map[$typeName] );
         }
 
         return $map;
