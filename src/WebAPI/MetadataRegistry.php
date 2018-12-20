@@ -34,6 +34,25 @@ use Psr\Cache\CacheItemPoolInterface;
 class MetadataRegistry {
 
     /**
+     * Contains type names of attribute metadata which need OData expansion to retrieve option sets.
+     */
+    const OPTIONSET_ATTRIBUTES = [
+        'BooleanAttributeMetadata',
+        'EntityNameAttributeMetadata',
+        'MultiSelectPicklistAttributeMetadata',
+        'PicklistAttributeMetadata',
+        'StateAttributeMetadata',
+        'StatusAttributeMetadata',
+    ];
+
+    /**
+     * How long to store metadata until it is discarded.
+     *
+     * @var \DateInterval
+     */
+    public $ttl;
+
+    /**
      * @var Client
      */
     protected $client;
@@ -42,13 +61,6 @@ class MetadataRegistry {
      * @var CacheItemPoolInterface
      */
     protected $storage;
-
-    /**
-     * How long to store metadata until it is discarded.
-     *
-     * @var \DateInterval
-     */
-    public $ttl;
 
     /**
      * MetadataRegistry constructor.
@@ -94,9 +106,8 @@ class MetadataRegistry {
         }
 
         try {
-
             $object = $this->client->getRecord( 'EntityDefinitions', "LogicalName='{$logicalName}'", [
-                'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships'
+                'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships',
             ] );
             unset( $object->{Annotation::ODATA_CONTEXT} );
         } catch ( ODataException $e ) {
@@ -107,6 +118,15 @@ class MetadataRegistry {
             throw $e;
         }
 
+        /*
+         * Attributes with option sets arrived without them because OptionSet property is an OData navigation property
+         * which needs expansion and explicit type casting.
+         *
+         * Although we duplicate the attributes, MetadataSerializer will eliminate the duplicates
+         * and overwrite them with the newly retrieved attributes.
+         */
+        $object->Attributes = array_merge( $object->Attributes, $this->retrieveOptionSetAttributes( $logicalName ) );
+
         $serializer = new MetadataSerializer();
         $md = $serializer->createEntityMetadata( $object );
 
@@ -114,6 +134,51 @@ class MetadataRegistry {
         $this->storage->save( $cached );
 
         return $md;
+    }
+
+    /**
+     * Retrieves attributes with option sets for the given entity.
+     *
+     * OData needs type casting AND navigation property expansion to return relevant data. We cycle through each
+     * type that needs navigation property expansion and later merge these attributes together.
+     *
+     * @param string $logicalName
+     *
+     * @return array
+     * @throws OData\AuthenticationException
+     */
+    protected function retrieveOptionSetAttributes( $logicalName ) {
+        $typedAttributes = [];
+
+        foreach ( static::OPTIONSET_ATTRIBUTES as $type ) {
+            try {
+                $attributesResponse = $this->client->getList( "EntityDefinitions(LogicalName='{$logicalName}')/Attributes/Microsoft.Dynamics.CRM.{$type}", [
+                    'Expand' => 'OptionSet,GlobalOptionSet',
+                ] );
+
+                foreach ( $attributesResponse->List as $attribute ) {
+                    unset( $attribute->{'OptionSet@odata.context'} );
+
+                    if ( !isset( $attribute->OptionSet ) && isset( $attribute->GlobalOptionSet ) ) {
+                        $attribute->OptionSet = $attribute->GlobalOptionSet;
+                    }
+
+                    unset( $attribute->GlobalOptionSet );
+
+                    $typedAttributes[] = $attribute;
+                }
+            } catch ( ODataException $e ) {
+                $this->client->getLogger()->error( 'Web API responded with an error to the attribute expansion request', [
+                    'entity' => $logicalName,
+                    'type' => 'Microsoft.Dynamics.CRM.' . $type,
+                    'exception' => $e,
+                ] );
+
+                continue;
+            }
+        }
+
+        return $typedAttributes;
     }
 
 }
