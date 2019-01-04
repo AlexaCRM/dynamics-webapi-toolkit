@@ -87,6 +87,8 @@ class SerializationHelper {
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
                 $translatedData[$outboundMapping[$logicalName] . Annotation::ODATA_BIND] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
+
+                continue;
             }
 
             $this->client->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
