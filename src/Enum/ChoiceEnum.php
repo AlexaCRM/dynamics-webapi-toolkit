@@ -24,7 +24,10 @@ namespace AlexaCRM\Enum;
 use Elao\Enum\ChoiceEnumTrait;
 use Elao\Enum\SimpleChoiceEnum;
 
-abstract class ChoiceEnum extends SimpleChoiceEnum {
+/**
+ * Provides implementation for choice-based enumerable types.
+ */
+abstract class ChoiceEnum extends SimpleChoiceEnum implements \JsonSerializable {
 
     /** @internal */
     private static $guessedReadables = [];
@@ -81,6 +84,15 @@ abstract class ChoiceEnum extends SimpleChoiceEnum {
         }
 
         return self::$guessedReadables[$enumType];
+    }
+
+    /**
+     * In JSON, serialize as string.
+     *
+     * @return string
+     */
+    public function jsonSerialize() {
+        return $this->getReadable();
     }
 
 }
