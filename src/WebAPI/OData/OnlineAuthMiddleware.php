@@ -25,6 +25,7 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as HttpClientException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Represents the Dynamics 365 (online) authentication middleware.
@@ -153,8 +154,12 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             ] );
             $settings->logger->debug( 'Retrieved a new access token via ' . $tokenEndpoint );
         } catch ( RequestException $e ) {
-            $response = json_decode( $e->getResponse()->getBody()->getContents() );
-            $errorDescription = $response->error_description;
+            $errorDescription = $e->getMessage();
+            if ( $e->getResponse() instanceof ResponseInterface ) {
+                $response = json_decode( $e->getResponse()->getBody()->getContents() );
+                $errorDescription = $response->error_description;
+            }
+
             throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
         }
 
