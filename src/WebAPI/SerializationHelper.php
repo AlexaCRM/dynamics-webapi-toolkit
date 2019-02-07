@@ -53,7 +53,7 @@ class SerializationHelper {
      * @return array
      * @throws OData\AuthenticationException
      * @throws OData\EntityNotSupportedException
-     * @throws OData\InaccessibleMetadataException
+     * @throws OData\TransportException
      */
     public function serializeEntity( Entity $entity ) {
         $metadata = $this->client->getMetadata();
@@ -68,8 +68,6 @@ class SerializationHelper {
 
         $translatedData = [];
 
-        /*
-         */
         foreach ( $touchedFields as $field => $value ) {
             $outboundMapping = $outboundMap[$field];
             if ( is_string( $outboundMapping ) ) {
@@ -111,7 +109,7 @@ class SerializationHelper {
      * @return Entity
      * @throws OData\AuthenticationException
      * @throws OData\EntityNotSupportedException
-     * @throws OData\InaccessibleMetadataException
+     * @throws OData\TransportException
      */
     public function deserializeEntity( $rawEntity, EntityReference $reference, $attributeToEntityMap = null ) {
         $metadata = $this->client->getMetadata();

@@ -102,8 +102,6 @@ class Metadata {
          * Used to expand the list of accepted types in the outbound mapping.
          * Example: navigation property is of type mscrm.principal, which is an abstract type
          * having mscrm.systemuser and mscrm.team descendants.
-         *
-         * See EntityMap.php:L121.
          */
         $metadata->parentTypesMap = [];
         foreach ( $baseTypes as $baseType ) {
@@ -186,7 +184,7 @@ class Metadata {
      */
     public function getEntityMap( string $entityName ) {
         if ( !array_key_exists( $entityName, $this->entityMaps ) ) {
-            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported in Web API" );
+            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported by Web API" );
         }
 
         return $this->entityMaps[$entityName];
@@ -204,7 +202,7 @@ class Metadata {
      */
     public function getEntitySetName( string $entityName ) {
         if ( !array_key_exists( $entityName, $this->entitySetMap ) ) {
-            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported in Web API" );
+            throw new EntityNotSupportedException( "Entity `{$entityName}` is not supported by Web API" );
         }
 
         return $this->entitySetMap[$entityName];

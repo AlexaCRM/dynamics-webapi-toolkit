@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 AlexaCRM
+ * Copyright 2019 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -16,46 +16,13 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
 namespace AlexaCRM\WebAPI\OData;
 
 /**
- * Contains Dynamics 365 (online) credentials.
+ * Represents all errors which occurred because of transport failures.
  */
-class OnlineSettings extends Settings {
-
-    /**
-     * Azure AD application ID.
-     *
-     * @var string
-     */
-    public $applicationID;
-
-    /**
-     * Azure AD application secret.
-     *
-     * @var string
-     */
-    public $applicationSecret;
-
-    /**
-     * Azure AD tenant ID.
-     *
-     * Optional, allows skipping tenant detection.
-     *
-     * @var string
-     */
-    public $tenantID;
-
-    /**
-     * Returns Web API endpoint URI.
-     *
-     * @return string
-     */
-    public function getEndpointURI() {
-        return trim( $this->instanceURI, '/' ) . '/api/data/v' . $this->apiVersion . '/';
-    }
+class TransportException extends Exception {
 
 }

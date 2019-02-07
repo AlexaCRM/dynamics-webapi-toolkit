@@ -107,7 +107,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $tenantID = $tenantMatch[1];
         $this->settings->logger->debug( "Probed {$endpointUri} for tenant ID {{$tenantID}}" );
 
-        $expirationDuration = new \DateInterval( 'P30D' ); // Cache the tenant ID for 30 days.
+        $expirationDuration = new \DateInterval( 'P1Y' ); // Cache the tenant ID for 1 year.
         $this->settings->cachePool->save( $cache->set( $tenantID )->expiresAfter( $expirationDuration ) );
 
         return $tenantID;

@@ -111,7 +111,7 @@ class Client {
      *
      * @return Metadata
      * @throws AuthenticationException
-     * @throws InaccessibleMetadataException
+     * @throws TransportException
      */
     public function getMetadata() {
         if ( $this->metadata instanceof Metadata ) {
@@ -133,11 +133,11 @@ class Client {
             ] );
             $this->getLogger()->debug( 'Retrieved OData metadata via ' . $metadataURI );
         } catch ( ConnectException $e ) {
-            throw $e;
+            throw new TransportException( $e->getMessage(), $e );
         } catch ( RequestException $e ) {
             if ( $e->getResponse() === null ) {
                 $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
-                throw new InaccessibleMetadataException( $e->getMessage(), $e );
+                throw new TransportException( $e->getMessage(), $e );
             }
 
             if ( $e->getResponse()->getStatusCode() === 401 ) {
@@ -148,7 +148,7 @@ class Client {
 
             $responseCode = $e->getResponse()->getStatusCode();
             $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
-            throw new InaccessibleMetadataException( 'Metadata request returned a ' . $responseCode . ' code', $e );
+            throw new TransportException( 'Metadata request returned a ' . $responseCode . ' code', $e );
         }
 
         $metadataXML = $resp->getBody()->getContents();
@@ -166,8 +166,9 @@ class Client {
      * @param array $headers
      *
      * @return mixed|\Psr\Http\Message\ResponseInterface
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     private function doRequest( $method, $url, $data = null, array $headers = [] ) {
         if ( $headers == null ) {
@@ -193,7 +194,7 @@ class Client {
         } catch ( RequestException $e ) {
             if ( $e->getResponse() === null ) {
                 $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
-                throw new ODataException( (object)[ 'message' => $e->getMessage() ], $e );
+                throw new TransportException( $e->getMessage(), $e );
             }
 
             if ( $e->getResponse()->getStatusCode() === 401 ) {
@@ -207,7 +208,7 @@ class Client {
             throw new ODataException( $response->error, $e );
         } catch ( GuzzleException $e ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
-            throw new ODataException( (object)[ 'message' => $e->getMessage() ], $e );
+            throw new TransportException( $e->getMessage(), $e );
         }
     }
 
@@ -290,8 +291,9 @@ class Client {
      * @param null $queryOptions
      *
      * @return ListResponse
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function getList( $uri, $queryOptions = null ) {
         $url = $this->buildQueryURL( $uri, $queryOptions );
@@ -346,8 +348,9 @@ class Client {
      * @param null $queryOptions
      *
      * @return mixed
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function getRecord( $entityCollection, $entityId, $queryOptions = null ) {
         $url = $this->buildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
@@ -362,8 +365,9 @@ class Client {
      * @param null $queryOptions
      *
      * @return mixed
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function getCount( $uri, $queryOptions = null ) {
         $url = $this->buildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
@@ -378,8 +382,9 @@ class Client {
      * @param $data
      *
      * @return mixed
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function create( $entityCollection, $data ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $entityCollection );
@@ -398,8 +403,9 @@ class Client {
      * @param bool $upsert
      *
      * @return \stdClass
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function update( $entityCollection, $key, $data, $upsert = false ) {
         $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
@@ -421,8 +427,9 @@ class Client {
      * @param $entityCollection
      * @param $entityId
      *
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function delete( $entityCollection, $entityId ) {
         $url = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $entityId );
@@ -436,8 +443,9 @@ class Client {
      * @param $toEntityCollection
      * @param $toEntityId
      *
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
@@ -452,8 +460,9 @@ class Client {
      * @param $toEntityCollection
      * @param $toEntityId
      *
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function disassociate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
         $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
@@ -469,8 +478,9 @@ class Client {
      * @param string $entityId For bound functions -- entity record ID.
      *
      * @return mixed
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function executeFunction( $functionName, $parameters = null, $entityCollection = null, $entityId = null ) {
         $paramvars   = [];
@@ -510,8 +520,9 @@ class Client {
      * @param string $entityId For bound actions -- entity record ID.
      *
      * @return mixed
-     * @throws ODataException
      * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
      */
     public function executeAction( $actionName, $parameters = null, $entityCollection = null, $entityId = null ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $actionName );

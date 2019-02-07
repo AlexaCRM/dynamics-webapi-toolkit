@@ -22,9 +22,10 @@
 namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\WebAPI\OData\AuthenticationException;
-use AlexaCRM\WebAPI\OData\InaccessibleMetadataException;
-use AlexaCRM\WebAPI\OData\ODataException;
+use AlexaCRM\WebAPI\OData\Client as ODataClient;
 use AlexaCRM\WebAPI\OData\EntityNotSupportedException;
+use AlexaCRM\WebAPI\OData\ODataException;
+use AlexaCRM\WebAPI\OData\TransportException;
 use AlexaCRM\Xrm\ColumnSet;
 use AlexaCRM\Xrm\Entity;
 use AlexaCRM\Xrm\EntityCollection;
@@ -35,7 +36,6 @@ use AlexaCRM\Xrm\Query\PagingInfo;
 use AlexaCRM\Xrm\Query\QueryBase;
 use AlexaCRM\Xrm\Query\QueryByAttribute;
 use AlexaCRM\Xrm\Relationship;
-use AlexaCRM\WebAPI\OData\Client as ODataClient;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -67,16 +67,15 @@ class Client implements IOrganizationService {
      * @param EntityReference[] $relatedEntities
      *
      * @return void
-     * @throws Exception
      * @throws AuthenticationException
-     * @throws InaccessibleMetadataException
-     * @throws EntityNotSupportedException
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     public function Associate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entityName );
-
         try {
+            $metadata = $this->client->getMetadata();
+            $collectionName = $metadata->getEntitySetName( $entityName );
+
             foreach ( $relatedEntities as $ref ) {
                 $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
@@ -84,7 +83,11 @@ class Client implements IOrganizationService {
                 $this->client->associate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
             }
         } catch ( ODataException $e ) {
-            throw new Exception( 'Associate request failed: ' . $e->getMessage(), $e );
+            throw new OrganizationException( 'Associate request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot associate: entity `{$entityName}` is not supported", $e );
         }
     }
 
@@ -95,25 +98,28 @@ class Client implements IOrganizationService {
      *
      * @return string ID of the new record.
      * @throws AuthenticationException
-     * @throws Exception
-     * @throws InaccessibleMetadataException
-     * @throws EntityNotSupportedException
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     public function Create( Entity $entity ) {
-        $serializer = new SerializationHelper( $this->client );
-        $translatedData = $serializer->serializeEntity( $entity );
-
-        $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
-
         try {
+            $serializer = new SerializationHelper( $this->client );
+            $translatedData = $serializer->serializeEntity( $entity );
+
+            $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
+
             $responseId = $this->client->create( $collectionName, $translatedData );
+
+            $entity->getAttributeState()->reset();
+
+            return $responseId;
         } catch ( ODataException $e ) {
-            throw new Exception( 'Create request failed: ' . $e->getMessage(), $e );
+            throw new OrganizationException( 'Create request failed: ' . $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot create: entity `{$entity->LogicalName}` is not supported", $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
         }
-
-        $entity->getAttributeState()->reset();
-
-        return $responseId;
     }
 
     /**
@@ -123,19 +129,22 @@ class Client implements IOrganizationService {
      * @param string $entityId Record ID.
      *
      * @return void
-     * @throws InaccessibleMetadataException
+     * @throws OrganizationException
+     * @throws ToolkitException
      * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws Exception
      */
     public function Delete( string $entityName, $entityId ) {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entityName );
-
         try {
+            $metadata = $this->client->getMetadata();
+            $collectionName = $metadata->getEntitySetName( $entityName );
+
             $this->client->delete( $collectionName, $entityId );
         } catch ( ODataException $e ) {
-            throw new Exception( 'Delete request failed: '. $e->getMessage(), $e );
+            throw new OrganizationException( 'Delete request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot delete: entity `{$entityName}` is not supported", $e );
         }
     }
 
@@ -148,16 +157,15 @@ class Client implements IOrganizationService {
      * @param EntityReference[] $relatedEntities
      *
      * @return void
-     * @throws InaccessibleMetadataException
+     * @throws OrganizationException
+     * @throws ToolkitException
      * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws Exception
      */
     public function Disassociate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entityName );
-
         try {
+            $metadata = $this->client->getMetadata();
+            $collectionName = $metadata->getEntitySetName( $entityName );
+
             foreach ( $relatedEntities as $ref ) {
                 $associatedCollectionName = $metadata->getEntitySetName( $ref->LogicalName );
 
@@ -165,7 +173,11 @@ class Client implements IOrganizationService {
                 $this->client->disassociate( $collectionName, $entityId, $relationship->SchemaName, $associatedCollectionName, $ref->Id );
             }
         } catch ( ODataException $e ) {
-            throw new Exception( 'Disassociate request failed: ' . $e->getMessage(), $e );
+            throw new OrganizationException( 'Disassociate request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot disassociate: entity `{$entityName}` is not supported", $e );
         }
     }
 
@@ -182,52 +194,66 @@ class Client implements IOrganizationService {
     }
 
     /**
-     * Retrieves a record,
+     * Retrieves a record.
      *
      * @param string $entityName
      * @param string $entityId Record ID.
      * @param ColumnSet $columnSet
      *
      * @return Entity
-     * @throws InaccessibleMetadataException
      * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws Exception
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
-    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity {
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entityName );
-        $entityMap = $metadata->getEntityMap( $entityName );
-        $inboundMap = $entityMap->inboundMap;
-
-        $options = [];
-        if ( $columnSet->AllColumns !== true ) {
-            $options['Select'] = [];
-
-            // $select must not be empty. Add primary key.
-            $options['Select'][] = $entityMap->key;
-
-            $columnMapping = array_flip( $inboundMap );
-            foreach ( $columnSet->Columns as $column ) {
-                if ( !array_key_exists( $column, $columnMapping ) ) {
-                    $this->getLogger()->warning( "No inbound attribute mapping found for {$entityName}[{$column}]" );
-                    continue;
-                }
-
-                $options['Select'][] = $columnMapping[$column];
-            }
-        }
-
+    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) {
         try {
+            $metadata = $this->client->getMetadata();
+            $collectionName = $metadata->getEntitySetName( $entityName );
+            $entityMap = $metadata->getEntityMap( $entityName );
+            $inboundMap = $entityMap->inboundMap;
+
+            $options = [];
+            if ( $columnSet->AllColumns !== true ) {
+                $options['Select'] = [];
+
+                // $select must not be empty. Add primary key.
+                $options['Select'][] = $entityMap->key;
+
+                $columnMapping = array_flip( $inboundMap );
+                foreach ( $columnSet->Columns as $column ) {
+                    if ( !array_key_exists( $column, $columnMapping ) ) {
+                        $this->getLogger()->warning( "No inbound attribute mapping found for {$entityName}[{$column}]" );
+                        continue;
+                    }
+
+                    $options['Select'][] = $columnMapping[ $column ];
+                }
+            }
+
             $response = $this->client->getRecord( $collectionName, $entityId, $options );
+
+            $serializer = new SerializationHelper( $this->client );
+            $entity = $serializer->deserializeEntity( $response, new EntityReference( $entityName, $entityId ) );
+
+            return $entity;
         } catch ( ODataException $e ) {
-            throw new Exception( 'Retrieve request failed: ' . $e->getMessage(), $e );
+            if ( $e->getCode() === 404 ) {
+                return null;
+            }
+
+            throw new OrganizationException( 'Retrieve request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot retrieve: entity `{$entityName}` is not supported", $e );
         }
+    }
 
-        $serializer = new SerializationHelper( $this->client );
-        $entity = $serializer->deserializeEntity( $response, new EntityReference( $entityName, $entityId ) );
-
-        return $entity;
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger(): LoggerInterface {
+        return $this->client->getLogger();
     }
 
     /**
@@ -237,9 +263,8 @@ class Client implements IOrganizationService {
      *
      * @return EntityCollection
      * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws InaccessibleMetadataException
-     * @throws Exception
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     public function RetrieveMultiple( QueryBase $query ) {
         if ( $query instanceof FetchExpression ) {
@@ -252,111 +277,79 @@ class Client implements IOrganizationService {
     }
 
     /**
-     * Updates an existing record.
-     *
-     * @param Entity $entity
-     *
-     * @return void
-     * @throws InaccessibleMetadataException
-     * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws Exception
-     */
-    public function Update( Entity $entity ) {
-        $serializer = new SerializationHelper( $this->client );
-        $translatedData = $serializer->serializeEntity( $entity );
-
-        $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
-
-        try {
-            $this->client->update( $collectionName, $entity->Id, $translatedData );
-        } catch ( ODataException $e ) {
-            throw new Exception( 'Update request failed: ' . $e->getMessage(), $e );
-        }
-
-        $entity->getAttributeState()->reset();
-    }
-
-    /**
-     * Returns an instance of ODataClient for direct access to OData service and underlying transport.
-     *
-     * @return ODataClient
-     */
-    public function getClient() : ODataClient {
-        return $this->client;
-    }
-
-    /**
      * @param FetchExpression $query
      *
      * @return EntityCollection
-     * @throws InaccessibleMetadataException
      * @throws AuthenticationException
-     * @throws EntityNotSupportedException
-     * @throws Exception
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     protected function retrieveViaFetchXML( FetchExpression $query ) {
-        $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
-        $fetchDOM->loadXML( $query->Query );
-
-        $entityTag = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 );
-        if ( !( $entityTag instanceof \DOMElement ) || !$entityTag->hasAttribute( 'name' ) ) {
-            throw new Exception( 'Malformed FetchXML query: could not locate the <entity/> element or entity name not specified' );
-        }
-
-        $entityName = $entityTag->getAttribute( 'name' );
-
-        $metadata = $this->client->getMetadata();
-        $collectionName = $metadata->getEntitySetName( $entityName );
-        $entityMap = $metadata->getEntityMap( $entityName );
-
         try {
+            $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
+            $fetchDOM->loadXML( $query->Query );
+
+            $entityTag = $fetchDOM->getElementsByTagName( 'entity' )->item( 0 );
+            if ( !( $entityTag instanceof \DOMElement ) || !$entityTag->hasAttribute( 'name' ) ) {
+                throw new ToolkitException( 'Malformed FetchXML query: could not locate the <entity/> element or entity name not specified' );
+            }
+
+            $entityName = $entityTag->getAttribute( 'name' );
+
+            $metadata = $this->client->getMetadata();
+            $collectionName = $metadata->getEntitySetName( $entityName );
+            $entityMap = $metadata->getEntityMap( $entityName );
+
             $response = $this->client->getList( $collectionName, [
                 'FetchXml' => $query->Query,
             ] );
-        } catch ( ODataException $e ) {
-            throw new Exception( 'RetrieveMultiple (FetchXML) request failed: ' . $e->getMessage(), $e );
-        }
 
-        $collection = new EntityCollection();
-        $collection->EntityName = $entityName;
-        $collection->MoreRecords = false;
-        $collection->TotalRecordCount = $response->TotalRecordCount;
-        $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
+            $collection = new EntityCollection();
+            $collection->EntityName = $entityName;
+            $collection->MoreRecords = false;
+            $collection->TotalRecordCount = $response->TotalRecordCount;
+            $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
 
-        if ( !$response->Count ) {
-            return $collection;
-        }
-
-        if ( isset( $response->SkipToken ) ) {
-            preg_match( '~pagingcookie="(.*?)"~', $response->SkipToken, $tokenMatch );
-            $collection->PagingCookie = urldecode( urldecode( $tokenMatch[1] ) );
-            $collection->MoreRecords = true;
-        }
-
-        $serializer = new SerializationHelper( $this->client );
-        $entityRefTypeMap = $serializer->getFetchXMLAliasedLookupTypes( $query->Query );
-
-        /*
-         * Deserialize all fields as usual.
-         *
-         * If the value looks like GUID and has a FormattedValue annotation but no lookuplogicalname,
-         * it's a lookup from a linked entity. Look up its logical name in FetchXML.
-         * If any x002e are found, replace the divider with dot (.).
-         */
-        foreach ( $response->List as $item ) {
-            $ref = new EntityReference( $entityName );
-            $recordKey = $entityMap->key;
-            if ( array_key_exists( $recordKey, $item ) ) {
-                $ref->Id = $item->{$recordKey};
+            if ( !$response->Count ) {
+                return $collection;
             }
 
-            $record = $serializer->deserializeEntity( $item, $ref, $entityRefTypeMap );
+            if ( isset( $response->SkipToken ) ) {
+                preg_match( '~pagingcookie="(.*?)"~', $response->SkipToken, $tokenMatch );
+                $collection->PagingCookie = urldecode( urldecode( $tokenMatch[1] ) );
+                $collection->MoreRecords = true;
+            }
 
-            $collection->Entities[] = $record;
+            $serializer = new SerializationHelper( $this->client );
+            $entityRefTypeMap = $serializer->getFetchXMLAliasedLookupTypes( $query->Query );
+
+            /*
+             * Deserialize all fields as usual.
+             *
+             * If the value looks like GUID and has a FormattedValue annotation but no lookuplogicalname,
+             * it's a lookup from a linked entity. Look up its logical name in FetchXML.
+             * If any x002e are found, replace the divider with dot (.).
+             */
+            foreach ( $response->List as $item ) {
+                $ref = new EntityReference( $entityName );
+                $recordKey = $entityMap->key;
+                if ( array_key_exists( $recordKey, $item ) ) {
+                    $ref->Id = $item->{$recordKey};
+                }
+
+                $record = $serializer->deserializeEntity( $item, $ref, $entityRefTypeMap );
+
+                $collection->Entities[] = $record;
+            }
+
+            return $collection;
+        } catch ( ODataException $e ) {
+            throw new OrganizationException( 'RetrieveMultiple (FetchXML) request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot retrieve via FetchXML: entity `{$entityName}` is not supported", $e );
         }
-
-        return $collection;
     }
 
     /**
@@ -364,144 +357,181 @@ class Client implements IOrganizationService {
      *
      * @return EntityCollection
      * @throws AuthenticationException
-     * @throws InaccessibleMetadataException
-     * @throws EntityNotSupportedException
-     * @throws Exception
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
-        $metadata = $this->client->getMetadata();
-        $entityMap = $metadata->getEntityMap( $query->EntityName );
-        $inboundMap = $entityMap->inboundMap;
-        $columnMap = array_flip( $inboundMap );
+        try {
+            $metadata = $this->client->getMetadata();
+            $entityMap = $metadata->getEntityMap( $query->EntityName );
+            $inboundMap = $entityMap->inboundMap;
+            $columnMap = array_flip( $inboundMap );
 
-        $queryData = [];
-        $filterQuery = [];
-        foreach ( $query->Attributes as $attributeName => $value ) {
-            $queryAttributeName = $columnMap[$attributeName];
+            $queryData = [];
+            $filterQuery = [];
+            foreach ( $query->Attributes as $attributeName => $value ) {
+                $queryAttributeName = $columnMap[ $attributeName ];
 
-            $attributeType = '';
-            if ( array_key_exists( $attributeName, $entityMap->fieldTypes ) ) {
-                $attributeType = $entityMap->fieldTypes[ $attributeName ];
+                $attributeType = '';
+                if ( array_key_exists( $attributeName, $entityMap->fieldTypes ) ) {
+                    $attributeType = $entityMap->fieldTypes[ $attributeName ];
+                }
+
+                switch ( true ) {
+                    /*
+                     * GUIDs may be stored as strings,
+                     * but GUIDs in UniqueIdentifier attributes must not be enclosed in quotes.
+                     */
+                    case ( is_string( $value ) && $attributeType !== 'Edm.Guid' ):
+                        $queryValue = "'{$value}'";
+                        break;
+                    case is_bool( $value ):
+                        $queryValue = $value? 'true' : 'false';
+                        break;
+                    case $value === null:
+                        $queryValue = 'null';
+                        break;
+                    default:
+                        $queryValue = $value;
+                }
+
+                $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
+            }
+            if ( count( $filterQuery ) ) {
+                $queryData['Filter'] = implode( ' and ', $filterQuery );
             }
 
-            switch ( true ) {
-                /*
-                 * GUIDs may be stored as strings,
-                 * but GUIDs in UniqueIdentifier attributes must not be enclosed in quotes.
-                 */
-                case ( is_string( $value ) && $attributeType !== 'Edm.Guid' ):
-                    $queryValue ="'{$value}'"; break;
-                case is_bool( $value):
-                    $queryValue = $value? 'true' : 'false'; break;
-                case $value === null:
-                    $queryValue = 'null'; break;
-                default:
-                    $queryValue = $value;
+            if ( $query->ColumnSet instanceof ColumnSet && !$query->ColumnSet->AllColumns ) {
+                foreach ( $query->ColumnSet->Columns as $column ) {
+                    if ( !array_key_exists( $column, $columnMap ) ) {
+                        $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$column}]" );
+                        continue;
+                    }
+
+                    $queryData['Select'][] = $columnMap[ $column ];
+                }
             }
 
-            $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
-        }
-        if ( count( $filterQuery ) ) {
-            $queryData['Filter'] = implode( ' and ', $filterQuery );
-        }
-
-        if ( $query->ColumnSet instanceof ColumnSet && !$query->ColumnSet->AllColumns ) {
-            foreach ( $query->ColumnSet->Columns as $column ) {
-                if ( !array_key_exists( $column, $columnMap ) ) {
-                    $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$column}]" );
+            $orderMap = [
+                0 => 'asc',
+                1 => 'desc',
+            ];
+            foreach ( $query->Orders as $attributeName => $orderType ) {
+                if ( !array_key_exists( $attributeName, $columnMap ) ) {
+                    $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$attributeName}] order setting" );
                     continue;
                 }
 
-                $queryData['Select'][] = $columnMap[$column];
-            }
-        }
-
-        $orderMap = [
-            0 => 'asc',
-            1 => 'desc',
-        ];
-        foreach ( $query->Orders as $attributeName => $orderType ) {
-            if ( !array_key_exists( $attributeName, $columnMap ) ) {
-                $this->getLogger()->warning( "No inbound attribute mapping found for {$query->EntityName}[{$attributeName}] order setting" );
-                continue;
+                $queryData['OrderBy'][] = $columnMap[ $attributeName ] . ' ' . $orderMap[ $orderType->getValue() ];
             }
 
-            $queryData['OrderBy'][] = $columnMap[$attributeName] . ' ' . $orderMap[$orderType->getValue()];
-        }
-
-        if ( $query->TopCount > 0 && $query->PageInfo instanceof PagingInfo ) {
-            throw new \InvalidArgumentException( 'QueryByAttribute cannot have both TopCount and PageInfo properties set' );
-        }
-
-        if ( $query->TopCount > 0 ) {
-            $queryData['Top'] = $query->TopCount;
-        }
-
-        if ( $query->PageInfo instanceof PagingInfo ) {
-            if ( $query->PageInfo->Count > 0 ) {
-                $queryData['MaxPageSize'] = $query->PageInfo->Count;
+            if ( $query->TopCount > 0 && $query->PageInfo instanceof PagingInfo ) {
+                throw new \InvalidArgumentException( 'QueryByAttribute cannot have both TopCount and PageInfo properties set' );
             }
 
-            if ( isset( $query->PageInfo->PagingCookie ) ) {
-                $queryData['SkipToken'] = $query->PageInfo->PagingCookie;
+            if ( $query->TopCount > 0 ) {
+                $queryData['Top'] = $query->TopCount;
             }
 
-            if ( $query->PageInfo->ReturnTotalRecordCount ) {
-                $queryData['IncludeCount'] = true;
-            }
-        }
+            if ( $query->PageInfo instanceof PagingInfo ) {
+                if ( $query->PageInfo->Count > 0 ) {
+                    $queryData['MaxPageSize'] = $query->PageInfo->Count;
+                }
 
-        $collectionName = $metadata->getEntitySetName( $query->EntityName );
-        try {
+                if ( isset( $query->PageInfo->PagingCookie ) ) {
+                    $queryData['SkipToken'] = $query->PageInfo->PagingCookie;
+                }
+
+                if ( $query->PageInfo->ReturnTotalRecordCount ) {
+                    $queryData['IncludeCount'] = true;
+                }
+            }
+
+            $collectionName = $metadata->getEntitySetName( $query->EntityName );
             $response = $this->client->getList( $collectionName, $queryData );
-        } catch ( ODataException $e ) {
-            throw new Exception( 'RetrieveMultiple (QueryByAttribute) request failed: ' . $e->getMessage(), $e );
-        }
 
-        $collection = new EntityCollection();
-        $collection->EntityName = $query->EntityName;
-        $collection->MoreRecords = false;
-        $collection->TotalRecordCount = $response->TotalRecordCount;
-        $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
+            $collection = new EntityCollection();
+            $collection->EntityName = $query->EntityName;
+            $collection->MoreRecords = false;
+            $collection->TotalRecordCount = $response->TotalRecordCount;
+            $collection->TotalRecordCountLimitExceeded = $response->TotalRecordCountLimitExceeded;
 
-        if ( !$response->Count ) {
-            return $collection;
-        }
-
-        if ( isset( $response->SkipToken ) ) {
-            $collection->PagingCookie = $response->SkipToken;
-            $collection->MoreRecords = true;
-        }
-
-        $serializer = new SerializationHelper( $this->client );
-
-        foreach ( $response->List as $item ) {
-            $ref = new EntityReference( $query->EntityName );
-            $recordKey = $entityMap->key;
-            if ( array_key_exists( $recordKey, $item ) ) {
-                $ref->Id = $item->{$recordKey};
+            if ( !$response->Count ) {
+                return $collection;
             }
 
-            $record = $serializer->deserializeEntity( $item, $ref );
+            if ( isset( $response->SkipToken ) ) {
+                $collection->PagingCookie = $response->SkipToken;
+                $collection->MoreRecords = true;
+            }
 
-            $collection->Entities[] = $record;
+            $serializer = new SerializationHelper( $this->client );
+
+            foreach ( $response->List as $item ) {
+                $ref = new EntityReference( $query->EntityName );
+                $recordKey = $entityMap->key;
+                if ( array_key_exists( $recordKey, $item ) ) {
+                    $ref->Id = $item->{$recordKey};
+                }
+
+                $record = $serializer->deserializeEntity( $item, $ref );
+
+                $collection->Entities[] = $record;
+            }
+
+            return $collection;
+        } catch ( ODataException $e ) {
+            throw new OrganizationException( 'RetrieveMultiple (QueryByAttribute) request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot retrieve via QueryByAttribute: entity `{$query->EntityName}` is not supported", $e );
         }
+    }
 
-        return $collection;
+    /**
+     * Updates an existing record.
+     *
+     * @param Entity $entity
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws OrganizationException
+     * @throws ToolkitException
+     */
+    public function Update( Entity $entity ) {
+        try {
+            $serializer = new SerializationHelper( $this->client );
+            $translatedData = $serializer->serializeEntity( $entity );
+
+            $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
+
+            $this->client->update( $collectionName, $entity->Id, $translatedData );
+
+            $entity->getAttributeState()->reset();
+        } catch ( ODataException $e ) {
+            throw new OrganizationException( 'Update request failed: ' . $e->getMessage(), $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
+        } catch ( EntityNotSupportedException $e ) {
+            throw new ToolkitException( "Cannot update: entity `{$entity->LogicalName}` is not supported", $e );
+        }
+    }
+
+    /**
+     * Returns an instance of ODataClient for direct access to OData service and underlying transport.
+     *
+     * @return ODataClient
+     */
+    public function getClient(): ODataClient {
+        return $this->client;
     }
 
     /**
      * @return CacheItemPoolInterface
      */
-    public function getCachePool() : CacheItemPoolInterface {
+    public function getCachePool(): CacheItemPoolInterface {
         return $this->client->getCachePool();
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger() : LoggerInterface {
-        return $this->client->getLogger();
     }
 
 }

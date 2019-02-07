@@ -89,7 +89,7 @@ interface IOrganizationService {
      *
      * @return Entity
      */
-    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) : Entity;
+    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet );
 
     /**
      * Retrieves a collection of records.

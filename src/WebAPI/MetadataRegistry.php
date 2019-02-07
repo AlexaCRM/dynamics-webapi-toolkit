@@ -23,8 +23,10 @@ namespace AlexaCRM\WebAPI;
 use AlexaCRM\Cache\NullAdapter;
 use AlexaCRM\WebAPI\Client as WebAPIClient;
 use AlexaCRM\WebAPI\OData\Annotation;
+use AlexaCRM\WebAPI\OData\AuthenticationException;
 use AlexaCRM\WebAPI\OData\Client;
 use AlexaCRM\WebAPI\OData\ODataException;
+use AlexaCRM\WebAPI\OData\TransportException;
 use AlexaCRM\Xrm\Metadata\EntityMetadata;
 use Psr\Cache\CacheItemPoolInterface;
 
@@ -65,7 +67,7 @@ class MetadataRegistry {
     /**
      * MetadataRegistry constructor.
      *
-     * @param \AlexaCRM\WebAPI\Client $client
+     * @param WebAPIClient $client
      */
     public function __construct( WebAPIClient $client ) {
         $this->client = $client->getClient();
@@ -96,8 +98,9 @@ class MetadataRegistry {
      * @param string $logicalName
      *
      * @return EntityMetadata
-     * @throws ODataException
-     * @throws OData\AuthenticationException
+     * @throws AuthenticationException
+     * @throws OrganizationException
+     * @throws ToolkitException
      */
     public function getDefinition( $logicalName ) {
         $cached = $this->storage->getItem( $logicalName );
@@ -110,22 +113,24 @@ class MetadataRegistry {
                 'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships',
             ] );
             unset( $object->{Annotation::ODATA_CONTEXT} );
+
+            /*
+             * Attributes with option sets arrived without them because OptionSet property is an OData navigation property
+             * which needs expansion and explicit type casting.
+             *
+             * Although we duplicate the attributes, MetadataSerializer will eliminate the duplicates
+             * and overwrite them with the newly retrieved attributes.
+             */
+            $object->Attributes = array_merge( $object->Attributes, $this->retrieveOptionSetAttributes( $logicalName ) );
         } catch ( ODataException $e ) {
             if ( $e->getCode() === 404 ) {
                 return null;
             }
 
-            throw $e;
+            throw new OrganizationException( "Failed to retrieve `{$logicalName}` metadata", $e );
+        } catch ( TransportException $e ) {
+            throw new ToolkitException( $e->getMessage(), $e );
         }
-
-        /*
-         * Attributes with option sets arrived without them because OptionSet property is an OData navigation property
-         * which needs expansion and explicit type casting.
-         *
-         * Although we duplicate the attributes, MetadataSerializer will eliminate the duplicates
-         * and overwrite them with the newly retrieved attributes.
-         */
-        $object->Attributes = array_merge( $object->Attributes, $this->retrieveOptionSetAttributes( $logicalName ) );
 
         $serializer = new MetadataSerializer();
         $md = $serializer->createEntityMetadata( $object );
@@ -145,7 +150,8 @@ class MetadataRegistry {
      * @param string $logicalName
      *
      * @return array
-     * @throws OData\AuthenticationException
+     * @throws AuthenticationException
+     * @throws TransportException
      */
     protected function retrieveOptionSetAttributes( $logicalName ) {
         $typedAttributes = [];
