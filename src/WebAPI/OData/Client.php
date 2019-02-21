@@ -140,13 +140,13 @@ class Client {
                 throw new TransportException( $e->getMessage(), $e );
             }
 
-            if ( $e->getResponse()->getStatusCode() === 401 ) {
+            $responseCode = $e->getResponse()->getStatusCode();
+            if ( $responseCode === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();
                 throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
-            $responseCode = $e->getResponse()->getStatusCode();
             $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
             throw new TransportException( 'Metadata request returned a ' . $responseCode . ' code', $e );
         }
@@ -197,14 +197,20 @@ class Client {
                 throw new TransportException( $e->getMessage(), $e );
             }
 
-            if ( $e->getResponse()->getStatusCode() === 401 ) {
+            $responseCode = $e->getResponse()->getStatusCode();
+            if ( $responseCode === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();
                 throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
             }
 
             $response = json_decode( $e->getResponse()->getBody()->getContents() );
-            $this->getLogger()->error( "Failed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
+            if ( $responseCode !== 404 ) {
+                $this->getLogger()->error( "Failed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
+            } else {
+                $this->getLogger()->notice( "Not Found {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
+            }
+
             throw new ODataException( $response->error, $e );
         } catch ( GuzzleException $e ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
