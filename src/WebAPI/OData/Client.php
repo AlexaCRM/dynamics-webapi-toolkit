@@ -501,12 +501,12 @@ class Client {
             }
             $url = sprintf( '%s%s(%s)?%s', $this->settings->getEndpointURI(), $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
             if ( $entityCollection != null ) {
-                $url = sprintf( '%s%s(%s%s(%s))?%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
+                $url = sprintf( '%s%s(%s)/%s(%s)?%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
             }
         } else {
             $url = sprintf( '%s%s()', $this->settings->getEndpointURI(), $functionName );
             if ( $entityCollection != null ) {
-                $url = sprintf( '%s%s(%s%s())', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName );
+                $url = sprintf( '%s%s(%s)/%s()', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName );
             }
         }
 
