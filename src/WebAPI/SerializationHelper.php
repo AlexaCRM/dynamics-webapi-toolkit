@@ -45,8 +45,8 @@ class SerializationHelper {
     }
 
     /**
-     * Translate CRM attribute names to Web API outbound field names,
-     * including odata.bind annotation for lookup attributes.
+     * Translates CRM attribute names to Web API outbound field names,
+     * including the `odata.bind` annotation for lookup attributes.
      *
      * @param Entity $entity
      *
@@ -61,6 +61,9 @@ class SerializationHelper {
         $entityMap = $metadata->getEntityMap( $entity->LogicalName );
         $outboundMap = $entityMap->outboundMap;
 
+        // Use an inverted inbound map to disassociate records with AutoDisassociate: true.
+        $disassociateMap = array_flip( $entityMap->inboundMap );
+
         $touchedFields = [];
         foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
             $touchedFields[$fieldName] = $entity[$fieldName];
@@ -70,21 +73,43 @@ class SerializationHelper {
 
         foreach ( $touchedFields as $field => $value ) {
             $outboundMapping = $outboundMap[$field];
+            $isLookup = is_array( $outboundMapping );
+
             if ( is_string( $outboundMapping ) ) {
                 $translatedData[$outboundMapping] = $value;
                 continue; // Simple value mapping found.
             }
 
-            if ( is_array( $outboundMapping ) && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
+            if ( $isLookup && $value === null ) {
+                /*
+                 * Exploit the AutoDisassociate workaround to seamlessly disassociate lookup records
+                 * on record update.
+                 *
+                 * Utilizes the `AutoDisassociate: true` header with the corresponding read-only single-valued
+                 * navigation properties being set to NULL.
+                 *
+                 * Proven to work in Web API 9.0 and 9.1.
+                 *
+                 * {
+                 *   "_primarycontactid_value": null
+                 * }
+                 */
+                $translatedData[ $disassociateMap[ $field ] ] = null;
+            } elseif ( $isLookup && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
+                /*
+                 * Associate records using the @odata.bind annotation.
+                 */
                 $logicalName = $value->LogicalName;
-                if ( !array_key_exists( $logicalName, $outboundMapping) ) {
+
+                if ( !array_key_exists( $logicalName, $outboundMapping ) ) {
                     $this->client->getLogger()->error( "{$entity->LogicalName}[{$field}] lookup supplied with an unsupported entity type `{$logicalName}`" );
                     continue;
                 }
 
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
-                $translatedData[$outboundMapping[$logicalName] . Annotation::ODATA_BIND] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
+                $annotation = $outboundMapping[$logicalName] . Annotation::ODATA_BIND;
+                $translatedData[ $annotation ] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
 
                 continue;
             }

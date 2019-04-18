@@ -33,6 +33,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Dynamics 365 Web API OData client.
@@ -165,7 +166,7 @@ class Client {
      * @param mixed $data
      * @param array $headers
      *
-     * @return mixed|\Psr\Http\Message\ResponseInterface
+     * @return mixed|ResponseInterface
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
@@ -387,7 +388,7 @@ class Client {
      * @param $entityCollection
      * @param $data
      *
-     * @return mixed
+     * @return string|null
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
@@ -395,11 +396,8 @@ class Client {
     public function create( $entityCollection, $data ) {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $entityCollection );
         $res = $this->doRequest( 'POST', $url, $data );
-        $id = $res->getHeader( 'OData-EntityId' )[0];
-        $id = explode( '(', $id )[1];
-        $id = str_replace( ')', '', $id );
 
-        return $id;
+        return static::getEntityId( $res );
     }
 
     /**
@@ -408,25 +406,36 @@ class Client {
      * @param $data
      * @param bool $upsert
      *
-     * @return \stdClass
+     * @return string|null
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
     public function update( $entityCollection, $key, $data, $upsert = false ) {
         $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
-        $headers = [];
+        $headers = [
+            /*
+             * Exploit the AutoDisassociate workaround to seamlessly disassociate lookup records
+             * on record update.
+             *
+             * Utilizes the `AutoDisassociate: true` header with the corresponding read-only single-valued
+             * navigation properties being set to NULL.
+             *
+             * Proven to work in Web API 9.0 and 9.1.
+             *
+             * {
+             *   "_primarycontactid_value": null
+             * }
+             */
+            'AutoDisassociate' => 'true',
+        ];
         if ( $upsert ) {
             $headers['If-Match'] = '*';
         }
-        $res = $this->doRequest( 'PATCH', $url, $data, $headers );
-        $id = $res->getHeader( 'OData-EntityId' )[0];
-        $id = explode( '(', $id )[1];
-        $id = str_replace( ')', '', $id );
-        $result = new \stdClass();
-        $result->EntityId = $id;
 
-        return $result;
+        $res = $this->doRequest( 'PATCH', $url, $data, $headers );
+
+        return static::getEntityId( $res );
     }
 
     /**
@@ -564,6 +573,28 @@ class Client {
      */
     public function getLogger() {
         return $this->settings->logger;
+    }
+
+    /**
+     * Retrieves the ID of the newly created/updated entity record from response headers.
+     *
+     * @param ResponseInterface $response
+     *
+     * @return string|null
+     */
+    protected static function getEntityId( ResponseInterface $response ) {
+        $entityId = $response->getHeader( 'OData-EntityId' );
+        if ( count( $entityId ) === 0 ) {
+            return null;
+        }
+
+        // Textual UUID representation is 36 characters long.
+        $id = substr( $entityId[0], strrpos( $entityId[0], '(' ) + 1, 36 );
+        if ( $id === false ) {
+            return null;
+        }
+
+        return $id;
     }
 
 }
