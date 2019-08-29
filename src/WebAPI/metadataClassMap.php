@@ -22,12 +22,12 @@
  * Organization metadata serialization class map.
  */
 
-use AlexaCRM\WebAPI\Serializer\Reference;
+use AlexaCRM\StrongSerializer\Reference;
 use AlexaCRM\Xrm\Metadata\AttributeTypeCode;
 
 return [
     'AlexaCRM\Xrm\Label' => [
-        'LocalizedLabels' => ( new Reference( 'AlexaCRM\Xrm\LocalizedLabel' ) )->makeMap( 'LanguageCode' ),
+        'LocalizedLabels' => ( new Reference( 'AlexaCRM\Xrm\LocalizedLabel' ) )->toMap( 'LanguageCode' ),
         'UserLocalizedLabel' => new Reference( 'AlexaCRM\Xrm\LocalizedLabel' ),
     ],
     'AlexaCRM\Xrm\Metadata\EntityMetadata' => [
@@ -82,7 +82,7 @@ return [
                 default:
                     return 'AlexaCRM\Xrm\Metadata\AttributeMetadata';
             }
-        } ) )->makeMap( 'LogicalName' ),
+        } ) )->toMap( 'LogicalName' ),
         'CanBeInCustomEntityAssociation' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'CanBeInManyToMany' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'CanBePrimaryEntityInRelationship' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
@@ -110,12 +110,12 @@ return [
         'IsValidForQueue' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'IsVisibleInMobile' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
         'IsVisibleInMobileClient' => new Reference( 'AlexaCRM\Xrm\ManagedProperty' ),
-        'Keys' => ( new Reference( 'AlexaCRM\Xrm\Metadata\EntityKeyMetadata' ) )->makeMap( 'LogicalName' ),
-        'ManyToManyRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\ManyToManyRelationshipMetadata' ) )->makeMap( 'SchemaName' ),
-        'ManyToOneRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' ) )->makeMap( 'SchemaName' ),
-        'OneToManyRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' ) )->makeMap( 'SchemaName' ),
+        'Keys' => ( new Reference( 'AlexaCRM\Xrm\Metadata\EntityKeyMetadata' ) )->toMap( 'LogicalName' ),
+        'ManyToManyRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\ManyToManyRelationshipMetadata' ) )->toMap( 'SchemaName' ),
+        'ManyToOneRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' ) )->toMap( 'SchemaName' ),
+        'OneToManyRelationships' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OneToManyRelationshipMetadata' ) )->toMap( 'SchemaName' ),
         'OwnershipType' => new Reference( 'AlexaCRM\Xrm\Metadata\OwnershipTypes' ),
-        'Privileges' => ( new Reference( 'AlexaCRM\Xrm\Metadata\SecurityPrivilegeMetadata' ) )->makeMap( 'Name' ),
+        'Privileges' => ( new Reference( 'AlexaCRM\Xrm\Metadata\SecurityPrivilegeMetadata' ) )->toMap( 'Name' ),
     ],
     'AlexaCRM\Xrm\Metadata\AssociatedMenuConfiguration' => [
         'Behavior' => new Reference( 'AlexaCRM\Xrm\Metadata\AssociatedMenuBehavior' ),
@@ -198,7 +198,7 @@ return [
         'Label' => new Reference( 'AlexaCRM\Xrm\Label' ),
     ],
     'AlexaCRM\Xrm\Metadata\OptionSetMetadata' => [
-        'Options' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OptionMetadata' ) )->makeMap( 'Value' ),
+        'Options' => ( new Reference( 'AlexaCRM\Xrm\Metadata\OptionMetadata' ) )->toMap( 'Value' ),
     ],
     'AlexaCRM\Xrm\Metadata\OptionSetMetadataBase' => [
         'Description' => new Reference( 'AlexaCRM\Xrm\Label' ),

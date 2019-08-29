@@ -21,6 +21,7 @@
 namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\Cache\NullAdapter;
+use AlexaCRM\StrongSerializer\Reference;
 use AlexaCRM\WebAPI\Client as WebAPIClient;
 use AlexaCRM\WebAPI\OData\Annotation;
 use AlexaCRM\WebAPI\OData\AuthenticationException;
@@ -63,6 +64,13 @@ class MetadataRegistry {
      * @var CacheItemPoolInterface
      */
     protected $storage;
+
+    /**
+     * Deserializer class conversion map.
+     *
+     * @var array
+     */
+    protected static $map;
 
     /**
      * MetadataRegistry constructor.
@@ -118,7 +126,7 @@ class MetadataRegistry {
              * Attributes with option sets arrived without them because OptionSet property is an OData navigation property
              * which needs expansion and explicit type casting.
              *
-             * Although we duplicate the attributes, MetadataSerializer will eliminate the duplicates
+             * Although we duplicate the attributes, Deserializer will eliminate the duplicates
              * and overwrite them with the newly retrieved attributes.
              */
             $object->Attributes = array_merge( $object->Attributes, $this->retrieveOptionSetAttributes( $logicalName ) );
@@ -132,13 +140,27 @@ class MetadataRegistry {
             throw new ToolkitException( $e->getMessage(), $e );
         }
 
-        $serializer = new MetadataSerializer();
-        $md = $serializer->createEntityMetadata( $object );
+        $deserializer = $this->newDeserializer();
+        /** @var EntityMetadata $md */
+        $md = $deserializer->deserialize( $object, new Reference( EntityMetadata::class ) );
 
         $cached->set( $md )->expiresAfter( $this->ttl );
         $this->storage->save( $cached );
 
         return $md;
+    }
+
+    /**
+     * Provides a new instance of metadata deserializer.
+     *
+     * @return MetadataDeserializer
+     */
+    public function newDeserializer() {
+        if ( static::$map === null ) {
+            static::$map = require 'metadataClassMap.php';
+        }
+
+        return new MetadataDeserializer( static::$map );
     }
 
     /**
