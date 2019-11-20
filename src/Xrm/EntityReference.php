@@ -50,7 +50,7 @@ class EntityReference {
     /**
      * Key attributes of the record.
      *
-     * @var string[string]
+     * @var KeyAttributeCollection
      */
     public $KeyAttributes;
 

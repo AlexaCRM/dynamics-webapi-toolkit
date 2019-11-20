@@ -26,7 +26,7 @@ namespace AlexaCRM\Xrm;
  *
  * @property-read int $Count Gets the number of key attributes in the collection.
  */
-class KeyAttributeCollection implements \Iterator {
+class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
 
     /**
      * Collection of key attributes and values.
@@ -52,7 +52,7 @@ class KeyAttributeCollection implements \Iterator {
      *
      * @return bool
      */
-    public function Remove( $key ) : bool {
+    public function Remove( $key ): bool {
         if ( !array_key_exists( $key, $this->keys ) ) {
             return false;
         }
@@ -124,6 +124,59 @@ class KeyAttributeCollection implements \Iterator {
      */
     public function rewind() {
         reset( $this->keys );
+    }
+
+    /**
+     * Whether a offset exists.
+     *
+     * @param mixed $offset
+     *
+     * @return bool True on success or false on failure.
+     */
+    public function offsetExists( $offset ) {
+        return array_key_exists( $offset, $this->keys );
+    }
+
+    /**
+     * Offset to retrieve.
+     *
+     * @param mixed $offset The offset to retrieve.
+     *
+     * @return mixed Can return all value types.
+     */
+    public function offsetGet( $offset ) {
+        return $this->keys[ $offset ];
+    }
+
+    /**
+     * Offset to set.
+     *
+     * @param mixed $offset The offset to assign the value to.
+     * @param mixed $value The value to set.
+     * @return void
+     */
+    public function offsetSet( $offset, $value ) {
+        $this->Add( $offset, $value );
+    }
+
+    /**
+     * Offset to unset.
+     *
+     * @param mixed $offset The offset to unset.
+     *
+     * @return void
+     */
+    public function offsetUnset( $offset ) {
+        $this->Remove( $offset );
+    }
+
+    /**
+     * Count elements of an object.
+     *
+     * @return int The custom count as an integer.
+     */
+    public function count() {
+        return count( $this->keys );
     }
 
 }
