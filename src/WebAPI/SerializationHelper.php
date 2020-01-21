@@ -190,7 +190,7 @@ class SerializationHelper {
              * entity type targeted by the lookup attribute. We could validate logical name / ID pair in CRM
              * but it is a costly procedure, especially for lookups with a long Targets list.
              */
-            if ( array_key_exists( $logicalNameField, $rawEntity ) ) {
+            if ( property_exists( $rawEntity, $logicalNameField ) ) {
                 $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
             } elseif ( $attributeToEntityMap !== null
                        && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
@@ -207,7 +207,7 @@ class SerializationHelper {
             $targetEntity->Attributes[$targetField] = $targetValue;
 
             // Import formatted value.
-            if ( array_key_exists( $formattedValueField, $rawEntity ) ) {
+            if ( property_exists( $rawEntity, $formattedValueField ) ) {
                 $targetEntity->FormattedValues[$targetField] = $rawEntity->{$formattedValueField};
 
                 if ( $targetValue instanceof EntityReference ) {

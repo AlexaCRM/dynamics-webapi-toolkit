@@ -470,7 +470,7 @@ class Client implements IOrganizationService {
             foreach ( $response->List as $item ) {
                 $ref = new EntityReference( $query->EntityName );
                 $recordKey = $entityMap->key;
-                if ( array_key_exists( $recordKey, $item ) ) {
+                if ( property_exists( $item, $recordKey ) ) {
                     $ref->Id = $item->{$recordKey};
                 }
 
