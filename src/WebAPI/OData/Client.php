@@ -340,7 +340,7 @@ class Client {
                 $result->List = array_merge( $result->List, $data->value );
                 $result->Count = count( $result->List );
 
-                $nextLink     = $data->{Annotation::ODATA_NEXTLINK};
+                $nextLink     = $data->{Annotation::ODATA_NEXTLINK} ?? null;
             }
 
             unset( $result->SkipToken );
