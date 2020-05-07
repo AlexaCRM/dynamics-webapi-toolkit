@@ -67,16 +67,31 @@ class Client {
     protected $authMiddleware;
 
     /**
+     * Guzzle-compatible authentication middleware.
+     *
+     * @var MiddlewareInterface[]
+     */
+    protected $middlewares;
+
+    /**
      * Client constructor.
      *
      * @param Settings $settings
      * @param AuthMiddlewareInterface $authMiddleware
+     * @param MiddlewareInterface[] $middlewares
      */
-    function __construct( Settings $settings, AuthMiddlewareInterface $authMiddleware ) {
+    function __construct( Settings $settings, AuthMiddlewareInterface $authMiddleware, MiddlewareInterface ...$middlewares ) {
         $this->settings = $settings;
         $this->authMiddleware = $authMiddleware;
+        $this->middlewares = $middlewares;
 
-        $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [ 'settings' => $settings, 'authentication' => get_class( $authMiddleware ) ] );
+        $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [
+            'settings' => $settings,
+            'authentication' => get_class( $authMiddleware ),
+            'handlers' => array_map( function ( $middleware ) {
+                return get_class( $middleware );
+            }, $middlewares ),
+        ] );
     }
 
     /**
@@ -97,6 +112,10 @@ class Client {
 
         $handlerStack = HandlerStack::create();
         $handlerStack->push( $this->authMiddleware->getMiddleware() );
+
+        foreach ( $this->middlewares as $middleware ) {
+            $handlerStack->push( $middleware->getMiddleware() );
+        }
 
         $this->httpClient = new HttpClient( [
             'headers' => $headers,

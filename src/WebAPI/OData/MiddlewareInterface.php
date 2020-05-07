@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 AlexaCRM
+ * Copyright 2020 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -22,15 +22,18 @@
 namespace AlexaCRM\WebAPI\OData;
 
 /**
- * Describes an interface to provide authentication middleware.
+ * Describes an interface for middleware.
  */
-interface AuthMiddlewareInterface extends MiddlewareInterface {
+interface MiddlewareInterface {
 
     /**
-     * Discards the currently used access token.
+     * Returns a Guzzle-compliant middleware.
      *
-     * @return void
+     * The middleware must augment the request by adding required authorization credentials.
+     *
+     * @return callable
+     *
+     * @see http://docs.guzzlephp.org/en/stable/handlers-and-middleware.html
      */
-    public function discardToken();
-
+    public function getMiddleware();
 }
