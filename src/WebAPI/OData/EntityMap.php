@@ -29,31 +29,23 @@ class EntityMap {
 
     /**
      * Entity name.
-     *
-     * @var string
      */
-    public $name;
+    public string $name;
 
     /**
      * Entity primary key name.
-     *
-     * @var string
      */
-    public $key;
+    public ?string $key = null;
 
     /**
      * Whether the entity is abstract.
-     *
-     * @var bool
      */
-    public $isAbstract;
+    public bool $isAbstract;
 
     /**
      * Name of the base entity.
-     *
-     * @var string
      */
-    public $baseEntity;
+    public ?string $baseEntity = null;
 
     /**
      * Map of field names coming from Web API into concrete field names.
@@ -66,7 +58,7 @@ class EntityMap {
      * @see \AlexaCRM\WebAPI\Client::Retrieve() Used for entity unmarshalling and ColumnSet marshalling.
      * @see \AlexaCRM\WebAPI\Client::RetrieveMultiple() Used for entity unmarshalling.
      */
-    public $inboundMap = [];
+    public array $inboundMap = [];
 
     /**
      * Map of concrete field names into OData basic / navigation property names.
@@ -74,20 +66,20 @@ class EntityMap {
      * For basic properties, the mapping is [ concreteFieldName => ODataFieldName ], which is identical.
      *
      * For navigation properties, the mapping is [ concreteFieldName => [ type => ODataFieldName ] ].
-     * The rationale is that some concrete field names may be represented as multiple navigation property,
+     * The rationale is that some concrete field names may be represented as multiple navigation property names,
      * e.g. customerid converting to customerid_account for 'account' records, and customerid_contact
      * for 'contact' records.
      *
      * @var array
      */
-    public $outboundMap = [];
+    public array $outboundMap = [];
 
     /**
      * Map of CRM fields mapped to their EDM types.
      *
      * @var array
      */
-    public $fieldTypes = [];
+    public array $fieldTypes = [];
 
     /**
      * Creates an entity map from an CSDL EntityType node.
@@ -97,7 +89,7 @@ class EntityMap {
      *
      * @return static
      */
-    public static function createFromDOM( \DOMElement $element, Metadata $metadata ) {
+    public static function createFromDOM( \DOMElement $element, Metadata $metadata ): EntityMap {
         $map = new static();
 
         $x = new \DOMXPath( $element->ownerDocument );
@@ -174,7 +166,7 @@ class EntityMap {
      *
      * @param EntityMap $map Base entity map.
      */
-    public function rebuildFromBase( EntityMap $map ) {
+    public function rebuildFromBase( EntityMap $map ): void {
         $current = clone $this;
 
         $this->key = $map->key;

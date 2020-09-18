@@ -31,34 +31,26 @@ class ListResponse {
      *
      * @var object[]
      */
-    public $List;
+    public array $List;
 
     /**
      * The number of records returned.
-     *
-     * @var int
      */
-    public $Count;
+    public int $Count;
 
     /**
      * The info used to page large result sets.
-     *
-     * @var string
      */
-    public $SkipToken;
+    public ?string $SkipToken = null;
 
     /**
      * Total number of records.
-     *
-     * @var int
      */
-    public $TotalRecordCount;
+    public int $TotalRecordCount;
 
     /**
      * Whether the results of the query exceeds the total record count.
-     *
-     * @var bool
      */
-    public $TotalRecordCountLimitExceeded;
+    public bool $TotalRecordCountLimitExceeded = false;
 
 }

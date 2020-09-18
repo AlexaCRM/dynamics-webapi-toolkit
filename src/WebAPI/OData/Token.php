@@ -28,44 +28,24 @@ class Token {
 
     /**
      * Token type, usually `Bearer`.
-     *
-     * @var string
      */
-    public $token_type;
+    public ?string $type = null;
 
-    /**
-     * @var int
-     */
-    public $expires_in;
+    public ?int $expiresIn = null;
 
-    /**
-     * @var int
-     */
-    public $ext_expires_in;
+    public ?int $expiresOn = null;
 
-    /**
-     * @var int
-     */
-    public $expires_on;
-
-    /**
-     * @var int
-     */
-    public $not_before;
+    public ?int $notBefore = null;
 
     /**
      * Resource URI for which the token was granted.
-     *
-     * @var string
      */
-    public $resource;
+    public ?string $resource = null;
 
     /**
      * Token value.
-     *
-     * @var string
      */
-    public $access_token;
+    public ?string $token = null;
 
     /**
      * Constructs a new Token object from a JSON received from an OAuth2 token endpoint.
@@ -74,32 +54,20 @@ class Token {
      *
      * @return Token
      */
-    public static function createFromJson( $json ) {
+    public static function createFromJson( string $json ): Token {
         try {
             $tokenArray = \GuzzleHttp\json_decode( $json, true );
         } catch ( \InvalidArgumentException $e ) {
-            $tokenArray = [];
+            return new Token();
         }
 
         $token = new Token();
-
-        // Returns an empty token object in case of JSON decoding error.
-        if ( !count( $tokenArray ) ) {
-            return $token;
-        }
-
-        foreach ( $tokenArray as $key => $value ) {
-            if ( !property_exists( Token::class, $key ) ) {
-                continue;
-            }
-
-            $token->{$key} = $value;
-        }
-
-        $token->expires_in = (int)$token->expires_in;
-        $token->ext_expires_in = (int)$token->ext_expires_in;
-        $token->expires_on = (int)$token->expires_on;
-        $token->not_before = (int)$token->not_before;
+        $token->type = $tokenArray['token_type'] ?? null;
+        $token->expiresIn = isset( $tokenArray['expires_in'] )? (int)$tokenArray['expires_in'] : null;
+        $token->expiresOn = isset( $tokenArray['expires_on'] )? (int)$tokenArray['expires_on'] : null;
+        $token->notBefore = isset( $tokenArray['not_before'] )? (int)$tokenArray['not_before'] : null;
+        $token->resource = $tokenArray['resource'] ?? null;
+        $token->token = $tokenArray['access_token'] ?? null;
 
         return $token;
     }
@@ -107,16 +75,16 @@ class Token {
     /**
      * Tells whether the token is not expired.
      *
-     * @param int $time Specify time to check the token against.
+     * @param int|null $time Specify time to check the token against. Default is current time.
      *
      * @return bool
      */
-    public function isValid( $time = null ) {
+    public function isValid( int $time = null ): bool {
         if ( $time === null ) {
             $time = time();
         }
 
-        return ( $time >= $this->not_before && $time < $this->expires_on );
+        return ( $time >= $this->notBefore && $time < $this->expiresOn );
     }
 
 }

@@ -27,17 +27,13 @@ class ManagedProperty {
 
     /**
      * Whether the managed property value can be changed.
-     *
-     * @var bool
      */
-    public $CanBeChanged;
+    public ?bool $CanBeChanged = null;
 
     /**
      * The logical name for the managed property.
-     *
-     * @var string
      */
-    public $ManagedPropertyLogicalName;
+    public ?string $ManagedPropertyLogicalName = null;
 
     /**
      * The value of the managed property.

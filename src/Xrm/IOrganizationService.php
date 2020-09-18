@@ -38,7 +38,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Associate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities );
+    public function Associate( string $entityName, string $entityId, Relationship $relationship, array $relatedEntities ): void;
 
     /**
      * Creates a record.
@@ -47,7 +47,7 @@ interface IOrganizationService {
      *
      * @return string ID of the new record.
      */
-    public function Create( Entity $entity );
+    public function Create( Entity $entity ): string;
 
     /**
      * Deletes a record.
@@ -57,7 +57,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Delete( string $entityName, $entityId );
+    public function Delete( string $entityName, string $entityId ): void;
 
     /**
      * Deletes a link between records.
@@ -69,7 +69,7 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Disassociate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities );
+    public function Disassociate( string $entityName, string $entityId, Relationship $relationship, array $relatedEntities ): void;
 
     /**
      * Executes a function or action formed as a request.
@@ -87,18 +87,18 @@ interface IOrganizationService {
      * @param string $entityId Record ID.
      * @param ColumnSet $columnSet
      *
-     * @return Entity
+     * @return Entity|null
      */
-    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet );
+    public function Retrieve( string $entityName, string $entityId, ColumnSet $columnSet ): ?Entity;
 
     /**
      * Retrieves a collection of records.
      *
      * @param QueryBase $query
      *
-     * @return mixed
+     * @return EntityCollection
      */
-    public function RetrieveMultiple( QueryBase $query );
+    public function RetrieveMultiple( QueryBase $query ): EntityCollection;
 
     /**
      * Updates an existing record.
@@ -107,6 +107,6 @@ interface IOrganizationService {
      *
      * @return void
      */
-    public function Update( Entity $entity );
+    public function Update( Entity $entity ): void;
 
 }

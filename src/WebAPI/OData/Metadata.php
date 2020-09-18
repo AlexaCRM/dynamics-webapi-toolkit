@@ -31,17 +31,13 @@ class Metadata {
 
     /**
      * Service schema namespace;
-     *
-     * @var string
      */
-    public $namespace;
+    public string $namespace;
 
     /**
      * Registered namespace alias.
-     *
-     * @var string
      */
-    public $alias;
+    public string $alias;
 
     /**
      * Collection of entity type maps, covering incoming and outgoing field conversions.
@@ -50,21 +46,21 @@ class Metadata {
      *
      * @var EntityMap[]
      */
-    public $entityMaps;
+    public array $entityMaps = [];
 
     /**
      * Lists all types which have children, together with their descendants.
      *
      * @var array
      */
-    public $parentTypesMap;
+    public array $parentTypesMap = [];
 
     /**
      * EntityType to EntitySet map.
      *
      * @var array
      */
-    public $entitySetMap = [];
+    public array $entitySetMap = [];
 
     /**
      * Creates a new metadata object from a CSDL document.
@@ -73,8 +69,8 @@ class Metadata {
      *
      * @return Metadata|null
      */
-    public static function createFromXML( $xml ) {
-        $metadata = new Metadata();
+    public static function createFromXML( string $xml ): ?self {
+        $metadata = new self();
 
         $dom = new \DOMDocument( '1.0', 'utf-8' );
         if ( !$dom->loadXML( $xml ) ) {

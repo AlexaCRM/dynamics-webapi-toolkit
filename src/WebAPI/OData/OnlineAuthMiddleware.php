@@ -34,22 +34,15 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
     /**
      * OData service settings.
-     *
-     * @var OnlineSettings
      */
-    protected $settings;
+    protected OnlineSettings $settings;
 
     /**
      * Bearer token.
-     *
-     * @var Token
      */
-    protected $token;
+    protected ?Token $token = null;
 
-    /**
-     * @var HttpClient
-     */
-    protected $httpClient;
+    protected ?HttpClient $httpClient = null;
 
     /**
      * OnlineAuthMiddleware constructor.
@@ -62,16 +55,15 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
     /**
      * Constructs an HTTP client for the middleware.
-     *
-     * @return HttpClient
      */
-    protected function getHttpClient() {
+    protected function getHttpClient(): HttpClient {
         if ( $this->httpClient instanceof HttpClient ) {
             return $this->httpClient;
         }
 
+        /** @noinspection ProperNullCoalescingOperatorUsageInspection */
         $this->httpClient = new HttpClient( [
-            'verify' => $this->settings->caBundle !== null? $this->settings->caBundle : true,
+            'verify' => $this->settings->caBundle ?? true,
         ] );
 
         return $this->httpClient;
@@ -84,7 +76,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      *
      * @return string Tenant ID of the queried instance.
      */
-    protected function detectTenantID( $endpointUri ) {
+    protected function detectTenantID( string $endpointUri ): string {
         if ( isset( $this->settings->tenantID ) ) {
             return $this->settings->tenantID;
         }
@@ -118,7 +110,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      *
      * @throws AuthenticationException
      */
-    protected function acquireToken() {
+    protected function acquireToken(): Token {
         if ( $this->token instanceof Token && $this->token->isValid() ) {
             return $this->token; // Token already acquired and is not expired.
         }
@@ -134,9 +126,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
                 $settings->logger->debug( 'Loaded a non-expired access token from cache' );
 
                 return $token;
-            } else {
-                $settings->cachePool->deleteItem( $cacheKey );
             }
+
+            $settings->cachePool->deleteItem( $cacheKey );
         }
 
         $tenantId = $this->detectTenantID( $settings->getEndpointURI() );
@@ -165,7 +157,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
         $this->token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
         $expirationDate = new \DateTime();
-        $expirationDate->setTimestamp( $this->token->expires_on );
+        $expirationDate->setTimestamp( $this->token->expiresOn );
         $settings->cachePool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
 
         return $this->token;
@@ -174,7 +166,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     /**
      * Discards the access token from memory and cache.
      */
-    public function discardToken() {
+    public function discardToken(): void {
         $this->token = null;
 
         $settings = $this->settings;
@@ -190,18 +182,16 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      *
      * @see http://docs.guzzlephp.org/en/stable/handlers-and-middleware.html
      */
-    public function getMiddleware() {
+    public function getMiddleware(): callable {
         $self = $this;
 
-        return function ( callable $handler ) use ( $self ) {
-            $settings = $self->settings;
-
-            return function ( RequestInterface $request, array $options ) use ( $self, $handler, $settings ) {
+        return static function ( callable $handler ) use ( $self ) {
+            return static function ( RequestInterface $request, array $options ) use ( $self, $handler ) {
                 $token = $self->acquireToken();
-                $headerValue = $token->token_type . ' ' . $token->access_token;
-                $request = $request->withHeader( 'Authorization', $headerValue );
+                $headerValue = $token->type . ' ' . $token->token;
+                $newReq = $request->withHeader( 'Authorization', $headerValue );
 
-                return $handler( $request, $options );
+                return $handler( $newReq, $options );
             };
         };
     }

@@ -42,7 +42,12 @@ class ClientFactory {
      *
      * @return Client
      */
-    public static function createOnlineClient( $instanceURI, $applicationID, $applicationSecret, array $services = [] ) {
+    public static function createOnlineClient(
+        string $instanceURI,
+        string $applicationID,
+        string $applicationSecret,
+        array $services = []
+    ): Client {
         $settings = new OnlineSettings();
         $settings->instanceURI = $instanceURI;
         $settings->applicationID = $applicationID;
@@ -57,9 +62,8 @@ class ClientFactory {
 
         $middleware = new OnlineAuthMiddleware( $settings );
         $odataClient = new OData\Client( $settings, $middleware );
-        $client = new Client( $odataClient );
 
-        return $client;
+        return new Client( $odataClient );
     }
 
 }

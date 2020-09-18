@@ -31,10 +31,7 @@ use Psr\Http\Message\RequestInterface;
  */
 class TransferOptionMiddleware implements MiddlewareInterface {
 
-    /**
-     * @var string
-     */
-    protected $optionName;
+    protected string $optionName;
 
     /**
      * @var mixed
@@ -60,11 +57,11 @@ class TransferOptionMiddleware implements MiddlewareInterface {
      *
      * @see http://docs.guzzlephp.org/en/stable/handlers-and-middleware.html#creating-a-handler
      */
-    public function getMiddleware() {
+    public function getMiddleware(): callable {
         $self = $this;
 
-        return function ( callable $handler ) use ( $self ) {
-            return function ( RequestInterface $request, $options ) use ( $handler, $self ) {
+        return static function ( callable $handler ) use ( $self ) {
+            return static function ( RequestInterface $request, $options ) use ( $handler, $self ) {
                 $options[ $self->optionName ] = $self->optionValue;
 
                 return $handler( $request, $options );

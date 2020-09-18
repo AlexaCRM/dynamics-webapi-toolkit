@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018 AlexaCRM
+ * Copyright 2018-2020 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -47,7 +47,7 @@ class Client implements IOrganizationService {
     /**
      * @var ODataClient
      */
-    protected $client;
+    protected ODataClient $client;
 
     /**
      * Client constructor.
@@ -71,7 +71,7 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function Associate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
+    public function Associate( string $entityName, string $entityId, Relationship $relationship, array $relatedEntities ): void {
         try {
             $metadata = $this->client->getMetadata();
             $collectionName = $metadata->getEntitySetName( $entityName );
@@ -101,7 +101,7 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function Create( Entity $entity ) {
+    public function Create( Entity $entity ): string {
         try {
             $serializer = new SerializationHelper( $this->client );
             $translatedData = $serializer->serializeEntity( $entity );
@@ -133,7 +133,7 @@ class Client implements IOrganizationService {
      * @throws ToolkitException
      * @throws AuthenticationException
      */
-    public function Delete( string $entityName, $entityId ) {
+    public function Delete( string $entityName, string $entityId ): void {
         try {
             $metadata = $this->client->getMetadata();
             $collectionName = $metadata->getEntitySetName( $entityName );
@@ -161,7 +161,7 @@ class Client implements IOrganizationService {
      * @throws ToolkitException
      * @throws AuthenticationException
      */
-    public function Disassociate( string $entityName, $entityId, Relationship $relationship, array $relatedEntities ) {
+    public function Disassociate( string $entityName, string $entityId, Relationship $relationship, array $relatedEntities ): void {
         try {
             $metadata = $this->client->getMetadata();
             $collectionName = $metadata->getEntitySetName( $entityName );
@@ -200,12 +200,12 @@ class Client implements IOrganizationService {
      * @param string $entityId Record ID.
      * @param ColumnSet $columnSet
      *
-     * @return Entity
+     * @return Entity|null
      * @throws AuthenticationException
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function Retrieve( string $entityName, $entityId, ColumnSet $columnSet ) {
+    public function Retrieve( string $entityName, string $entityId, ColumnSet $columnSet ): ?Entity {
         try {
             $metadata = $this->client->getMetadata();
             $collectionName = $metadata->getEntitySetName( $entityName );
@@ -266,10 +266,12 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function RetrieveMultiple( QueryBase $query ) {
+    public function RetrieveMultiple( QueryBase $query ): EntityCollection {
         if ( $query instanceof FetchExpression ) {
             return $this->retrieveViaFetchXML( $query );
-        } elseif ( $query instanceof QueryByAttribute ) {
+        }
+
+        if ( $query instanceof QueryByAttribute ) {
             return $this->retrieveViaQueryByAttribute( $query );
         }
 
@@ -284,7 +286,7 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    protected function retrieveViaFetchXML( FetchExpression $query ) {
+    protected function retrieveViaFetchXML( FetchExpression $query ): EntityCollection {
         try {
             $fetchDOM = new \DOMDocument( '1.0', 'utf-8' );
             $fetchDOM->loadXML( $query->Query );
@@ -333,7 +335,7 @@ class Client implements IOrganizationService {
             foreach ( $response->List as $item ) {
                 $ref = new EntityReference( $entityName );
                 $recordKey = $entityMap->key;
-                if ( array_key_exists( $recordKey, $item ) ) {
+                if ( property_exists( $item, $recordKey ) ) {
                     $ref->Id = $item->{$recordKey};
                 }
 
@@ -360,7 +362,7 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    protected function retrieveViaQueryByAttribute( QueryByAttribute $query ) {
+    protected function retrieveViaQueryByAttribute( QueryByAttribute $query ): EntityCollection {
         try {
             $metadata = $this->client->getMetadata();
             $entityMap = $metadata->getEntityMap( $query->EntityName );
@@ -499,7 +501,7 @@ class Client implements IOrganizationService {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function Update( Entity $entity ) {
+    public function Update( Entity $entity ): void {
         try {
             $serializer = new SerializationHelper( $this->client );
             $translatedData = $serializer->serializeEntity( $entity );

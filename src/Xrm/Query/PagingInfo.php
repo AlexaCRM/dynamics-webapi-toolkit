@@ -28,30 +28,22 @@ class PagingInfo {
 
     /**
      * The number of entity instances returned per page.
-     *
-     * @var int
      */
-    public $Count;
+    public ?int $Count = null;
 
     /**
      * The number of pages returned from the query.
-     *
-     * @var int
      */
-    public $PageNumber;
+    public ?int $PageNumber = null;
 
     /**
      * The info used to page large result sets.
-     *
-     * @var string
      */
-    public $PagingCookie;
+    public ?string $PagingCookie = null;
 
     /**
      * Whether the total number of records should be returned from the query.
-     *
-     * @var bool
      */
-    public $ReturnTotalRecordCount;
+    public ?bool $ReturnTotalRecordCount = null;
 
 }

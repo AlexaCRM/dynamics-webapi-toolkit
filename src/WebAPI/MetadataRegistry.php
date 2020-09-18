@@ -29,6 +29,7 @@ use AlexaCRM\WebAPI\OData\Client;
 use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\WebAPI\OData\TransportException;
 use AlexaCRM\Xrm\Metadata\EntityMetadata;
+use DateInterval;
 use Psr\Cache\CacheItemPoolInterface;
 
 /**
@@ -51,26 +52,26 @@ class MetadataRegistry {
     /**
      * How long to store metadata until it is discarded.
      *
-     * @var \DateInterval
+     * @var DateInterval
      */
-    public $ttl;
+    public DateInterval $ttl;
 
     /**
      * @var Client
      */
-    protected $client;
+    protected Client $client;
 
     /**
      * @var CacheItemPoolInterface
      */
-    protected $storage;
+    protected CacheItemPoolInterface $storage;
 
     /**
      * Deserializer class conversion map.
      *
-     * @var array
+     * @var array|null
      */
-    protected static $map;
+    protected static ?array $map = null;
 
     /**
      * MetadataRegistry constructor.
@@ -83,7 +84,7 @@ class MetadataRegistry {
         $this->storage = new NullAdapter();
         $this->storage->clear();
 
-        $this->ttl = new \DateInterval( 'P7D' );
+        $this->ttl = new DateInterval( 'P7D' );
     }
 
     /**
@@ -93,7 +94,7 @@ class MetadataRegistry {
      *
      * @return MetadataRegistry
      */
-    public function withStorage( CacheItemPoolInterface $storage ) {
+    public function withStorage( CacheItemPoolInterface $storage ): MetadataRegistry {
         $new = clone $this;
         $new->storage = $storage;
 
@@ -105,12 +106,12 @@ class MetadataRegistry {
      *
      * @param string $logicalName
      *
-     * @return EntityMetadata
+     * @return EntityMetadata|null
      * @throws AuthenticationException
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function getDefinition( $logicalName ) {
+    public function getDefinition( string $logicalName ): ?EntityMetadata {
         $cached = $this->storage->getItem( $logicalName );
         if ( $cached->isHit() ) {
             return $cached->get();
@@ -155,7 +156,7 @@ class MetadataRegistry {
      *
      * @return MetadataDeserializer
      */
-    public function newDeserializer() {
+    public function newDeserializer(): MetadataDeserializer {
         if ( static::$map === null ) {
             static::$map = require 'metadataClassMap.php';
         }
@@ -175,7 +176,7 @@ class MetadataRegistry {
      * @throws AuthenticationException
      * @throws TransportException
      */
-    protected function retrieveOptionSetAttributes( $logicalName ) {
+    protected function retrieveOptionSetAttributes( string $logicalName ): array {
         $typedAttributes = [];
 
         foreach ( static::OPTIONSET_ATTRIBUTES as $type ) {

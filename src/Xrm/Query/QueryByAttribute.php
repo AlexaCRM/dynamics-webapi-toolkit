@@ -30,55 +30,43 @@ class QueryByAttribute extends QueryBase {
 
     /**
      * Map of field => value used in the query.
-     *
-     * @var array
      */
-    public $Attributes = [];
+    public array $Attributes = [];
 
     /**
      * The column set selected for the query.
-     *
-     * @var ColumnSet
      */
-    public $ColumnSet;
+    public ?ColumnSet $ColumnSet = null;
 
     /**
      * Name of the entity to query.
-     *
-     * @var string
      */
-    public $EntityName;
+    public ?string $EntityName = null;
 
     /**
      * Specifies the order in which the entity instances are returned from the query.
      *
      * @var OrderType[]
      */
-    public $Orders = [];
+    public array $Orders = [];
 
     /**
      * The number of pages and the number of entity instances per page returned from the query.
-     *
-     * @var PagingInfo
      */
-    public $PageInfo;
+    public ?PagingInfo $PageInfo = null;
 
     /**
      * The number of rows to be returned.
-     *
-     * @var int
      */
-    public $TopCount;
+    public ?int $TopCount = null;
 
     /**
      * QueryByAttribute constructor.
      *
-     * @param string $entityName
+     * @param string|null $entityName
      */
     public function __construct( string $entityName = null ) {
-        if ( $entityName !== null ) {
-            $this->EntityName = $entityName;
-        }
+        $this->EntityName = $entityName;
     }
 
     /**
@@ -87,7 +75,7 @@ class QueryByAttribute extends QueryBase {
      * @param string $attributeName The logical name of the attribute.
      * @param mixed $value The attribute value.
      */
-    public function AddAttributeValue( string $attributeName, $value ) {
+    public function AddAttributeValue( string $attributeName, $value ): void {
         $this->Attributes[$attributeName] = $value;
     }
 
@@ -97,7 +85,7 @@ class QueryByAttribute extends QueryBase {
      * @param string $attributeName The logical name of the attribute.
      * @param OrderType $orderType The order for that attribute.
      */
-    public function AddOrder( string $attributeName, OrderType $orderType ) {
+    public function AddOrder( string $attributeName, OrderType $orderType ): void {
         $this->Orders[$attributeName] = $orderType;
     }
 

@@ -33,7 +33,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @var array
      */
-    protected $keys = [];
+    protected array $keys = [];
 
     /**
      * Adds a key attribute value to the collection.
@@ -41,7 +41,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      * @param string $key
      * @param mixed $value
      */
-    public function Add( $key, $value ) {
+    public function Add( string $key, $value ): void {
         $this->keys[ $key ] = $value;
     }
 
@@ -52,7 +52,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return bool
      */
-    public function Remove( $key ): bool {
+    public function Remove( string $key ): bool {
         if ( !array_key_exists( $key, $this->keys ) ) {
             return false;
         }
@@ -69,7 +69,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return mixed
      */
-    public function __get( $name ) {
+    public function __get( string $name ) {
         switch ( $name ) {
             case 'Count':
                 return count( $this->keys );
@@ -92,7 +92,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return void Any returned value is ignored.
      */
-    public function next() {
+    public function next(): void {
         next( $this->keys );
     }
 
@@ -108,10 +108,9 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
     /**
      * Checks if current position is valid.
      *
-     * @return boolean The return value will be casted to boolean and then evaluated.
-     * Returns true on success or false on failure.
+     * @return boolean Returns true on success or false on failure.
      */
-    public function valid() {
+    public function valid(): bool {
         $key = $this->key();
 
         return ( $key !== null && $key !== false );
@@ -122,7 +121,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return void Any returned value is ignored.
      */
-    public function rewind() {
+    public function rewind(): void {
         reset( $this->keys );
     }
 
@@ -133,7 +132,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return bool True on success or false on failure.
      */
-    public function offsetExists( $offset ) {
+    public function offsetExists( $offset ): bool {
         return array_key_exists( $offset, $this->keys );
     }
 
@@ -155,7 +154,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      * @param mixed $value The value to set.
      * @return void
      */
-    public function offsetSet( $offset, $value ) {
+    public function offsetSet( $offset, $value ): void {
         $this->Add( $offset, $value );
     }
 
@@ -166,7 +165,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return void
      */
-    public function offsetUnset( $offset ) {
+    public function offsetUnset( $offset ): void {
         $this->Remove( $offset );
     }
 
@@ -175,7 +174,7 @@ class KeyAttributeCollection implements \Iterator, \Countable, \ArrayAccess {
      *
      * @return int The custom count as an integer.
      */
-    public function count() {
+    public function count(): int {
         return count( $this->keys );
     }
 

@@ -33,9 +33,9 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
     /**
      * @var array
      */
-    protected $attributes;
+    protected array $attributes;
 
-    public function reset() {
+    public function reset(): void {
         foreach ( $this->attributes as $attribute => &$state ) {
             $state = false;
         }
@@ -48,7 +48,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      *
      * @return boolean true on success or false on failure.
      */
-    public function offsetExists( $offset ) {
+    public function offsetExists( $offset ): bool {
         return array_key_exists( $offset, $this->attributes );
     }
 
@@ -71,7 +71,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      *
      * @return void
      */
-    public function offsetSet( $offset, $value ) {
+    public function offsetSet( $offset, $value ): void {
         $this->attributes[$offset] = $value;
     }
 
@@ -81,7 +81,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      *
      * @return void
      */
-    public function offsetUnset( $offset ) {
+    public function offsetUnset( $offset ): void {
         unset( $this->attributes[$offset] );
     }
 
@@ -90,7 +90,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      *
      * @return Traversable An instance of an object implementing Iterator or Traversable.
      */
-    public function getIterator() {
+    public function getIterator(): Traversable {
         return new \ArrayIterator( $this->attributes );
     }
 

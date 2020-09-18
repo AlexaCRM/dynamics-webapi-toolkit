@@ -34,44 +34,36 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Dynamics 365 Web API OData client.
  */
 class Client {
 
-    /**
-     * @var Settings
-     */
-    protected $settings;
+    protected Settings $settings;
 
     /**
      * Guzzle HTTP Client.
-     *
-     * @var HttpClient
      */
-    protected $httpClient;
+    protected ?HttpClient $httpClient = null;
 
     /**
      * OData service metadata storage.
-     *
-     * @var Metadata
      */
-    protected $metadata;
+    protected ?Metadata $metadata = null;
 
     /**
      * Guzzle-compatible authentication middleware.
-     *
-     * @var AuthMiddlewareInterface
      */
-    protected $authMiddleware;
+    protected AuthMiddlewareInterface $authMiddleware;
 
     /**
-     * Guzzle-compatible authentication middleware.
+     * Collection of Guzzle-compatible middleware.
      *
      * @var MiddlewareInterface[]
      */
-    protected $middlewares;
+    protected array $middlewares = [];
 
     /**
      * Client constructor.
@@ -96,10 +88,8 @@ class Client {
 
     /**
      * Returns the Guzzle HTTP client instance.
-     *
-     * @return HttpClient
      */
-    public function getHttpClient() {
+    public function getHttpClient(): HttpClient {
         if ( $this->httpClient instanceof HttpClient ) {
             return $this->httpClient;
         }
@@ -129,11 +119,10 @@ class Client {
     /**
      * Retrieves OData Service Metadata.
      *
-     * @return Metadata
      * @throws AuthenticationException
      * @throws TransportException
      */
-    public function getMetadata() {
+    public function getMetadata(): Metadata {
         if ( $this->metadata instanceof Metadata ) {
             return $this->metadata;
         }
@@ -185,12 +174,12 @@ class Client {
      * @param mixed $data
      * @param array $headers
      *
-     * @return mixed|ResponseInterface
+     * @return ResponseInterface
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    private function doRequest( $method, $url, $data = null, array $headers = [] ) {
+    private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
         if ( $headers == null ) {
             $headers = [];
         }
@@ -242,11 +231,11 @@ class Client {
      * Builds the URL with request parameters specified in the query string.
      *
      * @param string $uri Request URI relative to the service endpoint.
-     * @param array $queryOptions
+     * @param array|null $queryOptions
      *
      * @return string
      */
-    private function buildQueryURL( $uri, $queryOptions = null ) {
+    private function buildQueryURL( string $uri, array $queryOptions = null ): string {
         $endpointURI = $this->settings->getEndpointURI() . $uri;
         $queryParameters = [];
         if ( $queryOptions != null ) {
@@ -292,11 +281,11 @@ class Client {
     /**
      * Creates a collection of request headers from the query options.
      *
-     * @param array $queryOptions
+     * @param array|null $queryOptions
      *
      * @return array
      */
-    private function buildQueryHeaders( $queryOptions = null ) {
+    private function buildQueryHeaders( array $queryOptions = null ): array {
         $headers = [];
         $prefer = [];
 
@@ -313,7 +302,7 @@ class Client {
     }
 
     /**
-     * @param $uri
+     * @param string $uri
      * @param null $queryOptions
      *
      * @return ListResponse
@@ -321,7 +310,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function getList( $uri, $queryOptions = null ) {
+    public function getList( string $uri, $queryOptions = null ): ListResponse {
         $url = $this->buildQueryURL( $uri, $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -369,50 +358,48 @@ class Client {
     }
 
     /**
-     * @param $entityCollection
-     * @param $entityId
-     * @param null $queryOptions
+     * @param string $entityCollection
+     * @param string $entityId
+     * @param array|null $queryOptions
      *
-     * @return mixed
+     * @return object
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function getRecord( $entityCollection, $entityId, $queryOptions = null ) {
+    public function getRecord( string $entityCollection, string $entityId, array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
-        $result = json_decode( $res->getBody() );
 
-        return $result;
+        return json_decode( $res->getBody() );
     }
 
     /**
-     * @param $uri
-     * @param null $queryOptions
+     * @param string $uri
+     * @param array|null $queryOptions
      *
-     * @return mixed
+     * @return object
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function getCount( $uri, $queryOptions = null ) {
+    public function getCount( string $uri, array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
-        $result = json_decode( $res->getBody() );
 
-        return $result;
+        return json_decode( $res->getBody() );
     }
 
     /**
-     * @param $entityCollection
-     * @param $data
+     * @param string $entityCollection
+     * @param mixed $data
      *
      * @return string|null
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function create( $entityCollection, $data ) {
+    public function create( string $entityCollection, $data ): ?string {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $entityCollection );
         $res = $this->doRequest( 'POST', $url, $data );
 
@@ -420,9 +407,9 @@ class Client {
     }
 
     /**
-     * @param $entityCollection
-     * @param $key
-     * @param $data
+     * @param string $entityCollection
+     * @param string $key
+     * @param mixed $data
      * @param bool $upsert
      *
      * @return string|null
@@ -430,7 +417,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function update( $entityCollection, $key, $data, $upsert = false ) {
+    public function update( string $entityCollection, string $key, $data, bool $upsert = false ): ?string {
         $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
         $headers = [
             /*
@@ -458,47 +445,59 @@ class Client {
     }
 
     /**
-     * @param $entityCollection
-     * @param $entityId
+     * @param string $entityCollection
+     * @param string $entityId
      *
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function delete( $entityCollection, $entityId ) {
+    public function delete( string $entityCollection, string $entityId ): void {
         $url = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $entityId );
         $this->doRequest( 'DELETE', $url );
     }
 
     /**
-     * @param $fromEntityCollection
-     * @param $fromEntityId
-     * @param $navProperty
-     * @param $toEntityCollection
-     * @param $toEntityId
+     * @param string $fromEntityCollection
+     * @param string $fromEntityId
+     * @param string $navProperty
+     * @param string $toEntityCollection
+     * @param string $toEntityId
      *
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function associate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
+    public function associate(
+        string $fromEntityCollection,
+        string $fromEntityId,
+        string $navProperty,
+        string $toEntityCollection,
+        string $toEntityId
+    ): void {
         $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ Annotation::ODATA_ID => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
         $this->doRequest( 'POST', $url, $data );
     }
 
     /**
-     * @param $fromEntityCollection
-     * @param $fromEntityId
-     * @param $navProperty
-     * @param $toEntityCollection
-     * @param $toEntityId
+     * @param string $fromEntityCollection
+     * @param string $fromEntityId
+     * @param string $navProperty
+     * @param string $toEntityCollection
+     * @param string $toEntityId
      *
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function disassociate( $fromEntityCollection, $fromEntityId, $navProperty, $toEntityCollection, $toEntityId ) {
+    public function disassociate(
+        string $fromEntityCollection,
+        string $fromEntityId,
+        string $navProperty,
+        string $toEntityCollection,
+        string $toEntityId
+    ): void {
         $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
         $this->doRequest( 'DELETE', $url );
     }
@@ -506,35 +505,36 @@ class Client {
     /**
      * Executes a Web API function.
      *
-     * @param string $functionName Function name.
-     * @param array $parameters Function parameters.
-     * @param string $entityCollection For bound functions -- entity set name.
-     * @param string $entityId For bound functions -- entity record ID.
+     * @param string $name Function name.
+     * @param mixed|null $parameters Function parameters.
+     * @param string|null $entityCollection For bound functions -- entity set name.
+     * @param string|null $entityId For bound functions -- entity record ID.
      *
-     * @return mixed
+     * @return object
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeFunction( $functionName, $parameters = null, $entityCollection = null, $entityId = null ) {
-        $paramvars   = [];
-        $paramvalues = [];
-        $paramcount  = 1;
+    public function executeFunction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): object {
+        if ( $parameters !== null ) {
+            $paramNames   = [];
+            $paramValues = [];
 
-        if ( $parameters != null ) {
+            $paramNo  = 1;
             foreach ( $parameters as $key => $value ) {
-                $paramvars[] = sprintf( "%s=@p%s", $key, $paramcount );
-                $paramvalues[] = sprintf( "@p%s=%s", $paramcount, $value );
-                $paramcount ++;
+                $paramNames[] = sprintf( "%s=@p%s", $key, $paramNo );
+                $paramValues[] = sprintf( "@p%s=%s", $paramNo, $value );
+                $paramNo++;
             }
-            $url = sprintf( '%s%s(%s)?%s', $this->settings->getEndpointURI(), $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
+
+            $url = sprintf( '%s%s(%s)?%s', $this->settings->getEndpointURI(), $name, implode( ',', $paramNames ), implode( '&', $paramValues ) );
             if ( $entityCollection != null ) {
-                $url = sprintf( '%s%s(%s)/%s(%s)?%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName, implode( ',', $paramvars ), implode( '&', $paramvalues ) );
+                $url = sprintf( '%s%s(%s)/%s(%s)?%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name, implode( ',', $paramNames ), implode( '&', $paramValues ) );
             }
         } else {
-            $url = sprintf( '%s%s()', $this->settings->getEndpointURI(), $functionName );
-            if ( $entityCollection != null ) {
-                $url = sprintf( '%s%s(%s)/%s()', $this->settings->getEndpointURI(), $entityCollection, $entityId, $functionName );
+            $url = sprintf( '%s%s()', $this->settings->getEndpointURI(), $name );
+            if ( $entityCollection !== null ) {
+                $url = sprintf( '%s%s(%s)/%s()', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name );
             }
         }
 
@@ -548,20 +548,20 @@ class Client {
     /**
      * Executes a Web API action.
      *
-     * @param string $actionName Action name.
-     * @param array $parameters Action parameters.
-     * @param string $entityCollection For bound actions -- entity set name.
-     * @param string $entityId For bound actions -- entity record ID.
+     * @param string $name Action name.
+     * @param mixed|null $parameters Action parameters.
+     * @param string|null $entityCollection For bound actions -- entity set name.
+     * @param string|null $entityId For bound actions -- entity record ID.
      *
-     * @return mixed
+     * @return object
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeAction( $actionName, $parameters = null, $entityCollection = null, $entityId = null ) {
-        $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $actionName );
-        if ( $entityCollection != null ) {
-            $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $actionName );
+    public function executeAction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): object {
+        $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $name );
+        if ( $entityCollection !== null ) {
+            $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name );
         }
 
         $res = $this->doRequest( 'POST', $url, $parameters );
@@ -571,26 +571,15 @@ class Client {
         return $result;
     }
 
-    /**
-     * Returns the Settings instance.
-     *
-     * @return Settings
-     */
-    public function getSettings() {
+    public function getSettings(): Settings {
         return $this->settings;
     }
 
-    /**
-     * @return CacheItemPoolInterface
-     */
-    public function getCachePool() {
+    public function getCachePool(): CacheItemPoolInterface {
         return $this->settings->cachePool;
     }
 
-    /**
-     * @return \Psr\Log\LoggerInterface
-     */
-    public function getLogger() {
+    public function getLogger(): LoggerInterface {
         return $this->settings->logger;
     }
 
@@ -601,7 +590,7 @@ class Client {
      *
      * @return string|null
      */
-    protected static function getEntityId( ResponseInterface $response ) {
+    protected static function getEntityId( ResponseInterface $response ): ?string {
         $entityId = $response->getHeader( 'OData-EntityId' );
         if ( count( $entityId ) === 0 ) {
             return null;

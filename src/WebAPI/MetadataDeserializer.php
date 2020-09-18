@@ -32,7 +32,7 @@ class MetadataDeserializer extends Deserializer {
     /**
      * Creates a strongly-typed object. $type holds the FQCN of the type.
      *
-     * @param object
+     * @param object|object[] $data
      * @param Reference $type
      *
      * @return object

@@ -35,40 +35,51 @@ abstract class Settings implements LoggerAwareInterface {
     /**
      * Web API version.
      */
-    public $apiVersion = '8.2';
+    public string $apiVersion = '9.0';
 
     /**
      * Dynamics 365 organization address.
      *
      * @var string
      */
-    public $instanceURI;
+    public string $instanceURI;
 
     /**
      * Path to a custom CA bundle.
      *
-     * @var string
+     * @var string|bool
+     * @deprecated Use Settings::$caBundlePath and Settings::$tlsVerifyPeers.
      */
     public $caBundle;
 
     /**
+     * Path to the CA bundle.
+     *
+     * If no path is specified and peer verification is enabled, default CA bundle will be used if available.
+     */
+    public ?string $caBundlePath;
+
+    /**
+     * Whether to perform peer verification.
+     */
+    public bool $tlsVerifyPeers = true;
+
+    /**
      * @var CacheItemPoolInterface
      */
-    public $cachePool;
+    public CacheItemPoolInterface $cachePool;
 
     /**
      * @var LoggerInterface
      */
-    public $logger;
+    public LoggerInterface $logger;
 
     /**
      * ID of the user to impersonate during calls.
      *
-     * Null value means no user is impersonated.
-     *
-     * @var string
+     * Null value means impersonation is not performed.
      */
-    public $callerID;
+    public ?string $callerID = null;
 
     /**
      * Settings constructor.
@@ -83,7 +94,7 @@ abstract class Settings implements LoggerAwareInterface {
      *
      * @param LoggerInterface $logger
      */
-    public function setLogger( LoggerInterface $logger ) {
+    public function setLogger( LoggerInterface $logger ): void {
         $this->logger = $logger;
     }
 
@@ -92,6 +103,6 @@ abstract class Settings implements LoggerAwareInterface {
      *
      * @return string
      */
-    public abstract function getEndpointURI();
+    public abstract function getEndpointURI(): string;
 
 }

@@ -28,9 +28,7 @@ interface AuthMiddlewareInterface extends MiddlewareInterface {
 
     /**
      * Discards the currently used access token.
-     *
-     * @return void
      */
-    public function discardToken();
+    public function discardToken(): void;
 
 }

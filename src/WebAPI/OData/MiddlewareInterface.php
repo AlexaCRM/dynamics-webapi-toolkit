@@ -35,5 +35,5 @@ interface MiddlewareInterface {
      *
      * @see http://docs.guzzlephp.org/en/stable/handlers-and-middleware.html
      */
-    public function getMiddleware();
+    public function getMiddleware(): callable;
 }

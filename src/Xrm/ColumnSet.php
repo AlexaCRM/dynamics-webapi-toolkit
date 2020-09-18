@@ -31,14 +31,14 @@ class ColumnSet {
      *
      * @var bool
      */
-    public $AllColumns = false;
+    public bool $AllColumns = false;
 
     /**
      * Collection of attribute names to be retrieved.
      *
      * @var array
      */
-    public $Columns = [];
+    public array $Columns = [];
 
     /**
      * ColumnSet constructor.
@@ -60,7 +60,7 @@ class ColumnSet {
      *
      * @param string $column
      */
-    public function AddColumn( string $column ) {
+    public function AddColumn( string $column ): void {
         if ( in_array( $column, $this->Columns, true ) ) {
             return;
         }
@@ -74,7 +74,7 @@ class ColumnSet {
      *
      * @param string[] $columns
      */
-    public function AddColumns( array $columns ) {
+    public function AddColumns( array $columns ): void {
         $this->Columns = array_merge( $this->Columns, $columns );
         $this->Columns = array_unique( $this->Columns );
     }

@@ -28,10 +28,8 @@ class FetchExpression extends QueryBase {
 
     /**
      * The FetchXML query string.
-     *
-     * @var string
      */
-    public $Query;
+    public string $Query;
 
     /**
      * Initializes a new instance of the FetchExpression class.

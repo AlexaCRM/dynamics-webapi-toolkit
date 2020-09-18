@@ -29,31 +29,26 @@ class LocalizedLabel extends MetadataBase {
 
     /**
      * Whether the label is managed.
-     *
-     * @var bool
      */
-    public $IsManaged;
+    public ?bool $IsManaged = null;
 
     /**
      * The localized label string.
-     *
-     * @var string
      */
-    public $Label;
+    public ?string $Label = null;
 
     /**
      * The language code for the label.
      *
-     * @var int
      * @see https://docs.microsoft.com/en-us/previous-versions/windows/embedded/ms912047(v=winembedded.10)
      */
-    public $LanguageCode;
+    public ?int $LanguageCode = null;
 
     /**
      * LocalizedLabel constructor.
      *
-     * @param string $label The localized label string.
-     * @param int $languageCode The language code for the label.
+     * @param string|null $label The localized label string.
+     * @param int|null $languageCode The language code for the label.
      */
     public function __construct( string $label = null, int $languageCode = null ) {
         $this->Label = $label;

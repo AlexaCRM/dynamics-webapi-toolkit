@@ -32,13 +32,11 @@ class Label {
      *
      * @var LocalizedLabel[]
      */
-    public $LocalizedLabels = [];
+    public array $LocalizedLabels = [];
 
     /**
      * The label for the language of the current user.
-     *
-     * @var LocalizedLabel
      */
-    public $UserLocalizedLabel;
+    public ?LocalizedLabel $UserLocalizedLabel = null;
 
 }

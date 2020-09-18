@@ -1,6 +1,6 @@
 <?php
-/**
- * Copyright 2018 AlexaCRM
+/*
+ * Copyright 2020 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -16,39 +16,64 @@
  * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 
 namespace AlexaCRM\Xrm;
 
 /**
- * Identifies a record in Dynamics 365.
+ * Provides essential properties and utility methods for entity-like types -- Entity and EntityReference.
  */
-class EntityReference {
-
-    use EntityLikeTrait;
+trait EntityLikeTrait {
 
     /**
-     * Value of the primary attribute of the entity.
-     *
-     * @var string|null
+     * Unique ID of the record.
      */
-    public ?string $Name = null;
+    public ?string $Id = null;
 
     /**
-     * EntityReference constructor.
-     *
-     * An EntityReference instance may be created without any parameters specified,
-     * or with entity name specified, or with entity name and record ID specified,
-     * or with entity name and collection of KeyAttributes specified,
-     * or with entity name, key name and key value specified.
+     * Logical name of the entity.
+     */
+    public ?string $LogicalName = null;
+
+    /**
+     * Key attributes of the record.
+     */
+    public ?KeyAttributeCollection $KeyAttributes = null;
+
+    /**
+     * Constructor with overloading to support multiple initialization strategies.
      *
      * @param string|null $entityName
      * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value.
      */
-    public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
-        $this->constructOverloaded( $entityName, $entityId, $keyValue );
+    private function constructOverloaded( string $entityName = null, $entityId = null, $keyValue = null ): void {
+        if ( $entityName === null ) {
+            return;
+        }
+
+        $this->LogicalName = $entityName;
+
+        if ( $entityId === null && $keyValue === null ) {
+            return;
+        }
+
+        if ( $entityId instanceof KeyAttributeCollection ) {
+            $keyAttributes = $entityId;
+            $this->KeyAttributes = $keyAttributes;
+
+            return;
+        }
+
+        if ( is_string( $entityId ) && $keyValue === null ) {
+            $this->Id = $entityId;
+
+            return;
+        }
+
+        $this->KeyAttributes = new KeyAttributeCollection();
+        $keyName = $entityId;
+        $this->KeyAttributes->Add( $keyName, $keyValue );
     }
 
 }

@@ -11,12 +11,12 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "php": ">=7.0",
+    "php": "^7.4",
     "psr/log": "^1.0",
     "psr/cache": "^1.0",
-    "elao/enum": "^1.0@dev",
+    "elao/enum": "^1.6",
     "alexacrm/strong-serializer": "dev-master",
-    "guzzlehttp/guzzle": "~6"
+    "guzzlehttp/guzzle": "^6.5"
   },
   "autoload": {
     "psr-4": {

@@ -33,7 +33,7 @@ class SerializationHelper {
     /**
      * @var OData\Client
      */
-    protected $client;
+    protected OData\Client $client;
 
     /**
      * SerializationHelper constructor.
@@ -55,7 +55,7 @@ class SerializationHelper {
      * @throws OData\EntityNotSupportedException
      * @throws OData\TransportException
      */
-    public function serializeEntity( Entity $entity ) {
+    public function serializeEntity( Entity $entity ): array {
         $metadata = $this->client->getMetadata();
 
         $entityMap = $metadata->getEntityMap( $entity->LogicalName );
@@ -124,19 +124,19 @@ class SerializationHelper {
      * Creates a new Entity instance from the OData entity object.
      *
      * $attributeToEntityMap is used to create proper EntityReference instances
-     * for FetchXML results with aliased lookups - Web API loses lookup information for these
+     * for FetchXML results with aliased lookups - Web API loses lookup type information for these
      * and doesn't produce appropriate annotations.
      *
-     * @param mixed $rawEntity Output from the OData Client.
+     * @param object $rawEntity Output from the OData Client.
      * @param EntityReference $reference A reference containing the logical name and ID of the processed record.
-     * @param array $attributeToEntityMap
+     * @param array|null $attributeToEntityMap
      *
      * @return Entity
      * @throws OData\AuthenticationException
      * @throws OData\EntityNotSupportedException
      * @throws OData\TransportException
      */
-    public function deserializeEntity( $rawEntity, EntityReference $reference, $attributeToEntityMap = null ) {
+    public function deserializeEntity( object $rawEntity, EntityReference $reference, array $attributeToEntityMap = null ): Entity {
         $metadata = $this->client->getMetadata();
         $entityMap = $metadata->getEntityMap( $reference->LogicalName );
 
@@ -194,7 +194,7 @@ class SerializationHelper {
                 $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
             } elseif ( $attributeToEntityMap !== null
                        && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
-                       && array_key_exists( $formattedValueField, $rawEntity ) ) {
+                       && property_exists( $rawEntity, $formattedValueField ) ) {
                 /*
                  * Map to a static entity type if we've got a GUID and a formatted value and no entity type information.
                  * It means we're likely in the quirk mode and have to try guessing the lookup entity type.
@@ -229,7 +229,7 @@ class SerializationHelper {
      *
      * @return array
      */
-    public function getFetchXMLAliasedLookupTypes( $fetchXML ) {
+    public function getFetchXMLAliasedLookupTypes( string $fetchXML ): array {
         $attrToEntity = [];
 
         try {

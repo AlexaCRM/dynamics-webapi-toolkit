@@ -28,27 +28,21 @@ class Relationship {
 
     /**
      * Entity role: referencing or referenced.
-     *
-     * @var EntityRole|null
      */
-    public $PrimaryEntityRole;
+    public ?EntityRole $PrimaryEntityRole = null;
 
     /**
      * The name of the relationship.
-     *
-     * @var string
      */
-    public $SchemaName;
+    public ?string $SchemaName = null;
 
     /**
      * Relationship constructor.
      *
-     * @param string $schemaName The name of the relationship.
+     * @param string|null $schemaName The name of the relationship.
      */
     public function __construct( string $schemaName = null ) {
-        if ( $schemaName !== null ) {
-            $this->SchemaName = $schemaName;
-        }
+        $this->SchemaName = $schemaName;
     }
 
 }

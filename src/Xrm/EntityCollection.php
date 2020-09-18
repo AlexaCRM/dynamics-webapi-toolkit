@@ -31,42 +31,32 @@ class EntityCollection implements \Iterator {
      *
      * @var Entity[]
      */
-    public $Entities = [];
+    public array $Entities = [];
 
     /**
      * Logical name of the entity.
-     *
-     * @var string
      */
-    public $EntityName;
+    public ?string $EntityName = null;
 
     /**
      * Shows whether there are more records available.
-     *
-     * @var bool
      */
-    public $MoreRecords;
+    public ?bool $MoreRecords = null;
 
     /**
      * Paging information.
-     *
-     * @var string
      */
-    public $PagingCookie;
+    public ?string $PagingCookie = null;
 
     /**
      * Total number of records.
-     *
-     * @var int
      */
-    public $TotalRecordCount;
+    public ?int $TotalRecordCount = null;
 
     /**
      * Whether the results of the query exceeds the total record count.
-     *
-     * @var bool
      */
-    public $TotalRecordCountLimitExceeded;
+    public ?bool $TotalRecordCountLimitExceeded = null;
 
     /**
      * Return the current element.
@@ -79,10 +69,8 @@ class EntityCollection implements \Iterator {
 
     /**
      * Move forward to next element.
-     *
-     * @return void
      */
-    public function next() {
+    public function next(): void {
         next( $this->Entities );
     }
 
@@ -100,16 +88,14 @@ class EntityCollection implements \Iterator {
      *
      * @return boolean Returns true on success or false on failure.
      */
-    public function valid() {
+    public function valid(): bool {
         return isset( $this->Entities[ $this->key() ] );
     }
 
     /**
      * Rewind the Iterator to the first element.
-     *
-     * @return void
      */
-    public function rewind() {
+    public function rewind(): void {
         reset( $this->Entities );
     }
 
