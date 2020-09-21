@@ -61,9 +61,16 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             return $this->httpClient;
         }
 
-        /** @noinspection ProperNullCoalescingOperatorUsageInspection */
+        $verify = $this->settings->caBundle;
+        if ( $verify === null ) {
+            $verify = $this->settings->tlsVerifyPeers;
+            if ( $verify && $this->settings->caBundlePath !== null ) {
+                $verify = $this->settings->caBundlePath;
+            }
+        }
+
         $this->httpClient = new HttpClient( [
-            'verify' => $this->settings->caBundle ?? true,
+            'verify' => $verify,
         ] );
 
         return $this->httpClient;

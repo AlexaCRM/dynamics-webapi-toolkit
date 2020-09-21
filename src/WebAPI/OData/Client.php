@@ -107,9 +107,17 @@ class Client {
             $handlerStack->push( $middleware->getMiddleware() );
         }
 
+        $verify = $this->settings->caBundle;
+        if ( $verify === null ) {
+            $verify = $this->settings->tlsVerifyPeers;
+            if ( $verify && $this->settings->caBundlePath !== null ) {
+                $verify = $this->settings->caBundlePath;
+            }
+        }
+
         $this->httpClient = new HttpClient( [
             'headers' => $headers,
-            'verify' => $this->settings->caBundle !== null? $this->settings->caBundle : true,
+            'verify' => $verify,
             'handler' => $handlerStack,
         ] );
 
