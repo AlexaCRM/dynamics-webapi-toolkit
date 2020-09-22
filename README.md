@@ -22,7 +22,7 @@ The current release of the library does not support the following features (supp
 
 ### Prerequisites
 
-The main requirement is PHP 7.0 or later. cURL is recommended but is not required. [Composer](https://getcomposer.org/) is required to install the toolkit and its dependencies.
+The main requirement is PHP 7.4 or later. cURL is recommended but is not required. [Composer](https://getcomposer.org/) is required to install the toolkit and its dependencies.
 
 ### Installing
 
