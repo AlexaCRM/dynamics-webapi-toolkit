@@ -518,12 +518,12 @@ class Client {
      * @param string|null $entityCollection For bound functions -- entity set name.
      * @param string|null $entityId For bound functions -- entity record ID.
      *
-     * @return object
+     * @return object|null
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeFunction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): object {
+    public function executeFunction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): ?object {
         if ( $parameters !== null ) {
             $paramNames   = [];
             $paramValues = [];
@@ -561,12 +561,12 @@ class Client {
      * @param string|null $entityCollection For bound actions -- entity set name.
      * @param string|null $entityId For bound actions -- entity record ID.
      *
-     * @return object
+     * @return object|null
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeAction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): object {
+    public function executeAction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): ?object {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $name );
         if ( $entityCollection !== null ) {
             $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name );
