@@ -15,7 +15,7 @@
     "psr/log": "^1.0",
     "psr/cache": "^1.0",
     "elao/enum": "^1.0@dev",
-    "alexacrm/strong-serializer": "dev-master",
+    "alexacrm/strong-serializer": "^1.0",
     "guzzlehttp/guzzle": "~6"
   },
   "autoload": {
