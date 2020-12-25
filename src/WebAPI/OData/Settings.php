@@ -57,7 +57,7 @@ abstract class Settings implements LoggerAwareInterface {
      *
      * If no path is specified and peer verification is enabled, default CA bundle will be used if available.
      */
-    public ?string $caBundlePath;
+    public ?string $caBundlePath = null;
 
     /**
      * Whether to perform peer verification.
