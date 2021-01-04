@@ -24,6 +24,7 @@ namespace AlexaCRM\WebAPI\OData;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as HttpClientException;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -77,6 +78,13 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     }
 
     /**
+     * Provides access to the cache pool to store transient data, e.g. access token, tenant id.
+     */
+    protected function getPool(): CacheItemPoolInterface {
+        return $this->settings->cachePool;
+    }
+
+    /**
      * Detects the instance tenant ID by probing the API without authorization.
      *
      * @param string $endpointUri
@@ -88,8 +96,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             return $this->settings->tenantID;
         }
 
+        $pool = $this->getPool();
         $cacheKey = 'msdynwebapi.tenant.' . sha1( $endpointUri );
-        $cache = $this->settings->cachePool->getItem( $cacheKey );
+        $cache = $pool->getItem( $cacheKey );
         if ( $cache->isHit() ) {
             return $cache->get();
         }
@@ -107,7 +116,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $this->settings->logger->debug( "Probed {$endpointUri} for tenant ID {{$tenantID}}" );
 
         $expirationDuration = new \DateInterval( 'P1Y' ); // Cache the tenant ID for 1 year.
-        $this->settings->cachePool->save( $cache->set( $tenantID )->expiresAfter( $expirationDuration ) );
+        $pool->save( $cache->set( $tenantID )->expiresAfter( $expirationDuration ) );
 
         return $tenantID;
     }
@@ -124,8 +133,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
         $settings = $this->settings;
 
+        $pool = $this->getPool();
         $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
-        $cache = $settings->cachePool->getItem( $cacheKey );
+        $cache = $pool->getItem( $cacheKey );
         if ( $cache->isHit() ) {
             $token = $cache->get();
             if ( $token instanceof Token && $token->isValid() ) {
@@ -135,7 +145,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
                 return $token;
             }
 
-            $settings->cachePool->deleteItem( $cacheKey );
+            $pool->deleteItem( $cacheKey );
         }
 
         $tenantId = $this->detectTenantID( $settings->getEndpointURI() );
@@ -165,7 +175,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $this->token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
         $expirationDate = new \DateTime();
         $expirationDate->setTimestamp( $this->token->expiresOn );
-        $settings->cachePool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
+        $pool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
 
         return $this->token;
     }
@@ -179,7 +189,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $settings = $this->settings;
 
         $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
-        $settings->cachePool->deleteItem( $cacheKey );
+        $this->getPool()->deleteItem( $cacheKey );
     }
 
     /**
