@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018, 2021 AlexaCRM
+ * Copyright 2021 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -21,47 +21,19 @@
 namespace AlexaCRM\Xrm\Metadata;
 
 /**
- * Contains the metadata for an attribute type Image.
+ * Contains the metadata for an attribute type File.
  */
-class ImageAttributeMetadata extends AttributeMetadata {
+class FileAttributeMetadata extends AttributeMetadata {
 
     /**
-     * Whether the image attribute can store a full-size image in addition to a thumbnail image.
-     *
-     * @var bool
-     */
-    public $CanStoreFullImage;
-
-    /**
-     * Whether the attribute is the primary image for the entity.
-     *
-     * @var bool
-     */
-    public $IsPrimaryImage;
-
-    /**
-     * The maximum height of the image.
-     *
-     * @var int
-     */
-    public $MaxHeight;
-
-    /**
-     * The maximum allowable size (in kilobytes) of the stored image.
+     * The maximum allowable size (in kilobytes) of the stored file.
      *
      * @var int
      */
     public $MaxSizeInKB;
 
     /**
-     * The maximum width of the image.
-     *
-     * @var int
-     */
-    public $MaxWidth;
-
-    /**
-     * ImageAttributeMetadata constructor.
+     * FileAttributeMetadata constructor.
      *
      * @param string|null $schemaName
      */
