@@ -80,7 +80,7 @@ class Client {
         $settings->logger->debug( 'Initializing Dynamics Web API Toolkit', [
             'settings' => $settings,
             'authentication' => get_class( $authMiddleware ),
-            'handlers' => array_map( function ( $middleware ) {
+            'handlers' => array_map( function( $middleware ) {
                 return get_class( $middleware );
             }, $middlewares ),
         ] );
@@ -188,16 +188,12 @@ class Client {
      * @throws TransportException
      */
     private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
-        if ( $headers == null ) {
-            $headers = [];
-        }
-
         if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
-            $headers['Content-Type'] = 'application/json';
+            $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
         }
 
         if ( $this->settings->callerID !== null ) {
-            $headers['MSCRMCallerID'] = $this->settings->callerID;
+            $headers = array_merge( [ 'MSCRMCallerID' => '$this->settings->callerID' ], $headers );
         }
 
         try {
@@ -205,7 +201,11 @@ class Client {
                 'headers' => $headers,
                 'json' => $data,
             ] );
-            $this->getLogger()->debug( "Completed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $response->getHeaders(), 'responseBody' => $response->getBody()->getContents() ] );
+            $this->getLogger()->debug( "Completed {$method} {$url}", [
+                'payload' => $data,
+                'responseHeaders' => $response->getHeaders(),
+                'responseBody' => $response->getBody()->getContents(),
+            ] );
 
             return $response;
         } catch ( RequestException $e ) {
@@ -223,9 +223,17 @@ class Client {
 
             $response = json_decode( $e->getResponse()->getBody()->getContents() );
             if ( $responseCode !== 404 ) {
-                $this->getLogger()->error( "Failed {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
+                $this->getLogger()->error( "Failed {$method} {$url}", [
+                    'payload' => $data,
+                    'responseHeaders' => $e->getResponse()->getHeaders(),
+                    'responseBody' => $response,
+                ] );
             } else {
-                $this->getLogger()->notice( "Not Found {$method} {$url}", [ 'payload' => $data, 'responseHeaders' => $e->getResponse()->getHeaders(), 'responseBody' => $response ] );
+                $this->getLogger()->notice( "Not Found {$method} {$url}", [
+                    'payload' => $data,
+                    'responseHeaders' => $e->getResponse()->getHeaders(),
+                    'responseBody' => $response,
+                ] );
             }
 
             throw new ODataException( $response->error, $e );
@@ -322,9 +330,9 @@ class Client {
         $url = $this->buildQueryURL( $uri, $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
-        $data          = json_decode( $res->getBody() );
-        $result        = new ListResponse();
-        $result->List  = $data->value;
+        $data = json_decode( $res->getBody() );
+        $result = new ListResponse();
+        $result->List = $data->value;
         $result->Count = count( $data->value );
 
         $result->TotalRecordCount = -1;
@@ -352,11 +360,11 @@ class Client {
                 $res = $this->doRequest( 'GET', $nextLink, null, $this->buildQueryHeaders( $queryOptions ) );
 
                 $nextLink = null;
-                $data         = json_decode( $res->getBody() );
+                $data = json_decode( $res->getBody() );
                 $result->List = array_merge( $result->List, $data->value );
                 $result->Count = count( $result->List );
 
-                $nextLink     = $data->{Annotation::ODATA_NEXTLINK} ?? null;
+                $nextLink = $data->{Annotation::ODATA_NEXTLINK} ?? null;
             }
 
             unset( $result->SkipToken );
@@ -426,7 +434,7 @@ class Client {
      * @throws TransportException
      */
     public function update( string $entityCollection, string $key, $data, bool $upsert = false ): ?string {
-        $url     = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
+        $url = sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $entityCollection, $key );
         $headers = [
             /*
              * Exploit the AutoDisassociate workaround to seamlessly disassociate lookup records
@@ -450,6 +458,27 @@ class Client {
         $res = $this->doRequest( 'PATCH', $url, $data, $headers );
 
         return static::getEntityId( $res );
+    }
+
+    /**
+     * @param string $entityCollection
+     * @param string $key
+     * @param string $field
+     * @param $value
+     * @param string|null $filename
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function upload( string $entityCollection, string $key, string $field, $value, ?string $filename = null ): void {
+        $url = sprintf( '%s%s(%s)/%s', $this->settings->getEndpointURI(), $entityCollection, $key, $field );
+        $headers = [ 'Content-Type' => 'application/octet-stream' ];
+        if ( $filename !== null ) {
+            $headers['x-ms-file-name'] = $filename;
+        }
+        $this->doRequest( 'PUT', $url, $value, $headers );
     }
 
     /**
@@ -483,7 +512,7 @@ class Client {
         string $toEntityCollection,
         string $toEntityId
     ): void {
-        $url  = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
+        $url = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ Annotation::ODATA_ID => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
         $this->doRequest( 'POST', $url, $data );
     }
@@ -525,10 +554,10 @@ class Client {
      */
     public function executeFunction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): ?object {
         if ( $parameters !== null ) {
-            $paramNames   = [];
+            $paramNames = [];
             $paramValues = [];
 
-            $paramNo  = 1;
+            $paramNo = 1;
             foreach ( $parameters as $key => $value ) {
                 $paramNames[] = sprintf( "%s=@p%s", $key, $paramNo );
                 $paramValues[] = sprintf( "@p%s=%s", $paramNo, $value );
