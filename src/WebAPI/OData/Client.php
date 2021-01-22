@@ -197,10 +197,16 @@ class Client {
         }
 
         try {
-            $response = $this->getHttpClient()->request( $method, $url, [
-                'headers' => $headers,
-                'json' => $data,
-            ] );
+            $payload = [
+                'headers' => $headers
+            ];
+            if ( !isset( $headers['Content-Type'] ) || $headers['Content-Type'] === 'application/json' ) {
+                $payload['json'] = $data;
+            } else {
+                $payload['body'] = $data;
+            }
+
+            $response = $this->getHttpClient()->request( $method, $url, $payload );
             $this->getLogger()->debug( "Completed {$method} {$url}", [
                 'payload' => $data,
                 'responseHeaders' => $response->getHeaders(),
