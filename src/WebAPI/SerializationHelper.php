@@ -95,6 +95,7 @@ class SerializationHelper {
                  * }
                  */
                 $translatedData[ $disassociateMap[ $field ] ] = null;
+                continue;
             } elseif ( $isLookup && ( $value instanceof EntityReference || $value instanceof Entity ) ) {
                 /*
                  * Associate records using the @odata.bind annotation.
