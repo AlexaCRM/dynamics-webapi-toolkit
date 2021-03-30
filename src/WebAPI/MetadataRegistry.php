@@ -194,6 +194,10 @@ class MetadataRegistry {
 
                     unset( $attribute->GlobalOptionSet );
 
+                    if ( !isset($attribute->{'@odata.type'})){
+                        $attribute->{'@odata.type'} = "#Microsoft.Dynamics.CRM.{$type}";
+                    }
+
                     $typedAttributes[] = $attribute;
                 }
             } catch ( ODataException $e ) {
