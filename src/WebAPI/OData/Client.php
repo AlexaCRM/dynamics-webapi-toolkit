@@ -294,6 +294,10 @@ class Client {
             if ( isset( $queryOptions['FetchXml'] ) ) {
                 $queryParameters['fetchXml'] = $queryOptions['FetchXml'];
             }
+            if ( isset( $queryOptions['ApiVersion'] ) ) {
+                $queryParameters['api-version'] = $queryOptions['ApiVersion'];
+            }
+
             $endpointURI .= '?' . http_build_query( $queryParameters );
         }
 

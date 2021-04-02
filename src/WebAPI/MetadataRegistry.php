@@ -120,6 +120,7 @@ class MetadataRegistry {
         try {
             $object = $this->client->getRecord( 'EntityDefinitions', "LogicalName='{$logicalName}'", [
                 'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships',
+                'ApiVersion' => $this->client->getSettings()->apiVersion,
             ] );
             unset( $object->{Annotation::ODATA_CONTEXT} );
 
