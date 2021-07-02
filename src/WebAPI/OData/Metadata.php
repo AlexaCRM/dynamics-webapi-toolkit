@@ -152,7 +152,9 @@ class Metadata {
             $metadata->entityMaps[$typeName] = $newMap;
 
             $baseType = $metadata->entityMaps[$newMap->baseEntity];
-            $metadata->entityMaps[$typeName]->rebuildFromBase( $baseType );
+            if ($baseType !== null) {
+                $metadata->entityMaps[$typeName]->rebuildFromBase( $baseType );
+            }
         }
 
         /*
