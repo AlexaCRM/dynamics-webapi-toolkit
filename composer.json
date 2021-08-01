@@ -23,7 +23,12 @@
       "AlexaCRM\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "AlexaCRM\\": "tests/"
+    }
+  },
   "require-dev": {
-    "phpunit/phpunit": "^8.1"
+    "phpunit/phpunit": "^9.5"
   }
 }

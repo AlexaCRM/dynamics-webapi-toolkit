@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright 2018 AlexaCRM
  *
@@ -19,6 +20,8 @@
  *
  */
 
+declare( strict_types=1 );
+
 namespace AlexaCRM\Xrm;
 
 use Traversable;
@@ -33,7 +36,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
     /**
      * @var array
      */
-    protected array $attributes;
+    protected array $attributes = [];
 
     public function reset(): void {
         foreach ( $this->attributes as $attribute => &$state ) {
