@@ -34,7 +34,17 @@ class OnlineSettings extends Settings {
     /**
      * Azure AD application secret.
      */
-    public string $applicationSecret;
+    public ?string $applicationSecret;
+
+    /**
+     * Certificate path.
+     */
+    public string $certificatePath = '';
+
+    /**
+     * Certificate passphrase.
+     */
+    public ?string $passphrase = null;
 
     /**
      * Azure AD tenant ID.
@@ -48,6 +58,14 @@ class OnlineSettings extends Settings {
      */
     public function getEndpointURI(): string {
         return trim( $this->instanceURI, '/' ) . '/api/data/v' . $this->apiVersion . '/';
+    }
+
+	/**
+	 * Check if authentication is certificate based or not
+	 * @return bool
+	 */
+    public function isCertificateBasedAuth(): bool {
+        return empty($this->applicationSecret) && !empty($this->certificatePath);
     }
 
 }

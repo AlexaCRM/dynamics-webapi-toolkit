@@ -134,7 +134,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $settings = $this->settings;
 
         $pool = $this->getPool();
-        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
+        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret ?? $settings->certificatePath );
         $cache = $pool->getItem( $cacheKey );
         if ( $cache->isHit() ) {
             $token = $cache->get();
@@ -153,14 +153,27 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
         $httpClient = $this->getHttpClient();
         try {
-            $tokenResponse = $httpClient->post( $tokenEndpoint, [
+            $requestPayload = [
                 'form_params' => [
                     'grant_type' => 'client_credentials',
                     'client_id' => $settings->applicationID,
                     'client_secret' => $settings->applicationSecret,
                     'resource' => $settings->instanceURI,
                 ],
-            ] );
+            ];
+
+	        // Add and remove unnecessary params for certificate-based auth
+	        if ( $this->settings->isCertificateBasedAuth() ) {
+		        $client_assertion              = $this->computeAssertion( $tokenEndpoint );
+		        $requestPayload['form_params'] = array_merge( $requestPayload['form_params'], [
+			        'client_assertion_type' => 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+			        'client_assertion'      => $client_assertion,
+		        ] );
+		        unset( $requestPayload['form_params']['client_secret'] );
+	        }
+
+	        $tokenResponse = $httpClient->post( $tokenEndpoint, $requestPayload );
+
             $settings->logger->debug( 'Retrieved a new access token via ' . $tokenEndpoint );
         } catch ( RequestException $e ) {
             $errorDescription = $e->getMessage();
@@ -180,6 +193,57 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         return $this->token;
     }
 
+	/**
+	 * @param string $tokenEndpoint
+	 * Compute an assertion for auth certificate in JWT format
+	 * The assertion is generated based on the guide: https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials
+	 * @return string
+	 * @throws \Exception
+	 */
+	private function computeAssertion( string $tokenEndpoint ): string {
+		if ( $certificate = file_get_contents( $this->settings->certificatePath ) ) {
+			openssl_pkcs12_read( $certificate, $certs, $this->settings->passphrase );
+			if ( empty( $certs ) ) {
+				throw new \Exception( "Can't read certificate. Please check your passphrase" );
+			}
+			$cert = openssl_x509_read( $certs["cert"] );
+			$pkey = openssl_pkey_get_private( $certs["pkey"] );
+
+			$header = json_encode( [
+				'alg' => 'RS256',
+				'typ' => 'JWT',
+				'x5t' => $this->base64UrlEncode( openssl_x509_fingerprint( $cert, 'sha1', true ) ),
+			] );
+
+			$payload = json_encode( [
+				'iss' => $this->settings->applicationID,
+				'sub' => $this->settings->applicationID,
+				'exp' => time() + ( 60 * 10 ),
+				'jti' => vsprintf( '%s%s-%s-4000-8%.3s-%s%s%s0', str_split( dechex( microtime( true ) * 1000 ) . bin2hex( random_bytes( 8 ) ), 4 ) ),
+				'aud' => $tokenEndpoint,
+				'nbf' => time() - ( 60 * 10 ),
+			] );
+
+			$base64UrlHeader  = $this->base64UrlEncode( $header );
+			$base64UrlPayload = $this->base64UrlEncode( $payload );
+			openssl_sign( "$base64UrlHeader.$base64UrlPayload", $signature, $pkey, 'SHA256' );
+			$base64UrlSignature = $this->base64UrlEncode( $signature );
+
+			return "$base64UrlHeader.$base64UrlPayload.$base64UrlSignature";
+		} else {
+			throw new \Exception( "No certificate found in '{$this->settings->certificatePath}'" );
+		}
+	}
+
+	/**
+	 * @param $text
+	 * Returns base64 url-encode string
+	 * @return string
+	 */
+	function base64UrlEncode( $text ) {
+		return rtrim( strtr( base64_encode( $text ), '+/', '-_' ), '=' );
+	}
+
     /**
      * Discards the access token from memory and cache.
      */
@@ -188,7 +252,7 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
 
         $settings = $this->settings;
 
-        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret );
+        $cacheKey = 'msdynwebapi.token.' . sha1( $settings->instanceURI . $settings->applicationID . $settings->applicationSecret ?? $settings->certificatePath );
         $this->getPool()->deleteItem( $cacheKey );
     }
 
