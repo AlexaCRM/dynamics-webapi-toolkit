@@ -150,9 +150,15 @@ class SerializationHelper {
                 continue;
             }
 
-            if ( !array_key_exists( $field, $inboundMap ) ) {
-                $this->client->getLogger()->warning( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map", [ 'inboundMap' => $inboundMap ] );
-            }
+	        if ( !array_key_exists( $field, $inboundMap ) ) {
+		        // Linked entity attributes received in [EntityName].[FieldName]
+		        if ( strpos( $field, '.' ) !== false ) {
+			        // So get just [FieldName] to match the inbound attribute map
+			        $field = explode( '.', $field )[1];
+		        } else {
+			        $this->client->getLogger()->warning( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map", [ 'inboundMap' => $inboundMap ] );
+		        }
+	        }
 
             if ( $attributeToEntityMap === null && ( !array_key_exists( $field, $inboundMap ) || $value === null ) ) {
                 continue;
