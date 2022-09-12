@@ -26,19 +26,12 @@ use Psr\Cache\CacheItemInterface;
  * Represents a PSR-6 compliant dummy cache item.
  */
 class NullCacheItem implements CacheItemInterface {
-
-    /**
-     * @var string
-     */
-    protected string $key;
-
     /**
      * NullCacheItem constructor.
      *
      * @param string $key
      */
-    public function __construct( string $key ) {
-        $this->key = $key;
+    public function __construct( protected string $key ) {
     }
 
     /**
