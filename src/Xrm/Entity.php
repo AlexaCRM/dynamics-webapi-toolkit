@@ -165,7 +165,7 @@ class Entity implements \ArrayAccess {
      *
      * @return mixed Can return all value types.
      */
-    public function offsetGet( $offset ) {
+    public function offsetGet( $offset ): mixed {
         return $this->GetAttributeValue( $offset );
     }
 
