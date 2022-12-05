@@ -28,6 +28,7 @@
 namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -119,6 +120,7 @@ class Client {
             'headers' => $headers,
             'verify' => $verify,
             'handler' => $handlerStack,
+            'cookies' => true,
         ] );
 
         return $this->httpClient;
@@ -206,12 +208,26 @@ class Client {
                 $payload['body'] = $data;
             }
 
+            $cache = $this->getCachePool()->getItem( 'msdynwebapi.cookiesjar' );
+            if ( $cache->isHit() ) {
+                $savedCookies = $cache->get();
+                if ( $savedCookies instanceof CookieJar ) {
+                    $payload['cookies'] = $savedCookies;
+                    $this->getLogger()->debug( 'Found request cookies in cache' );
+                }
+            }
+
             $response = $this->getHttpClient()->request( $method, $url, $payload );
             $this->getLogger()->debug( "Completed {$method} {$url}", [
                 'payload' => $data,
                 'responseHeaders' => $response->getHeaders(),
                 'responseBody' => $response->getBody()->getContents(),
             ] );
+
+            $responseCookie = $this->getHttpClient()->getConfig( 'cookies' );
+            if ( !empty( $responseCookie ) && !$cache->isHit() ) {
+                $this->getCachePool()->save( $cache->set( $responseCookie ) );
+            }
 
             return $response;
         } catch ( RequestException $e ) {
