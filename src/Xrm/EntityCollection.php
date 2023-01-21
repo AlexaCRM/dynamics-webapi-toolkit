@@ -61,9 +61,9 @@ class EntityCollection implements \Iterator {
     /**
      * Return the current element.
      *
-     * @return mixed
+     * @return Entity|bool
      */
-    public function current() {
+    public function current(): Entity|bool {
         return current( $this->Entities );
     }
 
@@ -77,9 +77,9 @@ class EntityCollection implements \Iterator {
     /**
      * Return the key of the current element.
      *
-     * @return mixed Scalar on success, or null on failure.
+     * @return string|int|null Scalar on success, or null on failure.
      */
-    public function key() {
+    public function key(): string|int|null {
         return key( $this->Entities );
     }
 
