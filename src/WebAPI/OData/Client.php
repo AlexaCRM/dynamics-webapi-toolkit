@@ -647,6 +647,76 @@ class Client {
     }
 
     /**
+     * @param string $search
+     * @param array|null $searchParameters
+     *
+     * @return mixed
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function query( string $search, array $searchParameters = null ) {
+        return $this->search( 'query', $search, $searchParameters );
+    }
+
+    /**
+     * @param string $search
+     * @param array|null $searchParameters
+     *
+     * @return mixed
+     *
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function suggest( string $search, array $searchParameters = null ) {
+        return $this->search( 'suggest', $search, $searchParameters );
+    }
+
+    /**
+     * @param string $search
+     * @param array|null $searchParameters
+     *
+     * @return mixed
+     *
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function autocomplete( string $search, array $searchParameters = null ) {
+        return $this->search( 'autocomplete', $search, $searchParameters );
+    }
+
+    /**
+     * Performs a search request with specified parameters.
+     *
+     * @param string $type
+     * @param string $search
+     * @param array|null $searchParameters
+     *
+     * @return mixed
+     *
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    protected function search( string $type, string $search, array $searchParameters = null ) {
+        $url = $this->settings->instanceURI . '/api/search/v1.0/' . $type;
+
+        $data = [
+            'search' => $search,
+        ];
+
+        if ( !empty( $searchParameters ) ) {
+            $data = array_merge( $searchParameters, $data );
+        }
+
+        $result = $this->doRequest( 'POST', $url, $data );
+
+        return json_decode( $result->getBody() );
+    }
+
+    /**
      * Retrieves the ID of the newly created/updated entity record from response headers.
      *
      * @param ResponseInterface $response
