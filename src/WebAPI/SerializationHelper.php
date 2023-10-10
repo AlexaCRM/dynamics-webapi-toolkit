@@ -197,6 +197,7 @@ class SerializationHelper {
             if ( property_exists( $rawEntity, $logicalNameField ) ) {
                 $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
             } elseif ( $attributeToEntityMap !== null
+	                   && is_string($value)
                        && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
                        && property_exists( $rawEntity, $formattedValueField ) ) {
                 /*
