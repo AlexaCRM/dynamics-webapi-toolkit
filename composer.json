@@ -12,7 +12,7 @@
   "minimum-stability": "dev",
   "require": {
     "php": "^7.4 || ^8.0",
-    "psr/log": "^1.0 || ^2.0",
+    "psr/log": "^1.0 || ^2.0 || ^3.0",
     "psr/cache": "^1.0 || ^2.0",
     "elao/enum": "^1.6",
     "alexacrm/strong-serializer": "^2.0",
