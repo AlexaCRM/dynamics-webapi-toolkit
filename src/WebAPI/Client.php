@@ -229,6 +229,7 @@ class Client implements IOrganizationService {
                     $options['Select'][] = $columnMapping[ $column ];
                 }
             }
+            $options['Expand'] = $columnSet->GetExpandQueryOption();
 
             $response = $this->client->getRecord( $collectionName, $entityId, $options );
 
@@ -365,12 +366,15 @@ class Client implements IOrganizationService {
     protected function retrieveViaQueryByAttribute( QueryByAttribute $query ): EntityCollection {
         try {
             $metadata = $this->client->getMetadata();
-            $entityMap = $metadata->getEntityMap( $query->EntityName );
+            $entityMap = $metadata->getEntityMap($query->EntityName);
             $inboundMap = $entityMap->inboundMap;
-            $columnMap = array_flip( $inboundMap );
+            $columnMap = array_flip($inboundMap);
 
             $queryData = [];
             $filterQuery = [];
+            foreach ($query->Filters as $filter) {
+                $filterQuery[] = $filter->toString();
+            }
             foreach ( $query->Attributes as $attributeName => $value ) {
                 $queryAttributeName = $columnMap[ $attributeName ];
 
@@ -379,25 +383,69 @@ class Client implements IOrganizationService {
                     $attributeType = $entityMap->fieldTypes[ $attributeName ];
                 }
 
-                switch ( true ) {
-                    /*
-                     * GUIDs may be stored as strings,
-                     * but GUIDs in UniqueIdentifier attributes must not be enclosed in quotes.
-                     */
-                    case ( is_string( $value ) && $attributeType !== 'Edm.Guid' ):
-                        $queryValue = "'{$value}'";
-                        break;
-                    case is_bool( $value ):
-                        $queryValue = $value? 'true' : 'false';
-                        break;
-                    case $value === null:
-                        $queryValue = 'null';
-                        break;
-                    default:
-                        $queryValue = $value;
-                }
+                if (is_array($value)) {
+                    // If we have a group of filters, make sure to format them correctly
+                    if (isset($value['filterSet'])) {
+                        $filterSet = [];
+                        foreach ($value['filterSet'] as $queryAttributeName => $filter) {
+                            // For now - assume only 1 level of nesting ever.
+                            if (is_array($value) && isset($filter['operator']) && is_string($filter['value'])) {
+                                switch ($filter['operator']) {
+                                    case 'contains':
+                                    case 'endswith':
+                                    case 'startswith':
+                                        $filterSet[] = $filter['operator'] . '(' . $queryAttributeName . ', \'' . $filter['value'] . '\')';
+                                        break;
+                                    default:
+                                        $filterSet[] = $queryAttributeName . ' ' . $filter['operator'] . ' ' . $filter['value'];
+                                }
+                            } elseif (is_array($value) && isset($filter['operator']) && is_array($filter['value'])) {
+                                switch ($filter['operator']) {
+                                    case 'NotIn':
+                                        $propertyValues = json_encode($filter['value']);
+                                        $filterSet[] = 'Microsoft.Dynamics.CRM.' . $filter['operator'] . '(PropertyName=\'' . $queryAttributeName . '\',PropertyValues=' . $propertyValues . ')';
+                                        break;
+                                }
+                            }
+                            else {
+                                $filterSet[] = $queryAttributeName . ' eq ' . $filter;
+                            }
+                        }
+                        $filterQuery[] = '(' . implode(' ' . $value['logicalOperator'] . ' ', $filterSet) . ')';
 
-                $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
+                    } else {
+                        switch ($value['operator']) {
+                            case 'contains':
+                            case 'endswith':
+                            case 'startswith':
+                                $filterQuery[] = $value['operator'] . '(' . $queryAttributeName . ', \'' . $value['value'] . '\')';
+                                break;
+                            default:
+                                $filterQuery[] = $queryAttributeName . ' ' . $value['operator'] . ' ' . $value['value'];
+                        }
+                    }
+                }
+                else {
+                    switch ( true ) {
+                        /*
+                         * GUIDs may be stored as strings,
+                         * but GUIDs in UniqueIdentifier attributes must not be enclosed in quotes.
+                         */
+                        case ( is_string( $value ) && $attributeType !== 'Edm.Guid' ):
+                            $queryValue = "'{$value}'";
+                            break;
+                        case is_bool( $value ):
+                            $queryValue = $value? 'true' : 'false';
+                            break;
+                        case $value === null:
+                            $queryValue = 'null';
+                            break;
+                        default:
+                            $queryValue = $value;
+                    }
+
+                    $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
+                }
             }
             if ( count( $filterQuery ) ) {
                 $queryData['Filter'] = implode( ' and ', $filterQuery );
@@ -412,6 +460,7 @@ class Client implements IOrganizationService {
 
                     $queryData['Select'][] = $columnMap[ $column ];
                 }
+                $queryData['Expand'] = $query->ColumnSet->GetExpandQueryOption();
             }
 
             $orderMap = [

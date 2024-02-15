@@ -34,6 +34,11 @@ class QueryByAttribute extends QueryBase {
     public array $Attributes = [];
 
     /**
+     * Filters to apply to the query.
+     */
+    public array $Filters = [];
+
+    /**
      * The column set selected for the query.
      */
     public ?ColumnSet $ColumnSet = null;
@@ -77,6 +82,16 @@ class QueryByAttribute extends QueryBase {
      */
     public function AddAttributeValue( string $attributeName, $value ): void {
         $this->Attributes[$attributeName] = $value;
+    }
+
+    /**
+     * Adds a filter value to the filter collection.
+     *
+     * @param  \AlexaCRM\Xrm\Query\FilterSet|\AlexaCRM\Xrm\Query\Filter  $filter
+     * @return void
+     */
+    public function AddFilter( FilterSet|Filter $filter ): void {
+        $this->Filters[] = $filter;
     }
 
     /**

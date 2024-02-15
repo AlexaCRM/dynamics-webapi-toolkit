@@ -40,6 +40,8 @@ class ColumnSet {
      */
     public array $Columns = [];
 
+    public array $Expands = [];
+
     /**
      * ColumnSet constructor.
      *
@@ -79,4 +81,26 @@ class ColumnSet {
         $this->Columns = array_unique( $this->Columns );
     }
 
+    /**
+     * Adds an expand to the column set
+     *
+     * @param $column
+     * @param  \AlexaCRM\Xrm\ColumnSet  $columnSet
+     */
+    public function AddExpand( $column, ColumnSet $columnSet ): void {
+        $this->Expands[$column] = $columnSet;
+    }
+
+    /**
+     * Convert the expand options into a valid query string.
+     *
+     * @return string
+     */
+    public function GetExpandQueryOption() {
+        $query = [];
+        foreach ($this->Expands as $expandColumn => $columnSet) {
+            $query[] = $expandColumn . '($select=' . implode(',', $columnSet->Columns) . ')';
+        }
+        return implode(',', $query);
+    }
 }

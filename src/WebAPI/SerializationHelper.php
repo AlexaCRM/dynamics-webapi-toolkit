@@ -45,6 +45,25 @@ class SerializationHelper {
     }
 
     /**
+     * Loop through the outbound map for the Entity.
+     * If the $field is found, return the key - this will be the entity type name.
+     */
+    public function findEntityType($outboundMap, $field): ?string
+    {
+        $type = null;
+
+        array_walk_recursive($outboundMap, function ($value, $key) use (&$type, $field) {
+            if ($value == $field) {
+                $type = $key;
+
+                return;
+            }
+        });
+
+        return $type;
+    }
+
+    /**
      * Translates CRM attribute names to Web API outbound field names,
      * including the `odata.bind` annotation for lookup attributes.
      *
@@ -137,37 +156,51 @@ class SerializationHelper {
      * @throws OData\EntityNotSupportedException
      * @throws OData\TransportException
      */
-    public function deserializeEntity( object $rawEntity, EntityReference $reference, array $attributeToEntityMap = null ): Entity {
+    public function deserializeEntity(
+      object $rawEntity,
+      EntityReference $reference,
+      ?array $attributeToEntityMap = null
+    ): Entity {
         $metadata = $this->client->getMetadata();
-        $entityMap = $metadata->getEntityMap( $reference->LogicalName );
+        $entityMap = $metadata->getEntityMap($reference->LogicalName);
 
-        $targetEntity = new Entity( $reference->LogicalName, $reference->Id );
+        $targetEntity = new Entity($reference->LogicalName, $reference->Id);
 
         $inboundMap = $entityMap->inboundMap;
 
-        foreach ( $rawEntity as $field => $value ) {
-            if ( stripos( $field, '@Microsoft' ) !== false || stripos( $field, '@OData' ) !== false ) {
+        foreach ($rawEntity as $field => $value) {
+            // Skip irrelevant data
+            if (stripos($field, '@Microsoft') !== false || stripos($field, '@OData') !== false) {
                 continue;
             }
 
-            if ( !array_key_exists( $field, $inboundMap ) ) {
-                $this->client->getLogger()->debug( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map", [
-                    'field' => $field,
-                    'inboundMap' => $inboundMap,
-                ] );
-            }
-
-            if ( $attributeToEntityMap === null && ( !array_key_exists( $field, $inboundMap ) || $value === null ) ) {
-                continue;
-            }
-
-            $targetField = array_key_exists( $field, $inboundMap )? $inboundMap[$field] : $field;
-            $logicalNameField = $field . Annotation::CRM_LOOKUPLOGICALNAME;
-            $formattedValueField = $field . Annotation::ODATA_FORMATTEDVALUE;
+            $targetField = array_key_exists($field, $inboundMap) ? $inboundMap[$field] : $field;
+            $logicalNameField = $field.Annotation::CRM_LOOKUPLOGICALNAME;
+            $formattedValueField = $field.Annotation::ODATA_FORMATTEDVALUE;
             $targetValue = $value;
 
-            if ( $attributeToEntityMap !== null && strpos( $targetField, '_x002e_' ) !== false ) {
-                $targetField = str_replace( '_x002e_', '.', $targetField );
+            // If the field doesn't exist, check if we're expanding a relationship, otherwise log it.
+            if (! array_key_exists($field, $inboundMap)) {
+                /**
+                 * If the type is an 'object', assume it's a nested relationship entity
+                 * Deserialise the data and set the $targetValue to the Entity.
+                 */
+                if (gettype($value) == 'object') {
+                    if ($relationType = $this->findEntityType($entityMap->outboundMap, $field)) {
+                        $targetValue = $this->deserializeEntity($value, new EntityReference($relationType, $value->{"{$relationType}id"}));
+                    }
+                } else {
+                    $this->client->getLogger()
+                      ->debug("Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map",
+                        [
+                          'field' => $field,
+                          'inboundMap' => $inboundMap,
+                        ]);
+                }
+            }
+
+            if ($attributeToEntityMap !== null && strpos($targetField, '_x002e_') !== false) {
+                $targetField = str_replace('_x002e_', '.', $targetField);
             }
 
             /*
@@ -194,28 +227,28 @@ class SerializationHelper {
              * entity type targeted by the lookup attribute. We could validate logical name / ID pair in CRM
              * but it is a costly procedure, especially for lookups with a long Targets list.
              */
-            if ( property_exists( $rawEntity, $logicalNameField ) ) {
-                $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
-            } elseif ( $attributeToEntityMap !== null
-	                   && is_string($value)
-                       && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
-                       && property_exists( $rawEntity, $formattedValueField ) ) {
+            if (property_exists($rawEntity, $logicalNameField)) {
+                $targetValue = new EntityReference($rawEntity->{$logicalNameField}, $value);
+            } elseif ($attributeToEntityMap !== null
+              && is_string($value)
+              && preg_match('~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value)
+              && property_exists($rawEntity, $formattedValueField)) {
                 /*
                  * Map to a static entity type if we've got a GUID and a formatted value and no entity type information.
                  * It means we're likely in the quirk mode and have to try guessing the lookup entity type.
                  */
-                if ( array_key_exists( $targetField, $attributeToEntityMap ) ) {
-                    $targetValue = new EntityReference( $attributeToEntityMap[$targetField], $value );
+                if (array_key_exists($targetField, $attributeToEntityMap)) {
+                    $targetValue = new EntityReference($attributeToEntityMap[$targetField], $value);
                 }
             }
 
             $targetEntity->Attributes[$targetField] = $targetValue;
 
             // Import formatted value.
-            if ( property_exists( $rawEntity, $formattedValueField ) ) {
+            if (property_exists($rawEntity, $formattedValueField)) {
                 $targetEntity->FormattedValues[$targetField] = $rawEntity->{$formattedValueField};
 
-                if ( $targetValue instanceof EntityReference ) {
+                if ($targetValue instanceof EntityReference) {
                     $targetValue->Name = $rawEntity->{$formattedValueField};
                 }
             }
