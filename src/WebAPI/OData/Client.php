@@ -340,7 +340,7 @@ class Client {
 
             if ( isset( $queryOptions['IncludeAnnotations'] ) ) {
                 if( $queryOptions['IncludeAnnotations'] === false ) {
-                    unset( $prefer['IncludeAnnotations'] );
+                    $prefer['IncludeAnnotations'] = 'odata.include-annotations="-*"';
                 }
                 else {
                     $prefer['IncludeAnnotations'] = 'odata.include-annotations="' . $queryOptions['IncludeAnnotations'] . '"';
