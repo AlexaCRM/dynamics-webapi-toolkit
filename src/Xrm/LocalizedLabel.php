@@ -45,6 +45,16 @@ class LocalizedLabel extends MetadataBase {
     public ?int $LanguageCode = null;
 
     /**
+     * Whether the item of metadata has changed.
+     */
+    public ?bool $HasChanged;
+
+    /**
+     * A unique identifier for the metadata item.
+     */
+    public $MetadataId;
+
+    /**
      * LocalizedLabel constructor.
      *
      * @param string|null $label The localized label string.

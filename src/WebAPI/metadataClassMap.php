@@ -38,8 +38,8 @@ return [
 
             if ( isset( $data->{'@odata.type'} ) ) {
                 $odataType = str_replace( '#Microsoft.Dynamics.CRM.', '', $data->{'@odata.type' } );
-                if ( class_exists( "AlexaCRM\\Xrm\\Metadata\\${odataType}" ) ) {
-                    return "AlexaCRM\\Xrm\\Metadata\\${odataType}";
+                if ( class_exists( "AlexaCRM\\Xrm\\Metadata\\{$odataType}" ) ) {
+                    return "AlexaCRM\\Xrm\\Metadata\\{$odataType}";
                 }
             }
 
