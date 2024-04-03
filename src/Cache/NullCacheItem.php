@@ -21,7 +21,6 @@
 namespace AlexaCRM\Cache;
 
 use Psr\Cache\CacheItemInterface;
-use DateTimeInterface;
 
 /**
  * Represents a PSR-6 compliant dummy cache item.
@@ -67,7 +66,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return mixed
      *   The value corresponding to this cache item's key, or null if not found.
      */
-    public function get() : bool {
+    public function get() {
         return null;
     }
 
@@ -97,7 +96,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The invoked object.
      */
-    public function set(mixed $value ) : static {
+    public function set($value) {
         return $this;
     }
 
@@ -113,7 +112,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The called object.
      */
-    public function expiresAt(?DateTimeInterface $expiration): static {
+    public function expiresAt($expiration) {
         return $this;
     }
 
@@ -130,7 +129,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The called object.
      */
-    public function expiresAfter(int|\DateInterval|null $time): static {
+    public function expiresAfter($time) {
         return $this;
     }
 }
