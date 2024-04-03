@@ -566,6 +566,22 @@ class Client {
     }
 
     /**
+     * @param string $uri
+     * @param array|null $queryOptions
+     *
+     * @return object
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function executeWebRequest( string $uri, array $queryOptions = null ): object {
+        $url = $this->buildQueryURL( $uri, $queryOptions );
+        $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
+
+        return json_decode( $res->getBody() );
+    }
+
+    /**
      * Executes a Web API function.
      *
      * @param string $name Function name.
