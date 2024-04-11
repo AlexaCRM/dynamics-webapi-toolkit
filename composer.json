@@ -1,6 +1,6 @@
 {
   "name": "alexacrm/dynamics-webapi-toolkit",
-  "description": "Web API toolkit for Microsoft Dynamics 365 and Dynamics CRM",
+  "description": "Web API toolkit for Microsoft Dataverse and Dynamics 365",
   "type": "library",
   "license": "MIT",
   "authors": [
@@ -10,10 +10,11 @@
     }
   ],
   "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
-    "php": ">=7.4",
-    "psr/log": "^1.0",
-    "psr/cache": "^1.0",
+    "php": ">=8.0",
+    "psr/log": "^3.0",
+    "psr/cache": "^3.0",
     "elao/enum": "^1.6",
     "alexacrm/strong-serializer": "^2.0",
     "guzzlehttp/guzzle": "^7.0"

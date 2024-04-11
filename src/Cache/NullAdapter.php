@@ -45,7 +45,7 @@ class NullAdapter implements CacheItemPoolInterface {
      * @return CacheItemInterface
      *   The corresponding Cache Item.
      */
-    public function getItem($key) : CacheItemInterface {
+    public function getItem(string $key) : CacheItemInterface {
         return new NullCacheItem( $key );
     }
 
