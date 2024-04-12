@@ -354,7 +354,7 @@ class Client implements IOrganizationService {
         }
     }
 
-    /**
+       /**
      * @param QueryByAttribute $query
      *
      * @return EntityCollection
@@ -371,7 +371,20 @@ class Client implements IOrganizationService {
 
             $queryData = [];
             $filterQuery = [];
-            foreach ( $query->Attributes as $attributeName => $value ) {
+            foreach ( $query->Attributes as $attributeName => $_value ) {
+                $value = null;
+                $operator = null;
+                try {
+                    $valueArray = json_decode($_value, true, 512, JSON_THROW_ON_ERROR);
+                    $value = $valueArray['value'] ?? null;
+                    $operator = $valueArray['operator'] ?? null;
+                } catch (\Exception $e) {
+                    $this->getLogger()->error($e->getMessage());
+                }
+
+                $value = empty($value) ? $_value : $value;
+                $operator = empty($operator) ? ' eq ' : " {$operator} ";
+
                 $queryAttributeName = $columnMap[ $attributeName ];
 
                 $attributeType = '';
@@ -397,7 +410,7 @@ class Client implements IOrganizationService {
                         $queryValue = $value;
                 }
 
-                $filterQuery[] = $queryAttributeName . ' eq ' . $queryValue;
+                $filterQuery[] = $queryAttributeName . $operator . $queryValue;
             }
             if ( count( $filterQuery ) ) {
                 $queryData['Filter'] = implode( ' and ', $filterQuery );
@@ -490,7 +503,7 @@ class Client implements IOrganizationService {
             throw new ToolkitException( "Cannot retrieve via QueryByAttribute: entity `{$query->EntityName}` is not supported", $e );
         }
     }
-
+    
     /**
      * Updates an existing record.
      *
