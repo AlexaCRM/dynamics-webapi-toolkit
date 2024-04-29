@@ -166,8 +166,8 @@ class SerializationHelper {
             $formattedValueField = $field . Annotation::ODATA_FORMATTEDVALUE;
             $targetValue = $value;
 
-            if ( $attributeToEntityMap !== null && strpos( $targetField, '_x002e_' ) !== false ) {
-                $targetField = str_replace( '_x002e_', '.', $targetField );
+            if ($attributeToEntityMap !== null && str_contains($targetField, '_x002e_')) {
+                $targetField = str_replace('_x002e_', '.', $targetField);
             }
 
             /*
@@ -209,15 +209,21 @@ class SerializationHelper {
                 }
             }
 
-            $targetEntity->Attributes[$targetField] = $targetValue;
+            if (! is_array($targetValue)) {
+                $targetEntity->Attributes[$targetField] = $targetValue;
 
-            // Import formatted value.
-            if ( property_exists( $rawEntity, $formattedValueField ) ) {
-                $targetEntity->FormattedValues[$targetField] = $rawEntity->{$formattedValueField};
+                // Import formatted value.
+                if (property_exists($rawEntity, $formattedValueField)) {
+                    $targetEntity->FormattedValues[$targetField] = $rawEntity->{$formattedValueField};
 
-                if ( $targetValue instanceof EntityReference ) {
-                    $targetValue->Name = $rawEntity->{$formattedValueField};
+                    if ($targetValue instanceof EntityReference) {
+                        $targetValue->Name = $rawEntity->{$formattedValueField};
+                    }
                 }
+            }
+
+            if (isset($rawEntity->{$targetField}) && is_array($rawEntity->{$targetField}) && ! empty($rawEntity->{$targetField})) {
+                $targetEntity->RelatedEntities[$targetField] = $this->getRelatedEntities($rawEntity->{$targetField});
             }
         }
 
@@ -284,4 +290,34 @@ class SerializationHelper {
         return $attrToEntity;
     }
 
+    /**
+     * Get the collection of related entity instances for the specified relationship.
+     * @param  array  $relatedEntitiesList
+     * @return array
+     */
+    protected function getRelatedEntities(array $relatedEntitiesList): array
+    {
+        $relatedEntities = [];
+        foreach ($relatedEntitiesList as $relatedRow) {
+            $relatedEntityProperties = (array) $relatedRow;
+            if (! array_key_exists('@odata.etag', $relatedEntityProperties)) {
+                continue;
+            }
+            $row = [];
+            foreach ($relatedEntityProperties as $propertyName => $propertyValue) {
+                if (str_starts_with($propertyName, '_') || str_contains($propertyName, '@')) {
+                    continue;
+                }
+                if (is_bool($propertyValue)) {
+                    $row[$propertyName] = $propertyValue;
+                    continue;
+                }
+                $formattedValueField = $propertyName.Annotation::ODATA_FORMATTEDVALUE;
+                $row[$propertyName] = $recordPropertiesList[$formattedValueField] ?? $propertyValue;
+            }
+            $relatedEntities[] = $row;
+        }
+
+        return $relatedEntities;
+    }
 }
