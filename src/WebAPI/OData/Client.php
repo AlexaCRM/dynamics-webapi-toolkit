@@ -329,16 +329,26 @@ class Client {
      */
     private function buildQueryHeaders( array $queryOptions = null ): array {
         $headers = [];
-        $prefer = [];
+        $prefer = [
+            'IncludeAnnotations' => 'odata.include-annotations="*"'
+        ];
 
         if ( $queryOptions != null ) {
             if ( isset( $queryOptions['MaxPageSize'] ) ) {
                 $prefer[] = 'odata.maxpagesize=' . $queryOptions['MaxPageSize'];
             }
+
+            if ( isset( $queryOptions['IncludeAnnotations'] ) ) {
+                if( $queryOptions['IncludeAnnotations'] === false ) {
+                    $prefer['IncludeAnnotations'] = 'odata.include-annotations="-*"';
+                }
+                else {
+                    $prefer['IncludeAnnotations'] = 'odata.include-annotations="' . $queryOptions['IncludeAnnotations'] . '"';
+                }
+            }
         }
 
-        $prefer[] = 'odata.include-annotations="*"';
-        $headers['Prefer'] = implode( ',', $prefer );
+        $headers['Prefer'] = implode( ',', array_values($prefer) );
 
         return $headers;
     }
