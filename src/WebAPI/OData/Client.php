@@ -200,7 +200,7 @@ class Client {
 
         try {
             $payload = [
-                'headers' => $headers
+                'headers' => $headers,
             ];
             if ( !isset( $headers['Content-Type'] ) || $headers['Content-Type'] === 'application/json' ) {
                 $payload['json'] = $data;
@@ -505,6 +505,47 @@ class Client {
             $headers['x-ms-file-name'] = $filename;
         }
         $this->doRequest( 'PUT', $url, $value, $headers );
+    }
+
+    /**
+     * @param string $entityName
+     * @param string $entityId
+     * @param string $filenameField
+     * @param array $headers
+     * @param bool $isImage
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function downloadFile( string $entityName, string $entityId, string $filenameField, array $headers = [], bool $isImage = false ): void {
+        $url = sprintf( '%s%s(%s)/%s/$value', $this->settings->getEndpointURI(), $entityName, $entityId, $filenameField );
+        if ( $isImage ) {
+            $url .= '?size=full';
+        }
+        $response = $this->doRequest( 'GET', $url, null, $headers );
+
+        foreach ( $response->getHeaders() as $headerKey => $headerValue ) {
+            header( "{$headerKey}: {$response->getHeaderLine($headerKey)}" );
+        }
+        echo $response->getBody()->getContents();
+    }
+
+    /**
+     * @param string $entityName
+     * @param string $entityId
+     * @param string $filenameField
+     * @param array $headers
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function downloadImage( string $entityName, string $entityId, string $filenameField, array $headers = [] ): void {
+        $headers = array_push( $headers, [ 'Content-Type' => 'application/octet-stream' ] );
+        $this->downloadFile( $entityName, $entityId, $filenameField, (array)$headers, true );
     }
 
     /**
