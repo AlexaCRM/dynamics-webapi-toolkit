@@ -218,11 +218,13 @@ class Client {
             }
 
             $response = $this->getHttpClient()->request( $method, $url, $payload );
-            $this->getLogger()->debug( "Completed {$method} {$url}", [
-                'payload' => $data,
-                'responseHeaders' => $response->getHeaders(),
-                'responseBody' => $response->getBody()->getContents(),
-            ] );
+            if (! str_contains($response->getHeaderLine('Content-Type'), 'application/octet-stream')) {
+                $this->getLogger()->debug("Completed {$method} {$url}", [
+                    'payload' => $data,
+                    'responseHeaders' => $response->getHeaders(),
+                    'responseBody' => $response->getBody()->getContents(),
+                ]);
+            }
 
             $responseCookie = $this->getHttpClient()->getConfig( 'cookies' );
             if ( !empty( $responseCookie ) && !$cache->isHit() ) {
@@ -505,6 +507,29 @@ class Client {
             $headers['x-ms-file-name'] = $filename;
         }
         $this->doRequest( 'PUT', $url, $value, $headers );
+    }
+
+    /**
+     * @param string $entityName
+     * @param string $key
+     * @param string $field
+     * @param $value
+     * @param string|null $filename
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws ODataException
+     * @throws TransportException
+     */
+    public function downloadFile( string $entityName, string $entityId, string $filenameField, $headers = []): void {
+        $url = sprintf( '%s%s(%s)/%s', $this->settings->getEndpointURI(), $entityName, $entityId, $filenameField );
+        $headers = [ 'Content-Type' => 'application/octet-stream' ];
+        $response = $this->doRequest( 'GET', $url, null, $headers );
+
+        foreach ( $response->getHeaders() as $headerKey => $headerValue ) {
+            header( "{$headerKey}: {$response->getHeaderLine($headerKey)}" );
+        }
+        echo $response->getBody()->getContents();
     }
 
     /**
