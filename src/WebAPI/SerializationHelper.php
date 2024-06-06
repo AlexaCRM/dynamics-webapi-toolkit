@@ -222,8 +222,14 @@ class SerializationHelper {
                 }
             }
 
-            if (isset($rawEntity->{$targetField}) && is_array($rawEntity->{$targetField}) && ! empty($rawEntity->{$targetField})) {
-                $targetEntity->RelatedEntities[$targetField] = $this->getRelatedEntities($rawEntity->{$targetField});
+            if (! empty($rawEntity->{$targetField}) && (is_array($rawEntity->{$targetField}) || $rawEntity->{$targetField} instanceof \stdClass)) {
+                if($rawEntity->{$targetField} instanceof \stdClass){
+                    $data = [(array)$rawEntity->{$targetField}];
+                }
+                else{
+                    $data = (array)$rawEntity->{$targetField};
+                }
+                $targetEntity->RelatedEntities[$targetField] = $this->getRelatedEntities($data);
             }
         }
 
@@ -298,19 +304,19 @@ class SerializationHelper {
     protected function getRelatedEntities(array $relatedEntitiesList): array
     {
         $relatedEntities = [];
-        foreach ($relatedEntitiesList as $relatedRow) {
-            $relatedEntityProperties = (array) $relatedRow;
-            if (! array_key_exists('@odata.etag', $relatedEntityProperties)) {
-                continue;
-            }
+        foreach ($relatedEntitiesList as $relatedEntity) {
+            $relatedEntityProperties = (array) $relatedEntity;
             $row = [];
             foreach ($relatedEntityProperties as $propertyName => $propertyValue) {
-                if (str_starts_with($propertyName, '_') || str_contains($propertyName, '@')) {
+                if (strpos($propertyName, '_') === 0 || strpos($propertyName, '@') !== false) {
                     continue;
                 }
                 if (is_bool($propertyValue)) {
                     $row[$propertyName] = $propertyValue;
                     continue;
+                }
+                if($propertyValue instanceof \stdClass){
+                    $propertyValue = $this->getRelatedEntities([(array)$propertyValue]);
                 }
                 $formattedValueField = $propertyName.Annotation::ODATA_FORMATTEDVALUE;
                 $row[$propertyName] = $recordPropertiesList[$formattedValueField] ?? $propertyValue;
