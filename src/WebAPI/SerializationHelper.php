@@ -66,17 +66,17 @@ class SerializationHelper {
 
         $touchedFields = [];
         foreach ( $entity->getAttributeState() as $fieldName => $_ ) {
-            $touchedFields[$fieldName] = $entity[$fieldName];
+            $touchedFields[ $fieldName ] = $entity[ $fieldName ];
         }
 
         $translatedData = [];
 
         foreach ( $touchedFields as $field => $value ) {
-            $outboundMapping = $outboundMap[$field];
+            $outboundMapping = $outboundMap[ $field ];
             $isLookup = is_array( $outboundMapping );
 
             if ( is_string( $outboundMapping ) ) {
-                $translatedData[$outboundMapping] = $value;
+                $translatedData[ $outboundMapping ] = $value;
                 continue; // Simple value mapping found.
             }
 
@@ -109,7 +109,7 @@ class SerializationHelper {
 
                 $fieldCollectionName = $metadata->getEntitySetName( $logicalName );
 
-                $annotation = $outboundMapping[$logicalName] . Annotation::ODATA_BIND;
+                $annotation = $outboundMapping[ $logicalName ] . Annotation::ODATA_BIND;
                 $translatedData[ $annotation ] = sprintf( '/%s(%s)', $fieldCollectionName, $value->Id );
 
                 continue;
@@ -161,13 +161,13 @@ class SerializationHelper {
                 continue;
             }
 
-            $targetField = array_key_exists( $field, $inboundMap )? $inboundMap[$field] : $field;
+            $targetField = array_key_exists( $field, $inboundMap ) ? $inboundMap[ $field ] : $field;
             $logicalNameField = $field . Annotation::CRM_LOOKUPLOGICALNAME;
             $formattedValueField = $field . Annotation::ODATA_FORMATTEDVALUE;
             $targetValue = $value;
 
-            if ($attributeToEntityMap !== null && str_contains($targetField, '_x002e_')) {
-                $targetField = str_replace('_x002e_', '.', $targetField);
+            if ( $attributeToEntityMap !== null && str_contains( $targetField, '_x002e_' ) ) {
+                $targetField = str_replace( '_x002e_', '.', $targetField );
             }
 
             /*
@@ -197,7 +197,7 @@ class SerializationHelper {
             if ( property_exists( $rawEntity, $logicalNameField ) ) {
                 $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
             } elseif ( $attributeToEntityMap !== null
-	                   && is_string($value)
+                       && is_string( $value )
                        && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
                        && property_exists( $rawEntity, $formattedValueField ) ) {
                 /*
@@ -205,31 +205,30 @@ class SerializationHelper {
                  * It means we're likely in the quirk mode and have to try guessing the lookup entity type.
                  */
                 if ( array_key_exists( $targetField, $attributeToEntityMap ) ) {
-                    $targetValue = new EntityReference( $attributeToEntityMap[$targetField], $value );
+                    $targetValue = new EntityReference( $attributeToEntityMap[ $targetField ], $value );
                 }
             }
 
-            if (! is_array($targetValue)) {
-                $targetEntity->Attributes[$targetField] = $targetValue;
+            if ( !is_array( $targetValue ) ) {
+                $targetEntity->Attributes[ $targetField ] = $targetValue;
 
                 // Import formatted value.
-                if (property_exists($rawEntity, $formattedValueField)) {
-                    $targetEntity->FormattedValues[$targetField] = $rawEntity->{$formattedValueField};
+                if ( property_exists( $rawEntity, $formattedValueField ) ) {
+                    $targetEntity->FormattedValues[ $targetField ] = $rawEntity->{$formattedValueField};
 
-                    if ($targetValue instanceof EntityReference) {
+                    if ( $targetValue instanceof EntityReference ) {
                         $targetValue->Name = $rawEntity->{$formattedValueField};
                     }
                 }
             }
 
-            if (! empty($rawEntity->{$targetField}) && (is_array($rawEntity->{$targetField}) || $rawEntity->{$targetField} instanceof \stdClass)) {
-                if($rawEntity->{$targetField} instanceof \stdClass){
-                    $data = [(array)$rawEntity->{$targetField}];
-                }
-                else{
+            if ( !empty( $rawEntity->{$targetField} ) && ( is_array( $rawEntity->{$targetField} ) || $rawEntity->{$targetField} instanceof \stdClass ) ) {
+                if ( $rawEntity->{$targetField} instanceof \stdClass ) {
+                    $data = [ (array)$rawEntity->{$targetField} ];
+                } else {
                     $data = (array)$rawEntity->{$targetField};
                 }
-                $targetEntity->RelatedEntities[$targetField] = $this->getRelatedEntities($data);
+                $targetEntity->RelatedEntities[ $targetField ] = $this->getRelatedEntities( $data );
             }
         }
 
@@ -270,13 +269,13 @@ class SerializationHelper {
                 continue;
             }
 
-            $entityMap = $metadata->entityMaps[$attributeEntity];
+            $entityMap = $metadata->entityMaps[ $attributeEntity ];
 
             if ( !array_key_exists( $targetField, $entityMap->outboundMap ) ) {
                 continue;
             }
 
-            $attributeMap = $entityMap->outboundMap[$targetField];
+            $attributeMap = $entityMap->outboundMap[ $targetField ];
             if ( !is_array( $attributeMap ) ) {
                 continue;
             }
@@ -290,7 +289,7 @@ class SerializationHelper {
             if ( $attr->hasAttribute( 'alias' ) ) {
                 $targetField = $attr->getAttribute( 'alias' );
             }
-            $attrToEntity[$targetField] = $targetEntity;
+            $attrToEntity[ $targetField ] = $targetEntity;
         }
 
         return $attrToEntity;
@@ -298,28 +297,29 @@ class SerializationHelper {
 
     /**
      * Get the collection of related entity instances for the specified relationship.
-     * @param  array  $relatedEntitiesList
+     *
+     * @param array $relatedEntitiesList
+     *
      * @return array
      */
-    protected function getRelatedEntities(array $relatedEntitiesList): array
-    {
+    protected function getRelatedEntities( array $relatedEntitiesList ): array {
         $relatedEntities = [];
-        foreach ($relatedEntitiesList as $relatedEntity) {
-            $relatedEntityProperties = (array) $relatedEntity;
+        foreach ( $relatedEntitiesList as $relatedEntity ) {
+            $relatedEntityProperties = (array)$relatedEntity;
             $row = [];
-            foreach ($relatedEntityProperties as $propertyName => $propertyValue) {
-                if (strpos($propertyName, '_') === 0 || strpos($propertyName, '@') !== false) {
+            foreach ( $relatedEntityProperties as $propertyName => $propertyValue ) {
+                if ( strpos( $propertyName, '_' ) === 0 || strpos( $propertyName, '@' ) !== false ) {
                     continue;
                 }
-                if (is_bool($propertyValue)) {
-                    $row[$propertyName] = $propertyValue;
+                if ( is_bool( $propertyValue ) ) {
+                    $row[ $propertyName ] = $propertyValue;
                     continue;
                 }
-                if($propertyValue instanceof \stdClass){
-                    $propertyValue = $this->getRelatedEntities([(array)$propertyValue]);
+                if ( $propertyValue instanceof \stdClass ) {
+                    $propertyValue = $this->getRelatedEntities( [ (array)$propertyValue ] );
                 }
-                $formattedValueField = $propertyName.Annotation::ODATA_FORMATTEDVALUE;
-                $row[$propertyName] = $recordPropertiesList[$formattedValueField] ?? $propertyValue;
+                $formattedValueField = $propertyName . Annotation::ODATA_FORMATTEDVALUE;
+                $row[ $propertyName ] = $recordPropertiesList[ $formattedValueField ] ?? $propertyValue;
             }
             $relatedEntities[] = $row;
         }
