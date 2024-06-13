@@ -43,6 +43,14 @@ class Entity implements \ArrayAccess {
     public array $FormattedValues = [];
 
     /**
+     *
+     * Contains a collection of related entities.
+     *
+     * @var array
+     */
+    public array $RelatedEntities = [];
+
+    /**
      * Collection of attributes' states.
      * If the attribute key exists and equals true, the attribute value has been changed
      * since the last time entity was persisted in CRM.
