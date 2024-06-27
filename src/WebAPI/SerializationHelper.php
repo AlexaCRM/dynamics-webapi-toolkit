@@ -210,6 +210,11 @@ class SerializationHelper {
             }
 
             $targetEntity->Attributes[$targetField] = $targetValue;
+            //Support for dotted notation in fetchxml
+            [$alias ,$field] = explode('.',$targetField);
+            if($field) {
+                $targetEntity->Attributes[ $alias ][ $field ] = $targetValue;
+            }
 
             // Import formatted value.
             if ( property_exists( $rawEntity, $formattedValueField ) ) {
