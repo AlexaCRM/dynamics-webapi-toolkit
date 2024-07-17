@@ -23,7 +23,8 @@ namespace AlexaCRM\Xrm\Metadata;
 /**
  * Specifies the base class for classes that contains metadata information.
  */
-abstract class MetadataBase {
+abstract class MetadataBase
+{
 
     /**
      * A unique identifier for the metadata item.
@@ -32,4 +33,21 @@ abstract class MetadataBase {
      */
     public $MetadataId;
 
+    public array $data = [];
+
+    public function __get( $name ) {
+        return $this->data[ $name ];
+    }
+
+    public function __set( $name, $value ) {
+        $this->data[ $name ] = $value;
+    }
+
+    public function __isset( $name ) {
+        return isset( $this->data[ $name ] );
+    }
+
+    public function __unset( $name ) {
+        unset( $this->data[ $name ] );
+    }
 }
