@@ -33,7 +33,7 @@ abstract class MetadataBase
      */
     public $MetadataId;
 
-    public array $data = [];
+    protected array $data = [];
 
     public function __get( $name ) {
         return $this->data[ $name ];
@@ -50,4 +50,5 @@ abstract class MetadataBase
     public function __unset( $name ) {
         unset( $this->data[ $name ] );
     }
+
 }
