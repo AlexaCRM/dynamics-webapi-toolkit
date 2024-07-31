@@ -24,6 +24,7 @@ namespace AlexaCRM\Xrm\Metadata;
  * Contains properties representing actions that may be performed
  * on the referenced entity in a one-to-many entity relationship.
  */
+#[\AllowDynamicProperties]
 class CascadeConfiguration {
 
     /**
@@ -75,23 +76,5 @@ class CascadeConfiguration {
      * @var CascadeType
      */
     public $Unshare;
-
-    protected array $data = [];
-
-    public function __get( $name ) {
-        return $this->data[ $name ];
-    }
-
-    public function __set( $name, $value ) {
-        $this->data[ $name ] = $value;
-    }
-
-    public function __isset( $name ) {
-        return isset( $this->data[ $name ] );
-    }
-
-    public function __unset( $name ) {
-        unset( $this->data[ $name ] );
-    }
 
 }

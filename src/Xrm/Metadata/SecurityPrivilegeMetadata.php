@@ -23,6 +23,7 @@ namespace AlexaCRM\Xrm\Metadata;
 /**
  * Contains the metadata that describes a security privilege for access to an entity.
  */
+#[\AllowDynamicProperties]
 final class SecurityPrivilegeMetadata {
 
     /**
@@ -83,23 +84,5 @@ final class SecurityPrivilegeMetadata {
      * @var PrivilegeType
      */
     public $PrivilegeType;
-
-    protected array $data = [];
-
-    public function __get( $name ) {
-        return $this->data[ $name ];
-    }
-
-    public function __set( $name, $value ) {
-        $this->data[ $name ] = $value;
-    }
-
-    public function __isset( $name ) {
-        return isset( $this->data[ $name ] );
-    }
-
-    public function __unset( $name ) {
-        unset( $this->data[ $name ] );
-    }
 
 }
