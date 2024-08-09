@@ -34,6 +34,14 @@ $ composer require alexacrm/dynamics-webapi-toolkit:dev-master
 
 See the [Tutorial](https://github.com/AlexaCRM/dynamics-webapi-toolkit/wiki/Tutorial) to learn how to consume the library.
 
+## Development
+
+The version compatible with PHP 8.2 and above is now available as `v4.x-dev`. Please note that this version is still under development, and its use is at your own risk. You can install it with the following command:
+
+```
+$ composer require alexacrm/dynamics-webapi-toolkit:v4.x-dev
+```
+
 ## Built With
 
 * David Yack's [Xrm.Tools.CRMWebAPI](https://github.com/davidyack/Xrm.Tools.CRMWebAPI) - some code was borrowed as OData helper code
@@ -41,8 +49,8 @@ See the [Tutorial](https://github.com/AlexaCRM/dynamics-webapi-toolkit/wiki/Tuto
 
 ## Versioning
 
-Currently the toolkit code is not tagged. Once the library is stable API-wise, we will use [SemVer](http://semver.org/) for versioning. 
+Toolkit uses [SemVer](http://semver.org/) for versioning.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
