@@ -72,6 +72,10 @@ class SerializationHelper {
         $translatedData = [];
 
         foreach ( $touchedFields as $field => $value ) {
+            if ( !isset( $outboundMap[ $field ] ) ) {
+                $this->client->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
+                continue;
+            }
             $outboundMapping = $outboundMap[ $field ];
             $isLookup = is_array( $outboundMapping );
 
@@ -114,8 +118,6 @@ class SerializationHelper {
 
                 continue;
             }
-
-            $this->client->getLogger()->warning( "No outbound attribute mapping found for {$entity->LogicalName}[{$field}]" );
         }
 
         return $translatedData;
