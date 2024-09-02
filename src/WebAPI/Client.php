@@ -49,6 +49,10 @@ class Client implements IOrganizationService {
      */
     protected ODataClient $client;
 
+    protected ?string $MSCRMCallerID;
+
+    protected ?string $callerObjectId;
+
     /**
      * Client constructor.
      *
@@ -107,7 +111,7 @@ class Client implements IOrganizationService {
             $translatedData = $serializer->serializeEntity( $entity );
 
             $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
-
+            $this->updateWebApiHeaderRequest();
             $responseId = $this->client->create( $collectionName, $translatedData );
 
             $entity->getAttributeState()->reset();
@@ -233,9 +237,8 @@ class Client implements IOrganizationService {
             $response = $this->client->getRecord( $collectionName, $entityId, $options );
 
             $serializer = new SerializationHelper( $this->client );
-            $entity = $serializer->deserializeEntity( $response, new EntityReference( $entityName, $entityId ) );
 
-            return $entity;
+            return $serializer->deserializeEntity( $response, new EntityReference( $entityName, $entityId ) );
         } catch ( ODataException $e ) {
             if ( $e->getCode() === 404 ) {
                 return null;
@@ -388,7 +391,7 @@ class Client implements IOrganizationService {
                         $queryValue = "'{$value}'";
                         break;
                     case is_bool( $value ):
-                        $queryValue = $value? 'true' : 'false';
+                        $queryValue = $value ? 'true' : 'false';
                         break;
                     case $value === null:
                         $queryValue = 'null';
@@ -492,6 +495,19 @@ class Client implements IOrganizationService {
     }
 
     /**
+     * Updating WebApi Request Headers
+     *
+     * @return void
+     */
+    private function updateWebApiHeaderRequest(): void {
+        if ( $this->callerObjectId !== null ) {
+            $this->client->setWebApiHeaderByName( 'CallerObjectId', $this->callerObjectId );
+        } elseif ( $this->MSCRMCallerID !== null ) {
+            $this->client->setWebApiHeaderByName( 'MSCRMCallerID', $this->MSCRMCallerID );
+        }
+    }
+
+    /**
      * Updates an existing record.
      *
      * @param Entity $entity
@@ -508,6 +524,7 @@ class Client implements IOrganizationService {
 
             $collectionName = $this->client->getMetadata()->getEntitySetName( $entity->LogicalName );
 
+            $this->updateWebApiHeaderRequest();
             $this->client->update( $collectionName, $entity->Id, $translatedData );
 
             $entity->getAttributeState()->reset();
@@ -536,4 +553,25 @@ class Client implements IOrganizationService {
         return $this->client->getCachePool();
     }
 
+    public function getMSCRMCallerID(): ?string {
+        return $this->MSCRMCallerID;
+    }
+
+    public function setMSCRMCallerID( ?string $MSCRMCallerID ): void {
+        try {
+            //search Microsoft Entra ID object ID
+            $entity = $this->Retrieve( 'systemuser', $MSCRMCallerID, new ColumnSet( [ 'azureactivedirectoryobjectid' ] ) );
+            $this->callerObjectId = $entity?->Attributes['azureactivedirectoryobjectid'];
+        } catch ( Exception ) {
+        }
+        $this->MSCRMCallerID = $MSCRMCallerID;
+    }
+
+    public function getCallerObjectId(): ?string {
+        return $this->callerObjectId;
+    }
+
+    public function setCallerObjectId( ?string $callerObjectId ): void {
+        $this->callerObjectId = $callerObjectId;
+    }
 }

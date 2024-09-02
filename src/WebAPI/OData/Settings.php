@@ -75,11 +75,18 @@ abstract class Settings implements LoggerAwareInterface {
     public LoggerInterface $logger;
 
     /**
-     * ID of the user to impersonate during calls.
-     *
+     * ID of the user (systemuserid) to impersonate during calls.
+     * @deprecated
      * Null value means impersonation is not performed.
      */
     public ?string $callerID = null;
+
+    /**
+     * Microsoft Entra ID object ID (Azure AD Object ID) - azureactivedirectoryobjectid
+     *
+     * Null value means impersonation is not performed.
+     */
+    public ?string $callerObjectId = null;
 
     /**
      * Settings constructor.

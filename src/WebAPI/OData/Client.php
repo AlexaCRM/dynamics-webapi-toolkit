@@ -67,6 +67,13 @@ class Client {
     protected array $middlewares = [];
 
     /**
+     * header to Web API request
+     *
+     * @var array
+     */
+    protected array $webApiHeaders = [];
+
+    /**
      * Client constructor.
      *
      * @param Settings $settings
@@ -179,6 +186,34 @@ class Client {
     }
 
     /**
+     * Get header for Web Api Request
+     *
+     * @param array|null $headers
+     * @param string|null $method
+     *
+     * @return array
+     */
+    private function getRequestHeaders( ?array $headers = [], ?string $method = 'GET' ): array {
+        if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
+            $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
+        }
+
+        //Odata/Client/Setting more important than the headers in the request
+        if ( $this->settings->callerObjectId || $this->settings->callerID ) {
+            $this->unsetWebApiHeaderByName( 'CallerObjectId' );
+            $this->unsetWebApiHeaderByName( 'MSCRMCallerID' );
+        }
+
+        if ( $this->settings->callerObjectId !== null ) {
+            $headers = array_merge( [ 'CallerObjectId' => $this->settings->callerObjectId ], $headers );
+        } elseif ( $this->settings->callerID !== null ) {
+            $headers = array_merge( [ 'MSCRMCallerID' => $this->settings->callerID ], $headers );
+        }
+
+        return $headers;
+    }
+
+    /**
      * @param string $method
      * @param string $url
      * @param mixed $data
@@ -190,13 +225,7 @@ class Client {
      * @throws TransportException
      */
     private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
-        if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
-            $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
-        }
-
-        if ( $this->settings->callerID !== null ) {
-            $headers = array_merge( [ 'MSCRMCallerID' => '$this->settings->callerID' ], $headers );
-        }
+        $headers = $this->getRequestHeaders( $headers, $method );
 
         try {
             $payload = [
@@ -793,6 +822,22 @@ class Client {
         }
 
         return $id;
+    }
+
+    public function getWebApiHeaderByName( $headerName ): array {
+        return $this?->webApiHeaders[ $headerName ];
+    }
+
+    public function unsetWebApiHeaderByName( $headerName ): void {
+        unset( $this->webApiHeaders[ $headerName ] );
+    }
+
+    public function setWebApiHeaderByName( $headerName, $headerValue ): void {
+        $this->webApiHeaders[ $headerName ] = $headerValue;
+    }
+
+    public function getWebApiHeaders(): array {
+        return $this->webApiHeaders;
     }
 
 }
