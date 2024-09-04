@@ -34,6 +34,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
@@ -65,6 +66,13 @@ class Client {
      * @var MiddlewareInterface[]
      */
     protected array $middlewares = [];
+
+    /**
+     * header to Web API request
+     *
+     * @var array
+     */
+    protected array $webApiHeaders = [];
 
     /**
      * Client constructor.
@@ -129,8 +137,11 @@ class Client {
     /**
      * Retrieves OData Service Metadata.
      *
+     * @return Metadata
      * @throws AuthenticationException
+     * @throws GuzzleException
      * @throws TransportException
+     * @throws InvalidArgumentException
      */
     public function getMetadata(): Metadata {
         if ( $this->metadata instanceof Metadata ) {
@@ -179,6 +190,34 @@ class Client {
     }
 
     /**
+     * Get header for Web Api Request
+     *
+     * @param array|null $headers
+     * @param string|null $method
+     *
+     * @return array
+     */
+    private function getRequestHeaders( ?array $headers = [], ?string $method = 'GET' ): array {
+        if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
+            $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
+        }
+
+        //Odata/Client/Setting more important than the headers in the request
+        if ( $this->settings->callerObjectId || $this->settings->callerID ) {
+            $this->unsetWebApiHeaderByName( 'CallerObjectId' );
+            $this->unsetWebApiHeaderByName( 'MSCRMCallerID' );
+        }
+
+        if ( $this->settings->callerObjectId !== null ) {
+            $headers = array_merge( [ 'CallerObjectId' => $this->settings->callerObjectId ], $headers );
+        } elseif ( $this->settings->callerID !== null ) {
+            $headers = array_merge( [ 'MSCRMCallerID' => $this->settings->callerID ], $headers );
+        }
+
+        return $headers;
+    }
+
+    /**
      * @param string $method
      * @param string $url
      * @param mixed $data
@@ -190,13 +229,7 @@ class Client {
      * @throws TransportException
      */
     private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
-        if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
-            $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
-        }
-
-        if ( $this->settings->callerID !== null ) {
-            $headers = array_merge( [ 'MSCRMCallerID' => '$this->settings->callerID' ], $headers );
-        }
+        $headers = $this->getRequestHeaders( $headers, $method );
 
         try {
             $payload = [
@@ -577,7 +610,7 @@ class Client {
         string $fromEntityId,
         string $navProperty,
         string $toEntityCollection,
-        string $toEntityId
+        string $toEntityId,
     ): void {
         $url = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ Annotation::ODATA_ID => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
@@ -600,9 +633,10 @@ class Client {
         string $fromEntityId,
         string $navProperty,
         string $toEntityCollection,
-        string $toEntityId
+        string $toEntityId,
     ): void {
-        $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
+        $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(),
+            $toEntityCollection, $toEntityId );
         $this->doRequest( 'DELETE', $url );
     }
 
@@ -793,6 +827,22 @@ class Client {
         }
 
         return $id;
+    }
+
+    public function getWebApiHeaderByName( $headerName ): array {
+        return $this?->webApiHeaders[ $headerName ];
+    }
+
+    public function unsetWebApiHeaderByName( $headerName ): void {
+        unset( $this->webApiHeaders[ $headerName ] );
+    }
+
+    public function setWebApiHeaderByName( $headerName, $headerValue ): void {
+        $this->webApiHeaders[ $headerName ] = $headerValue;
+    }
+
+    public function getWebApiHeaders(): array {
+        return $this->webApiHeaders;
     }
 
 }
