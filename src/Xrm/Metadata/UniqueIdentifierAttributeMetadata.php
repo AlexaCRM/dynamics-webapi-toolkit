@@ -30,7 +30,7 @@ class UniqueIdentifierAttributeMetadata extends AttributeMetadata {
      *
      * @param string|null $schemaName
      */
-    public function __construct( string $schemaName = null ) {
+    public function __construct(?string $schemaName = null ) {
         $this->SchemaName = $schemaName;
     }
 

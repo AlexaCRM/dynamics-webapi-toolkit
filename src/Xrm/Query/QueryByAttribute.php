@@ -65,7 +65,7 @@ class QueryByAttribute extends QueryBase {
      *
      * @param string|null $entityName
      */
-    public function __construct( string $entityName = null ) {
+    public function __construct(?string $entityName = null ) {
         $this->EntityName = $entityName;
     }
 
