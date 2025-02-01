@@ -79,7 +79,7 @@ class Token {
      *
      * @return bool
      */
-    public function isValid( int $time = null ): bool {
+    public function isValid(?int $time = null ): bool {
         if ( $time === null ) {
             $time = time();
         }

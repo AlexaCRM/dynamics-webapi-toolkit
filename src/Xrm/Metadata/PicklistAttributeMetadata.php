@@ -44,7 +44,7 @@ class PicklistAttributeMetadata extends EnumAttributeMetadata {
      *
      * @param string|null $schemaName
      */
-    public function __construct( string $schemaName = null ) {
+    public function __construct(?string $schemaName = null ) {
         $this->SchemaName = $schemaName;
     }
 

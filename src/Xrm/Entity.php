@@ -71,7 +71,7 @@ class Entity implements \ArrayAccess {
      * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value
      */
-    public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
+    public function __construct(?string $entityName = null, $entityId = null, $keyValue = null ) {
         $this->attributeState = new AttributeState();
         $this->constructOverloaded( $entityName, $entityId, $keyValue );
     }
