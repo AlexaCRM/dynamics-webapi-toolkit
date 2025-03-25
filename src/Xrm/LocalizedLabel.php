@@ -57,10 +57,10 @@ class LocalizedLabel extends MetadataBase {
     /**
      * LocalizedLabel constructor.
      *
-     * @param string|null $label The localized label string.
-     * @param int|null $languageCode The language code for the label.
+     * @param  string|null  $label  The localized label string.
+     * @param  int|null  $languageCode  The language code for the label.
      */
-    public function __construct( string $label = null, int $languageCode = null ) {
+    public function __construct( ?string $label = null, ?int $languageCode = null ) {
         $this->Label = $label;
         $this->LanguageCode = $languageCode;
     }

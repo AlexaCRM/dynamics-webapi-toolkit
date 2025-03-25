@@ -275,10 +275,10 @@ class AttributeMetadata extends MetadataBase {
     /**
      * AttributeMetadata constructor.
      *
-     * @param AttributeTypeCode|null $attributeType
-     * @param string|null $schemaName
+     * @param  AttributeTypeCode|null  $attributeType
+     * @param  string|null  $schemaName
      */
-    public function __construct( AttributeTypeCode $attributeType = null, string $schemaName = null ) {
+    public function __construct( ?AttributeTypeCode $attributeType = null, ?string $schemaName = null ) {
         if ( $attributeType !== null ) {
             $this->AttributeType = $attributeType;
         }

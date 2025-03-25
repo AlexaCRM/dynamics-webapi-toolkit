@@ -39,9 +39,9 @@ class Relationship {
     /**
      * Relationship constructor.
      *
-     * @param string|null $schemaName The name of the relationship.
+     * @param  string|null  $schemaName  The name of the relationship.
      */
-    public function __construct( string $schemaName = null ) {
+    public function __construct( ?string $schemaName = null ) {
         $this->SchemaName = $schemaName;
     }
 

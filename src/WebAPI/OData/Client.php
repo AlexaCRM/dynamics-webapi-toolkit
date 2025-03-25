@@ -273,7 +273,7 @@ class Client {
      *
      * @return string
      */
-    private function buildQueryURL( string $uri, array $queryOptions = null ): string {
+    private function buildQueryURL(string $uri, ?array $queryOptions = null ): string {
         $endpointURI = $this->settings->getEndpointURI() . $uri;
         $queryParameters = [];
         if ( $queryOptions != null ) {
@@ -327,7 +327,7 @@ class Client {
      *
      * @return array
      */
-    private function buildQueryHeaders( array $queryOptions = null ): array {
+    private function buildQueryHeaders(?array $queryOptions = null ): array {
         $headers = [];
         $prefer = [];
 
@@ -409,7 +409,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function getRecord( string $entityCollection, string $entityId, array $queryOptions = null ): object {
+    public function getRecord(string $entityCollection, string $entityId, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -425,7 +425,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function getCount( string $uri, array $queryOptions = null ): object {
+    public function getCount(string $uri, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -615,7 +615,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeWebRequest( string $uri, array $queryOptions = null ): object {
+    public function executeWebRequest(string $uri, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( $uri, $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -635,7 +635,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeFunction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): ?object {
+    public function executeFunction(string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
         if ( $parameters !== null ) {
             $paramNames = [];
             $paramValues = [];
@@ -678,7 +678,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeAction( string $name, $parameters = null, string $entityCollection = null, string $entityId = null ): ?object {
+    public function executeAction(string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $name );
         if ( $entityCollection !== null ) {
             $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name );
@@ -712,7 +712,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function query( string $search, array $searchParameters = null ) {
+    public function query(string $search, ?array $searchParameters = null ) {
         return $this->search( 'query', $search, $searchParameters );
     }
 
@@ -726,7 +726,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function suggest( string $search, array $searchParameters = null ) {
+    public function suggest(string $search, ?array $searchParameters = null ) {
         return $this->search( 'suggest', $search, $searchParameters );
     }
 
@@ -740,7 +740,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function autocomplete( string $search, array $searchParameters = null ) {
+    public function autocomplete(string $search, ?array $searchParameters = null ) {
         return $this->search( 'autocomplete', $search, $searchParameters );
     }
 
@@ -757,7 +757,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    protected function search( string $type, string $search, array $searchParameters = null ) {
+    protected function search(string $type, string $search, ?array $searchParameters = null ) {
         $url = $this->settings->instanceURI . '/api/search/v1.0/' . $type;
 
         $data = [

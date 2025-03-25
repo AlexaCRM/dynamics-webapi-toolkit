@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+  <edmx:Reference
+        Uri="https://vocabularies.odata.org/OData.Community.Keys.V1.xml"
+    >
+    <edmx:Include Namespace="OData.Community.Keys.V1" Alias="Keys" />
+    <edmx:IncludeAnnotations TermNamespace="OData.Community.Keys.V1" />
+  </edmx:Reference>
+  <edmx:Reference
+        Uri="https://vocabularies.odata.org/OData.Community.Display.V1.xml"
+    >
+    <edmx:Include Namespace="OData.Community.Display.V1" Alias="Display" />
+    <edmx:IncludeAnnotations TermNamespace="OData.Community.Display.V1" />
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema
+            xmlns="http://docs.oasis-open.org/odata/ns/edm"
+            Namespace="Microsoft.Dynamics.CRM"
+            Alias="mscrm"
+        >
+      <EntityType Name="account" BaseType="mscrm.crmbaseentity">
+        <Key>
+          <PropertyRef Name="accountid" />
+        </Key>
+        <Property Name="address2_line1" Type="Edm.String" Unicode="false" />
+        <Property Name="territorycode" Type="Edm.Int32" />
+        <Property Name="accountid" Type="Edm.Guid" />
+        <Property
+                    Name="address1_telephone1"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property
+                    Name="address1_postofficebox"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="marketcap" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="emailaddress3" Type="Edm.String" Unicode="false" />
+        <Property
+                    Name="address1_telephone3"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property
+                    Name="address2_telephone1"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="createdon" Type="Edm.DateTimeOffset" />
+        <Property Name="numberofemployees" Type="Edm.Int32" />
+        <Property Name="address1_line2" Type="Edm.String" Unicode="false" />
+        <Property Name="_owningbusinessunit_value" Type="Edm.Guid" />
+        <Property
+                    Name="timespentbymeonemailandmeetings"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="yominame" Type="Edm.String" Unicode="false" />
+        <Property Name="_msa_managingpartnerid_value" Type="Edm.Guid" />
+        <Property Name="cr245_dateonly" Type="Edm.Date" />
+        <Property Name="address2_longitude" Type="Edm.Double" />
+        <Property Name="ownershipcode" Type="Edm.Int32" />
+        <Property Name="timezoneruleversionnumber" Type="Edm.Int32" />
+        <Property Name="_ownerid_value" Type="Edm.Guid" />
+        <Property Name="primarysatoriid" Type="Edm.String" Unicode="false" />
+        <Property Name="overriddencreatedon" Type="Edm.DateTimeOffset" />
+        <Property Name="_masterid_value" Type="Edm.Guid" />
+        <Property Name="accountnumber" Type="Edm.String" Unicode="false" />
+        <Property Name="address2_fax" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_country" Type="Edm.String" Unicode="false" />
+        <Property Name="aging60_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="telephone1" Type="Edm.String" Unicode="false" />
+        <Property Name="aging90" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="revenue" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="industrycode" Type="Edm.Int32" />
+        <Property Name="emailaddress1" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_latitude" Type="Edm.Double" />
+        <Property Name="tickersymbol" Type="Edm.String" Unicode="false" />
+        <Property Name="address2_shippingmethodcode" Type="Edm.Int32" />
+        <Property Name="customersizecode" Type="Edm.Int32" />
+        <Property Name="address2_name" Type="Edm.String" Unicode="false" />
+        <Property Name="cr245_customimage" Type="Edm.Binary" />
+        <Property
+                    Name="cr245_currency_base"
+                    Type="Edm.Decimal"
+                    Scale="Variable"
+                />
+        <Property Name="address1_line3" Type="Edm.String" Unicode="false" />
+        <Property Name="cr245_currency" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="accountratingcode" Type="Edm.Int32" />
+        <Property Name="cr245_numbernone" Type="Edm.Int32" />
+        <Property Name="address1_line1" Type="Edm.String" Unicode="false" />
+        <Property Name="importsequencenumber" Type="Edm.Int32" />
+        <Property
+                    Name="adx_createdbyusername"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="paymenttermscode" Type="Edm.Int32" />
+        <Property Name="fax" Type="Edm.String" Unicode="false" />
+        <Property Name="traversedpath" Type="Edm.String" Unicode="false" />
+        <Property Name="businesstypecode" Type="Edm.Int32" />
+        <Property Name="address2_utcoffset" Type="Edm.Int32" />
+        <Property Name="donotphone" Type="Edm.Boolean" />
+        <Property Name="exchangerate" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="utcconversiontimezonecode" Type="Edm.Int32" />
+        <Property
+                    Name="address1_stateorprovince"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="cr245_datetimeuserlocal" Type="Edm.DateTimeOffset" />
+        <Property Name="ftpsiteurl" Type="Edm.String" Unicode="false" />
+        <Property Name="shippingmethodcode" Type="Edm.Int32" />
+        <Property
+                    Name="address2_telephone3"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="_owningteam_value" Type="Edm.Guid" />
+        <Property Name="marketingonly" Type="Edm.Boolean" />
+        <Property Name="cr245_numtimezone" Type="Edm.Int32" />
+        <Property Name="participatesinworkflow" Type="Edm.Boolean" />
+        <Property Name="address2_addressid" Type="Edm.Guid" />
+        <Property Name="_slaid_value" Type="Edm.Guid" />
+        <Property Name="address2_addresstypecode" Type="Edm.Int32" />
+        <Property Name="processid" Type="Edm.Guid" />
+        <Property Name="cr245_numberfloat" Type="Edm.Double" />
+        <Property Name="aging30" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="entityimage_url" Type="Edm.String" Unicode="false" />
+        <Property Name="sharesoutstanding" Type="Edm.Int32" />
+        <Property Name="address2_latitude" Type="Edm.Double" />
+        <Property Name="_parentaccountid_value" Type="Edm.Guid" />
+        <Property Name="stageid" Type="Edm.Guid" />
+        <Property Name="versionnumber" Type="Edm.Int64" />
+        <Property Name="preferredappointmenttimecode" Type="Edm.Int32" />
+        <Property
+                    Name="adx_createdbyipaddress"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="address2_composite" Type="Edm.String" Unicode="false" />
+        <Property Name="aging90_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property
+                    Name="cr245_datetimetimezoneindependent"
+                    Type="Edm.DateTimeOffset"
+                />
+        <Property Name="address1_upszone" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_county" Type="Edm.String" Unicode="false" />
+        <Property Name="cr245_dateuserlocal" Type="Edm.DateTimeOffset" />
+        <Property Name="merged" Type="Edm.Boolean" />
+        <Property Name="address1_city" Type="Edm.String" Unicode="false" />
+        <Property Name="description" Type="Edm.String" Unicode="false" />
+        <Property Name="entityimage" Type="Edm.Binary" />
+        <Property Name="donotemail" Type="Edm.Boolean" />
+        <Property
+                    Name="address2_stateorprovince"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property
+                    Name="adx_modifiedbyusername"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property
+                    Name="cr245_datetimezoneindependent"
+                    Type="Edm.DateTimeOffset"
+                />
+        <Property Name="donotfax" Type="Edm.Boolean" />
+        <Property Name="donotsendmm" Type="Edm.Boolean" />
+        <Property Name="emailaddress2" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_composite" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_name" Type="Edm.String" Unicode="false" />
+        <Property
+                    Name="address1_primarycontactname"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property
+                    Name="address1_postalcode"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="onholdtime" Type="Edm.Int32" />
+        <Property Name="creditonhold" Type="Edm.Boolean" />
+        <Property Name="aging60" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="_createdbyexternalparty_value" Type="Edm.Guid" />
+        <Property Name="statuscode" Type="Edm.Int32" />
+        <Property Name="_transactioncurrencyid_value" Type="Edm.Guid" />
+        <Property Name="address1_fax" Type="Edm.String" Unicode="false" />
+        <Property Name="stockexchange" Type="Edm.String" Unicode="false" />
+        <Property Name="_createdonbehalfby_value" Type="Edm.Guid" />
+        <Property Name="_modifiedbyexternalparty_value" Type="Edm.Guid" />
+        <Property Name="address1_longitude" Type="Edm.Double" />
+        <Property Name="address2_line3" Type="Edm.String" Unicode="false" />
+        <Property Name="donotpostalmail" Type="Edm.Boolean" />
+        <Property
+                    Name="address2_postalcode"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="_modifiedby_value" Type="Edm.Guid" />
+        <Property Name="address1_shippingmethodcode" Type="Edm.Int32" />
+        <Property Name="cr245_customimage_timestamp" Type="Edm.Int64" />
+        <Property Name="_createdby_value" Type="Edm.Guid" />
+        <Property Name="entityimage_timestamp" Type="Edm.Int64" />
+        <Property Name="donotbulkemail" Type="Edm.Boolean" />
+        <Property
+                    Name="address2_primarycontactname"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="primarytwitterid" Type="Edm.String" Unicode="false" />
+        <Property Name="customertypecode" Type="Edm.Int32" />
+        <Property Name="sic" Type="Edm.String" Unicode="false" />
+        <Property
+                    Name="address2_postofficebox"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="statecode" Type="Edm.Int32" />
+        <Property Name="address2_city" Type="Edm.String" Unicode="false" />
+        <Property Name="_primarycontactid_value" Type="Edm.Guid" />
+        <Property Name="address1_freighttermscode" Type="Edm.Int32" />
+        <Property Name="revenue_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="address1_addresstypecode" Type="Edm.Int32" />
+        <Property Name="donotbulkpostalmail" Type="Edm.Boolean" />
+        <Property Name="_preferredsystemuserid_value" Type="Edm.Guid" />
+        <Property Name="accountcategorycode" Type="Edm.Int32" />
+        <Property Name="creditlimit_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="telephone3" Type="Edm.String" Unicode="false" />
+        <Property Name="address1_addressid" Type="Edm.Guid" />
+        <Property Name="preferredappointmentdaycode" Type="Edm.Int32" />
+        <Property Name="websiteurl" Type="Edm.String" Unicode="false" />
+        <Property Name="_modifiedonbehalfby_value" Type="Edm.Guid" />
+        <Property Name="accountclassificationcode" Type="Edm.Int32" />
+        <Property Name="_slainvokedid_value" Type="Edm.Guid" />
+        <Property
+                    Name="adx_modifiedbyipaddress"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="name" Type="Edm.String" Unicode="false" />
+        <Property Name="creditlimit" Type="Edm.Decimal" Scale="Variable" />
+        <Property
+                    Name="cr245_numberdecimal"
+                    Type="Edm.Decimal"
+                    Scale="Variable"
+                />
+        <Property Name="lastonholdtime" Type="Edm.DateTimeOffset" />
+        <Property Name="telephone2" Type="Edm.String" Unicode="false" />
+        <Property Name="address2_line2" Type="Edm.String" Unicode="false" />
+        <Property
+                    Name="cr245_customimage_url"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="lastusedincampaign" Type="Edm.DateTimeOffset" />
+        <Property Name="aging30_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="followemail" Type="Edm.Boolean" />
+        <Property Name="address2_county" Type="Edm.String" Unicode="false" />
+        <Property Name="modifiedon" Type="Edm.DateTimeOffset" />
+        <Property Name="entityimageid" Type="Edm.Guid" />
+        <Property Name="cr245_numduration" Type="Edm.Int32" />
+        <Property Name="cr245_customimageid" Type="Edm.Guid" />
+        <Property Name="marketcap_base" Type="Edm.Decimal" Scale="Variable" />
+        <Property Name="address2_upszone" Type="Edm.String" Unicode="false" />
+        <Property Name="address2_country" Type="Edm.String" Unicode="false" />
+        <Property
+                    Name="address1_telephone2"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <Property Name="address2_freighttermscode" Type="Edm.Int32" />
+        <Property Name="address1_utcoffset" Type="Edm.Int32" />
+        <Property Name="_owninguser_value" Type="Edm.Guid" />
+        <Property Name="preferredcontactmethodcode" Type="Edm.Int32" />
+        <Property
+                    Name="address2_telephone2"
+                    Type="Edm.String"
+                    Unicode="false"
+                />
+        <NavigationProperty
+                    Name="account_principalobjectattributeaccess"
+                    Type="Collection(mscrm.principalobjectattributeaccess)"
+                    Partner="objectid_account"
+                />
+        <NavigationProperty
+                    Name="ownerid"
+                    Type="mscrm.principal"
+                    Nullable="false"
+                    Partner="owner_accounts"
+                >
+          <ReferentialConstraint
+                        Property="_ownerid_value"
+                        ReferencedProperty="ownerid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_ActivityPointers"
+                    Type="Collection(mscrm.activitypointer)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="Account_SyncErrors"
+                    Type="Collection(mscrm.syncerror)"
+                    Partner="regardingobjectid_account_syncerror"
+                />
+        <NavigationProperty
+                    Name="createdby"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="lk_accountbase_createdby"
+                >
+          <ReferentialConstraint
+                        Property="_createdby_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_Email_SendersAccount"
+                    Type="Collection(mscrm.email)"
+                    Partner="sendersaccount"
+                />
+        <NavigationProperty
+                    Name="Account_Email_EmailSender"
+                    Type="Collection(mscrm.email)"
+                    Partner="emailsender_account"
+                />
+        <NavigationProperty
+                    Name="Account_Annotation"
+                    Type="Collection(mscrm.annotation)"
+                    Partner="objectid_account"
+                />
+        <NavigationProperty
+                    Name="Account_SharepointDocumentLocation"
+                    Type="Collection(mscrm.sharepointdocumentlocation)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="sla_account_sla"
+                    Type="mscrm.sla"
+                    Nullable="false"
+                    Partner="manualsla_account"
+                >
+          <ReferentialConstraint
+                        Property="_slaid_value"
+                        ReferencedProperty="slaid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_connections2"
+                    Type="Collection(mscrm.connection)"
+                    Partner="record2id_account"
+                />
+        <NavigationProperty
+                    Name="modifiedby"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="lk_accountbase_modifiedby"
+                >
+          <ReferentialConstraint
+                        Property="_modifiedby_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_PostFollows"
+                    Type="Collection(mscrm.postfollow)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="account_PostRegardings"
+                    Type="Collection(mscrm.postregarding)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="Account_ProcessSessions"
+                    Type="Collection(mscrm.processsession)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="Account_Faxes"
+                    Type="Collection(mscrm.fax)"
+                    Partner="regardingobjectid_account_fax"
+                />
+        <NavigationProperty
+                    Name="masterid"
+                    Type="mscrm.account"
+                    Nullable="false"
+                    Partner="account_master_account"
+                >
+          <ReferentialConstraint
+                        Property="_masterid_value"
+                        ReferencedProperty="accountid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_master_account"
+                    Type="Collection(mscrm.account)"
+                    Partner="masterid"
+                />
+        <NavigationProperty
+                    Name="owningbusinessunit"
+                    Type="mscrm.businessunit"
+                    Nullable="false"
+                    Partner="business_unit_accounts"
+                >
+          <ReferentialConstraint
+                        Property="_owningbusinessunit_value"
+                        ReferencedProperty="businessunitid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_AsyncOperations"
+                    Type="Collection(mscrm.asyncoperation)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="transactioncurrencyid"
+                    Type="mscrm.transactioncurrency"
+                    Nullable="false"
+                    Partner="transactioncurrency_account"
+                >
+          <ReferentialConstraint
+                        Property="_transactioncurrencyid_value"
+                        ReferencedProperty="transactioncurrencyid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_DuplicateBaseRecord"
+                    Type="Collection(mscrm.duplicaterecord)"
+                    Partner="baserecordid_account"
+                />
+        <NavigationProperty
+                    Name="preferredsystemuserid"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="system_user_accounts"
+                >
+          <ReferentialConstraint
+                        Property="_preferredsystemuserid_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="createdonbehalfby"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="lk_accountbase_createdonbehalfby"
+                >
+          <ReferentialConstraint
+                        Property="_createdonbehalfby_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_RecurringAppointmentMasters"
+                    Type="Collection(mscrm.recurringappointmentmaster)"
+                    Partner="regardingobjectid_account_recurringappointmentmaster"
+                />
+        <NavigationProperty
+                    Name="Account_Phonecalls"
+                    Type="Collection(mscrm.phonecall)"
+                    Partner="regardingobjectid_account_phonecall"
+                />
+        <NavigationProperty
+                    Name="primarycontactid"
+                    Type="mscrm.contact"
+                    Nullable="false"
+                    Partner="account_primary_contact"
+                >
+          <ReferentialConstraint
+                        Property="_primarycontactid_value"
+                        ReferencedProperty="contactid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_SocialActivities"
+                    Type="Collection(mscrm.socialactivity)"
+                    Partner="regardingobjectid_account_socialactivity"
+                />
+        <NavigationProperty
+                    Name="Account_MailboxTrackingFolder"
+                    Type="Collection(mscrm.mailboxtrackingfolder)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="SocialActivity_PostAuthorAccount_accounts"
+                    Type="Collection(mscrm.socialactivity)"
+                    Partner="postauthoraccount_account"
+                />
+        <NavigationProperty
+                    Name="Account_CustomerAddress"
+                    Type="Collection(mscrm.customeraddress)"
+                    Partner="parentid_account"
+                />
+        <NavigationProperty
+                    Name="slakpiinstance_account"
+                    Type="Collection(mscrm.slakpiinstance)"
+                    Partner="regarding_account"
+                />
+        <NavigationProperty
+                    Name="Account_Tasks"
+                    Type="Collection(mscrm.task)"
+                    Partner="regardingobjectid_account_task"
+                />
+        <NavigationProperty
+                    Name="slainvokedid_account_sla"
+                    Type="mscrm.sla"
+                    Nullable="false"
+                    Partner="sla_account"
+                >
+          <ReferentialConstraint
+                        Property="_slainvokedid_value"
+                        ReferencedProperty="slaid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_BulkDeleteFailures"
+                    Type="Collection(mscrm.bulkdeletefailure)"
+                    Partner="regardingobjectid_account"
+                />
+        <NavigationProperty
+                    Name="SocialActivity_PostAuthor_accounts"
+                    Type="Collection(mscrm.socialactivity)"
+                    Partner="postauthor_account"
+                />
+        <NavigationProperty
+                    Name="contact_customer_accounts"
+                    Type="Collection(mscrm.contact)"
+                    Partner="parentcustomerid_account"
+                />
+        <NavigationProperty
+                    Name="Account_Appointments"
+                    Type="Collection(mscrm.appointment)"
+                    Partner="regardingobjectid_account_appointment"
+                />
+        <NavigationProperty
+                    Name="Account_Emails"
+                    Type="Collection(mscrm.email)"
+                    Partner="regardingobjectid_account_email"
+                />
+        <NavigationProperty
+                    Name="parentaccountid"
+                    Type="mscrm.account"
+                    Nullable="false"
+                    Partner="account_parent_account"
+                >
+          <ReferentialConstraint
+                        Property="_parentaccountid_value"
+                        ReferencedProperty="accountid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_parent_account"
+                    Type="Collection(mscrm.account)"
+                    Partner="parentaccountid"
+                />
+        <NavigationProperty
+                    Name="Socialprofile_customer_accounts"
+                    Type="Collection(mscrm.socialprofile)"
+                    Partner="customerid_account"
+                />
+        <NavigationProperty
+                    Name="Account_DuplicateMatchingRecord"
+                    Type="Collection(mscrm.duplicaterecord)"
+                    Partner="duplicaterecordid_account"
+                />
+        <NavigationProperty
+                    Name="account_activity_parties"
+                    Type="Collection(mscrm.activityparty)"
+                    Partner="partyid_account"
+                />
+        <NavigationProperty
+                    Name="account_connections1"
+                    Type="Collection(mscrm.connection)"
+                    Partner="record1id_account"
+                />
+        <NavigationProperty
+                    Name="owningteam"
+                    Type="mscrm.team"
+                    Nullable="false"
+                    Partner="team_accounts"
+                >
+          <ReferentialConstraint
+                        Property="_owningteam_value"
+                        ReferencedProperty="teamid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_actioncard"
+                    Type="Collection(mscrm.actioncard)"
+                    Partner="regardingobjectid_account_actioncard"
+                />
+        <NavigationProperty
+                    Name="owninguser"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="user_accounts"
+                >
+          <ReferentialConstraint
+                        Property="_owninguser_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="Account_Letters"
+                    Type="Collection(mscrm.letter)"
+                    Partner="regardingobjectid_account_letter"
+                />
+        <NavigationProperty
+                    Name="stageid_processstage"
+                    Type="mscrm.processstage"
+                    Nullable="false"
+                    Partner="processstage_account"
+                >
+          <ReferentialConstraint
+                        Property="stageid"
+                        ReferencedProperty="processstageid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="modifiedonbehalfby"
+                    Type="mscrm.systemuser"
+                    Nullable="false"
+                    Partner="lk_accountbase_modifiedonbehalfby"
+                >
+          <ReferentialConstraint
+                        Property="_modifiedonbehalfby_value"
+                        ReferencedProperty="systemuserid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="account_chats"
+                    Type="Collection(mscrm.chat)"
+                    Partner="regardingobjectid_account_chat"
+                />
+        <NavigationProperty
+                    Name="cr245_cr245_testing_RelatedAccount_account"
+                    Type="Collection(mscrm.cr245_testing)"
+                    Partner="cr245_RelatedAccount"
+                />
+        <NavigationProperty
+                    Name="account_msfp_alerts"
+                    Type="Collection(mscrm.msfp_alert)"
+                    Partner="regardingobjectid_account_msfp_alert"
+                />
+        <NavigationProperty
+                    Name="account_msfp_surveyinvites"
+                    Type="Collection(mscrm.msfp_surveyinvite)"
+                    Partner="regardingobjectid_account_msfp_surveyinvite"
+                />
+        <NavigationProperty
+                    Name="account_msfp_surveyresponses"
+                    Type="Collection(mscrm.msfp_surveyresponse)"
+                    Partner="regardingobjectid_account_msfp_surveyresponse"
+                />
+        <NavigationProperty
+                    Name="cr245_account_cr245_testing_781"
+                    Type="Collection(mscrm.cr245_testing)"
+                    Partner="cr245_Customer_account"
+                />
+        <NavigationProperty
+                    Name="msa_managingpartnerid"
+                    Type="mscrm.account"
+                    Nullable="false"
+                    Partner="msa_account_managingpartner"
+                >
+          <ReferentialConstraint
+                        Property="_msa_managingpartnerid_value"
+                        ReferencedProperty="accountid"
+                    />
+        </NavigationProperty>
+        <NavigationProperty
+                    Name="msa_account_managingpartner"
+                    Type="Collection(mscrm.account)"
+                    Partner="msa_managingpartnerid"
+                />
+        <NavigationProperty
+                    Name="msa_contact_managingpartner"
+                    Type="Collection(mscrm.contact)"
+                    Partner="msa_managingpartnerid"
+                />
+        <NavigationProperty
+                    Name="account_adx_inviteredemptions"
+                    Type="Collection(mscrm.adx_inviteredemption)"
+                    Partner="regardingobjectid_account_adx_inviteredemption"
+                />
+        <NavigationProperty
+                    Name="account_adx_portalcomments"
+                    Type="Collection(mscrm.adx_portalcomment)"
+                    Partner="regardingobjectid_account_adx_portalcomment"
+                />
+        <NavigationProperty
+                    Name="adx_invitation_assigntoaccount"
+                    Type="Collection(mscrm.adx_invitation)"
+                    Partner="adx_assignToAccount"
+                />
+        <NavigationProperty
+                    Name="powerpagecomponent_mspp_webrole_account"
+                    Type="Collection(mscrm.powerpagecomponent)"
+                    Partner="powerpagecomponent_mspp_webrole_account"
+                />
+        <NavigationProperty
+                    Name="alex_account_alex_identity"
+                    Type="Collection(mscrm.alex_identity)"
+                    Partner="alex_AccountId"
+                />
+      </EntityType>
+          </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
