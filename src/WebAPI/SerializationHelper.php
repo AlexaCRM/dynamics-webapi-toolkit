@@ -139,7 +139,7 @@ class SerializationHelper {
      * @throws OData\EntityNotSupportedException
      * @throws OData\TransportException
      */
-    public function deserializeEntity(object $rawEntity, EntityReference $reference, ?array $attributeToEntityMap = null ): Entity {
+    public function deserializeEntity( object $rawEntity, EntityReference $reference, ?array $attributeToEntityMap = null ): Entity {
         $metadata = $this->client->getMetadata();
         $entityMap = $metadata->getEntityMap( $reference->LogicalName );
 

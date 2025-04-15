@@ -40,7 +40,7 @@ class LookupAttributeMetadata extends AttributeMetadata {
     /**
      * LookupAttributeMetadata constructor.
      *
-     * @param  LookupFormat|null  $format
+     * @param LookupFormat|null $format
      */
     public function __construct( ?LookupFormat $format = null ) {
         parent::__construct();

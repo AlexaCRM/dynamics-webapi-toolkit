@@ -26,8 +26,7 @@ use GuzzleHttp\Exception\RequestException;
 /**
  * Represents an exception triggered by a non-succeeding response from the OData service.
  */
-class ODataException extends Exception
-{
+class ODataException extends Exception {
 
     /**
      * Underlying Guzzle-generated exception with relevant request and response objects.
@@ -46,23 +45,23 @@ class ODataException extends Exception
     /**
      * ODataException constructor.
      *
-     * @param  object  $response  OData error response object
-     * @param  RequestException|null  $inner
+     * @param object $response OData error response object
+     * @param RequestException|null $inner
      */
     public function __construct( $response, ?RequestException $inner = null ) {
         parent::__construct();
         $this->message = $response;
-        if ($inner !== null) {
+        if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
             $guzzleResponse = $inner->getResponse();
-            $statusCode = ($guzzleResponse !== null) ? $guzzleResponse->getStatusCode() : 0;
+            $statusCode = ( $guzzleResponse !== null ) ? $guzzleResponse->getStatusCode() : 0;
 
             $this->code = $statusCode;
 
             $level = (int) floor( $statusCode / 100 );
-            if ($level === 4) {
+            if ( $level === 4 ) {
                 $label = 'Client error';
-            } elseif ($level === 5) {
+            } elseif ( $level === 5 ) {
                 $label = 'Server error';
             } else {
                 $label = 'Unsuccessful request';
@@ -76,7 +75,7 @@ class ODataException extends Exception
                 $guzzleRequest->getMethod(),
                 $uri,
                 $statusCode,
-                ($guzzleResponse !== null) ? $guzzleResponse->getReasonPhrase() : '',
+                ( $guzzleResponse !== null ) ? $guzzleResponse->getReasonPhrase() : '',
                 $response->message
             );
         }

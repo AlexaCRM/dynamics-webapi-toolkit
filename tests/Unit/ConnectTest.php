@@ -8,7 +8,6 @@ use AlexaCRM\WebAPI\OData\ODataException;
 use AlexaCRM\WebAPI\OData\OnlineAuthMiddleware;
 use AlexaCRM\WebAPI\OData\OnlineSettings;
 use AlexaCRM\WebAPI\OData\TransportException;
-use AlexaCRM\Xrm\ColumnSet;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

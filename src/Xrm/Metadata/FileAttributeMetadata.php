@@ -20,7 +20,6 @@
 
 namespace AlexaCRM\Xrm\Metadata;
 
-
 /**
  * Contains the metadata for an attribute type File.
  */
@@ -36,7 +35,7 @@ class FileAttributeMetadata extends AttributeMetadata {
     /**
      * FileAttributeMetadata constructor.
      *
-     * @param  string|null  $schemaName
+     * @param string|null $schemaName
      */
     public function __construct( ?string $schemaName = null ) {
         parent::__construct( $schemaName );

@@ -63,7 +63,7 @@ class ImageAttributeMetadata extends AttributeMetadata {
     /**
      * ImageAttributeMetadata constructor.
      *
-     * @param  string|null  $schemaName
+     * @param string|null $schemaName
      */
     public function __construct( ?string $schemaName = null ) {
         parent::__construct( $schemaName );

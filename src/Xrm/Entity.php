@@ -69,9 +69,9 @@ class Entity implements ArrayAccess {
      * or with entity name and collection of KeyAttributes specified,
      * or with entity name, key name and key value specified.
      *
-     * @param  string|null  $entityName  Entity logical name
-     * @param  string|KeyAttributeCollection|null  $entityId  Record ID, KeyAttributeCollection, or key name
-     * @param  mixed  $keyValue  Key value
+     * @param string|null $entityName Entity logical name
+     * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
+     * @param mixed $keyValue Key value
      */
     public function __construct( ?string $entityName = null, $entityId = null, $keyValue = null ) {
         $this->attributeState = new AttributeState();
@@ -81,7 +81,7 @@ class Entity implements ArrayAccess {
     /**
      * Tells whether specified attribute value exists.
      *
-     * @param  string  $attribute
+     * @param string $attribute
      *
      * @return bool
      */
@@ -94,7 +94,7 @@ class Entity implements ArrayAccess {
      *
      * Returns NULL if the entity doesn't have the specified attribute.
      *
-     * @param  string  $attribute
+     * @param string $attribute
      *
      * @return mixed|null
      */
@@ -103,7 +103,7 @@ class Entity implements ArrayAccess {
             return null;
         }
 
-        return $this->Attributes[$attribute];
+        return $this->Attributes[ $attribute ];
     }
 
     /**
@@ -111,7 +111,7 @@ class Entity implements ArrayAccess {
      *
      * Returns empty string if the entity doesn't have the specified formatted value.
      *
-     * @param  string  $attribute
+     * @param string $attribute
      *
      * @return string
      */
@@ -120,18 +120,18 @@ class Entity implements ArrayAccess {
             return '';
         }
 
-        return $this->FormattedValues[$attribute];
+        return $this->FormattedValues[ $attribute ];
     }
 
     /**
      * Sets the value of the attribute.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param string $attribute
+     * @param mixed $value
      */
     public function SetAttributeValue( string $attribute, $value ): void {
-        $this->Attributes[$attribute] = $value;
-        $this->attributeState[$attribute] = true;
+        $this->Attributes[ $attribute ] = $value;
+        $this->attributeState[ $attribute ] = true;
     }
 
     /**
@@ -160,7 +160,7 @@ class Entity implements ArrayAccess {
     /**
      * Whether a offset exists.
      *
-     * @param  mixed  $offset
+     * @param mixed $offset
      *
      * @return bool true on success or false on failure.
      */
@@ -171,7 +171,7 @@ class Entity implements ArrayAccess {
     /**
      * Offset to retrieve.
      *
-     * @param  mixed  $offset
+     * @param mixed $offset
      *
      * @return mixed Can return all value types.
      */
@@ -182,8 +182,8 @@ class Entity implements ArrayAccess {
     /**
      * Offset to set
      *
-     * @param  mixed  $offset
-     * @param  mixed  $value
+     * @param mixed $offset
+     * @param mixed $value
      *
      * @return void
      */
@@ -194,12 +194,12 @@ class Entity implements ArrayAccess {
     /**
      * Offset to unset
      *
-     * @param  mixed  $offset
+     * @param mixed $offset
      *
      * @return void
      */
     public function offsetUnset( $offset ): void {
-        unset( $this->Attributes[$offset], $this->attributeState[$offset] );
+        unset( $this->Attributes[ $offset ], $this->attributeState[ $offset ] );
     }
 
     public function getAttributeState(): AttributeState {
@@ -219,7 +219,7 @@ class Entity implements ArrayAccess {
     public function __clone() {
         $this->attributeState = clone $this->attributeState;
 
-        foreach ($this->Attributes as $field => &$value) {
+        foreach ( $this->Attributes as $field => &$value ) {
             if ( ! is_object( $value ) ) {
                 continue;
             }

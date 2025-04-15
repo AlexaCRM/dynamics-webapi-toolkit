@@ -48,7 +48,7 @@ class MultiSelectPicklistAttributeMetadata extends EnumAttributeMetadata {
     /**
      * MultiSelectPicklistAttributeMetadata constructor.
      *
-     * @param  string|null  $schemaName
+     * @param string|null $schemaName
      */
     public function __construct( ?string $schemaName = null ) {
         parent::__construct( $schemaName );

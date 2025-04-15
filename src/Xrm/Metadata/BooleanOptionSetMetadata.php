@@ -42,8 +42,8 @@ class BooleanOptionSetMetadata extends OptionSetMetadataBase {
     /**
      * BooleanOptionSetMetadata constructor.
      *
-     * @param  OptionMetadata|null  $trueOption
-     * @param  OptionMetadata|null  $falseOption
+     * @param OptionMetadata|null $trueOption
+     * @param OptionMetadata|null $falseOption
      */
     public function __construct( ?OptionMetadata $trueOption = null, ?OptionMetadata $falseOption = null ) {
         $this->TrueOption = $trueOption;

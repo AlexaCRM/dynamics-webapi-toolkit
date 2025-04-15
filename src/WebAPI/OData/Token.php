@@ -63,9 +63,9 @@ class Token {
 
         $token = new Token();
         $token->type = $tokenArray['token_type'] ?? null;
-        $token->expiresIn = isset( $tokenArray['expires_in'] )? (int)$tokenArray['expires_in'] : null;
-        $token->expiresOn = isset( $tokenArray['expires_on'] )? (int)$tokenArray['expires_on'] : null;
-        $token->notBefore = isset( $tokenArray['not_before'] )? (int)$tokenArray['not_before'] : null;
+        $token->expiresIn = isset( $tokenArray['expires_in'] ) ? (int)$tokenArray['expires_in'] : null;
+        $token->expiresOn = isset( $tokenArray['expires_on'] ) ? (int)$tokenArray['expires_on'] : null;
+        $token->notBefore = isset( $tokenArray['not_before'] ) ? (int)$tokenArray['not_before'] : null;
         $token->resource = $tokenArray['resource'] ?? null;
         $token->token = $tokenArray['access_token'] ?? null;
 
@@ -79,7 +79,7 @@ class Token {
      *
      * @return bool
      */
-    public function isValid(?int $time = null ): bool {
+    public function isValid( ?int $time = null ): bool {
         if ( $time === null ) {
             $time = time();
         }
