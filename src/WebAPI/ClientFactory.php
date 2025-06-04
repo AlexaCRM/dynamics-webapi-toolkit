@@ -23,6 +23,8 @@ namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\WebAPI\OData\OnlineAuthMiddleware;
 use AlexaCRM\WebAPI\OData\OnlineSettings;
+use AlexaCRM\WebAPI\OData\OnPremiseAuthMiddleware;
+use AlexaCRM\WebAPI\OData\OnPremiseSettings;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -46,7 +48,7 @@ class ClientFactory {
         string $instanceURI,
         string $applicationID,
         string $applicationSecret,
-        array $services = []
+        array $services = [],
     ): Client {
         $settings = new OnlineSettings();
         $settings->instanceURI = $instanceURI;
@@ -61,6 +63,60 @@ class ClientFactory {
         }
 
         $middleware = new OnlineAuthMiddleware( $settings );
+        $odataClient = new OData\Client( $settings, $middleware );
+
+        return new Client( $odataClient );
+    }
+
+    /**
+     * Creates a client proxy implementing the IOrganizationService interface given the Organization URI
+     * and credentials for the Azure AD application configured for access to Dynamics 365.
+     *
+     * @param string $instanceURI Organization URI, e.g. https://contoso.crm.dynamics.com/.
+     * @param string $applicationAuthURI
+     * @param ?string $refreshTokenURI
+     * @param string $resourceURI
+     * @param string $applicationID GUID of the Azure AD application.
+     * @param string $applicationSecret Secret key of the Azure AD application.
+     * @param string $username
+     * @param string $password
+     * @param array $services Optional services like `logger` or `cachePool`.
+     *
+     * @return Client
+     */
+    public static function createOnPremiseClient(
+        string $instanceURI,
+        string $applicationAuthURI,
+        ?string $refreshTokenURI,
+        string $resourceURI,
+        string $applicationID,
+        string $applicationSecret,
+        string $username,
+        string $password,
+        array $services = [],
+    ): Client {
+        $settings = new OnPremiseSettings();
+        $settings->instanceURI = $instanceURI;
+        $settings->authURI = $applicationAuthURI;
+        if ( $refreshTokenURI ) {
+            $settings->refreshTokenURI = $refreshTokenURI;
+        } else {
+            $settings->refreshTokenURI = $applicationAuthURI;
+        }
+        $settings->resource = $resourceURI;
+        $settings->applicationID = $applicationID;
+        $settings->applicationSecret = $applicationSecret;
+        $settings->username = $username;
+        $settings->password = $password;
+
+        if ( isset ( $services['logger'] ) && $services['logger'] instanceof LoggerInterface ) {
+            $settings->setLogger( $services['logger'] );
+        }
+        if ( isset ( $services['cachePool'] ) && $services['cachePool'] instanceof CacheItemPoolInterface ) {
+            $settings->cachePool = $services['cachePool'];
+        }
+
+        $middleware = new OnPremiseAuthMiddleware( $settings );
         $odataClient = new OData\Client( $settings, $middleware );
 
         return new Client( $odataClient );

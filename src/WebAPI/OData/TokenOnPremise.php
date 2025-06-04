@@ -26,67 +26,46 @@ use GuzzleHttp\Utils;
 /**
  * Represents a Bearer token issued by an OAuth2 token endpoint.
  */
-class Token {
+class TokenOnPremise extends Token {
 
     /**
-     * Token type, usually `Bearer`.
+     * Refresh Token value.
      */
-    public ?string $type = null;
+    public ?string $refreshToken = null;
 
-    public ?int $expiresIn = null;
-
-    public ?int $expiresOn = null;
-
-    public ?int $notBefore = null;
-
-    /**
-     * Resource URI for which the token was granted.
-     */
-    public ?string $resource = null;
-
-    /**
-     * Token value.
-     */
-    public ?string $token = null;
+    public ?int $refreshTokenExpiresIn = null;
 
     /**
      * Constructs a new Token object from a JSON received from an OAuth2 token endpoint.
      *
      * @param string $json
      *
-     * @return Token
+     * @return TokenOnPremise
      */
-    public static function createFromJson( string $json ): Token {
+    public static function createFromJson( string $json ): TokenOnPremise {
         try {
             $tokenArray = Utils::jsonDecode( $json, true );
         } catch ( \InvalidArgumentException $e ) {
-            return new Token();
+            return new TokenOnPremise();
         }
 
-        $token = new Token();
+        $token = new TokenOnPremise();
         $token->type = $tokenArray['token_type'] ?? null;
-        $token->expiresIn = isset( $tokenArray['expires_in'] ) ? (int)$tokenArray['expires_in'] : null;
-        $token->expiresOn = isset( $tokenArray['expires_on'] ) ? (int)$tokenArray['expires_on'] : null;
-        $token->notBefore = isset( $tokenArray['not_before'] ) ? (int)$tokenArray['not_before'] : null;
+        $token->expiresIn = isset( $tokenArray['expires_in'] ) ? (int)$tokenArray['expires_in'] + time() : null;
         $token->resource = $tokenArray['resource'] ?? null;
         $token->token = $tokenArray['access_token'] ?? null;
+        $token->refreshToken = $tokenArray['refresh_token'] ?? null;
+        $token->refreshTokenExpiresIn = $tokenArray['refresh_token_expires_in'] ?? null;
 
         return $token;
     }
 
-    /**
-     * Tells whether the token is not expired.
-     *
-     * @param int|null $time Specify time to check the token against. Default is current time.
-     *
-     * @return bool
-     */
     public function isValid( ?int $time = null ): bool {
         if ( $time === null ) {
             $time = time();
         }
 
-        return ( $time >= $this->notBefore && $time < $this->expiresOn );
+        return ( $time < $this->expiresIn );
     }
 
 }
