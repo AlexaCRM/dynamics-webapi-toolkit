@@ -24,6 +24,7 @@ namespace AlexaCRM\WebAPI\OData;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -40,12 +41,22 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
     /**
      * Bearer token.
      */
-    protected ?Token $token = null;
+    protected ?TokenOnPremise $token = null;
 
     protected ?HttpClient $httpClient = null;
 
-    public function __construct( OnPremiseSettings $settings ) {
+    protected string $tokenCacheKey;
+
+    protected string $refreshTokenCacheKey;
+
+    public function __construct( OnPremiseSettings $settings, $ignoreAuthCache ) {
         $this->settings = $settings;
+        $tokenHash = sha1( $settings->getOnPremiseAuthURI() . $settings->applicationID . $settings->username );
+        $this->tokenCacheKey = 'onpremise.token.' . $tokenHash;
+        $this->refreshTokenCacheKey = 'onpremise.refresh.token.' . $tokenHash;
+        if ( $ignoreAuthCache === true ) {
+            $this->acquireToken( $ignoreAuthCache );
+        }
     }
 
     /**
@@ -78,9 +89,24 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
         return $this->settings->cachePool;
     }
 
-    private function refreshToken( $cache, $token ): void {
+    /**
+     * @return bool
+     * @throws AuthenticationException
+     * @throws InvalidArgumentException
+     */
+    public function refreshToken(): bool {
         $settings = $this->settings;
-        $refreshToken = $settings->getRefreshTokenURI();
+        $refreshTokenURI = $settings->getRefreshTokenURI();
+
+        $pool = $this->getPool();
+        $cache = $pool->getItem( $this->refreshTokenCacheKey );
+        if ( $cache->isHit() ) {
+            $refreshToken = $cache->get();
+        } else {
+            $this->token = null;
+
+            return false;
+        }
 
         $requestPayload = [
             'form_params' => [
@@ -88,14 +114,16 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
                 'client_id' => $settings->applicationID,
                 'client_secret' => $settings->applicationSecret,
                 'resource' => $settings->resource,
-                'refresh_token' => $token->refreshToken,
+                'refresh_token' => $refreshToken,
             ],
         ];
 
-        $this->requestToken( $refreshToken, $cache, $requestPayload );
+        $this->requestToken( $refreshTokenURI, $requestPayload );
+
+        return (bool)$this->token;
     }
 
-    private function getAuthToken( $cache ): void {
+    private function getAuthToken(): void {
         $settings = $this->settings;
         $requestPayload = [
             'form_params' => [
@@ -109,45 +137,57 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
             ],
         ];
         $tokenEndpoint = $settings->getOnPremiseAuthURI();
-        $this->requestToken( $tokenEndpoint, $cache, $requestPayload );
+        $this->requestToken( $tokenEndpoint, $requestPayload );
     }
 
     /**
      * Acquires the Bearer token via client credentials OAuth2 flow.
      *
+     * @param bool|null $ignoreAuthCache
+     *
+     * @return TokenOnPremise
      * @throws AuthenticationException
+     * @throws InvalidArgumentException
      */
-    protected function acquireToken(): Token {
-        if ( $this->token instanceof Token && $this->token->isValid() ) {
+    protected function acquireToken( ?bool $ignoreAuthCache = false ): TokenOnPremise {
+        if ( $this->token instanceof TokenOnPremise && $this->token->isValid() ) {
             return $this->token; // Token already acquired and is not expired.
+        }
+
+        if ( $ignoreAuthCache === true ) {
+            $this->getAuthToken();
+
+            return $this->token;
         }
 
         $settings = $this->settings;
 
         $pool = $this->getPool();
-        $cacheKey = 'onpremise.token.' . sha1( $settings->getOnPremiseAuthURI() . $settings->applicationID . $settings->applicationSecret );
-        $cache = $pool->getItem( $cacheKey );
+        $cache = $pool->getItem( $this->tokenCacheKey );
+
         if ( $cache->isHit() ) {
             $token = $cache->get();
-            if ( $token instanceof Token ) {
-                if ( !$token->isValid() ) {
-                    $this->refreshToken( $cache, $token );
-                }
+            if ( $token instanceof TokenOnPremise && $token->isValid() ) {
+                $this->token = $token;
                 $settings->logger->debug( 'Loaded a non-expired access token from cache' );
-            } else {
-                $pool->deleteItem( $cacheKey );
+
+                return $this->token;
             }
-        } else {
-            $this->getAuthToken( $cache );
+            $this->refreshToken();
+
+            if ( $this->token ) {
+                return $this->token;
+            }
         }
+        $pool->deleteItem( $this->tokenCacheKey );
+        $pool->deleteItem( $this->refreshTokenCacheKey );
+        $this->getAuthToken();
 
         return $this->token;
     }
 
-    private function requestToken( $endPoint, $cache, $requestPayload ): void {
+    private function requestToken( $endPoint, $requestPayload ): void {
         $settings = $this->settings;
-        $pool = $this->getPool();
-
         $httpClient = $this->getHttpClient();
 
         try {
@@ -162,11 +202,20 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
 
             throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
         }
-
+        $pool = $this->getPool();
+        $cacheToken = $pool->getItem( $this->tokenCacheKey );
+        $cacheRefreshToken = $pool->getItem( $this->refreshTokenCacheKey );
         $this->token = TokenOnPremise::createFromJson( $tokenResponse->getBody()->getContents() );
-        $expirationDate = new \DateTime();
-        $expirationDate->setTimestamp( $this->token->expiresIn );
-        $pool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
+
+        $tokenExpData = new \DateTime();
+        $tokenExpData->setTimestamp( $this->token->expiresIn );
+        $pool->save( $cacheToken->set( $this->token )->expiresAt( $tokenExpData ) );
+
+        if ( $this->token->refreshToken ) {
+            $refreshTokenExpData = new \DateTime();
+            $refreshTokenExpData->setTimestamp( $this->token->refreshTokenExpiresIn );
+            $pool->save( $cacheRefreshToken->set( $this->token->refreshToken )->expiresAt( $refreshTokenExpData ) );
+        }
     }
 
     /**

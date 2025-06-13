@@ -276,5 +276,14 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             };
         };
     }
+
+    /**
+     * Always returns true, because there is no token
+     *
+     * @return bool
+     */
+    public function refreshToken(): bool {
+        return true;
+    }
 }
 

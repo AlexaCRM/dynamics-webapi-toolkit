@@ -31,4 +31,9 @@ interface AuthMiddlewareInterface extends MiddlewareInterface {
      */
     public function discardToken(): void;
 
+    /**
+     * Refresh the currently used access token.
+     */
+    public function refreshToken(): ?bool;
+
 }

@@ -55,7 +55,9 @@ class TokenOnPremise extends Token {
         $token->resource = $tokenArray['resource'] ?? null;
         $token->token = $tokenArray['access_token'] ?? null;
         $token->refreshToken = $tokenArray['refresh_token'] ?? null;
-        $token->refreshTokenExpiresIn = $tokenArray['refresh_token_expires_in'] ?? null;
+        if ( isset( $tokenArray['refresh_token_expires_in'] ) ) {
+            $token->refreshTokenExpiresIn = $tokenArray['refresh_token_expires_in'] + time();
+        }
 
         return $token;
     }

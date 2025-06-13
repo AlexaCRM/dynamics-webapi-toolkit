@@ -29,6 +29,7 @@ namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -227,6 +228,7 @@ class Client {
      * @throws AuthenticationException
      * @throws ODataException
      * @throws TransportException
+     * @throws InvalidArgumentException
      */
     private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
         $headers = $this->getRequestHeaders( $headers, $method );
@@ -250,7 +252,17 @@ class Client {
                 }
             }
 
-            $response = $this->getHttpClient()->request( $method, $url, $payload );
+            try {
+                $response = $this->getHttpClient()->request( $method, $url, $payload );
+            } catch ( ClientException $e ) {
+                if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()->getStatusCode() === 401 ) {
+                    $this->authMiddleware->refreshToken();
+                    $response = $this->getHttpClient()->request( $method, $url, $payload );
+                } else {
+                    $this->exceptionHandler( $e, $method, $url, $data );
+                    throw new ODataException( $e->getResponse()->getStatusCode(), $e );
+                }
+            }
             $this->getLogger()->debug( "Completed {$method} {$url}", [
                 'payload' => $data,
                 'responseHeaders' => $response->getHeaders(),
@@ -264,34 +276,8 @@ class Client {
 
             return $response;
         } catch ( RequestException $e ) {
-            if ( $e->getResponse() === null ) {
-                $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
-                throw new TransportException( $e->getMessage(), $e );
-            }
-
-            $responseCode = $e->getResponse()->getStatusCode();
-            if ( $responseCode === 401 ) {
-                $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
-                $this->authMiddleware->discardToken();
-                throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
-            }
-
-            $response = json_decode( $e->getResponse()->getBody()->getContents() );
-            if ( $responseCode !== 404 ) {
-                $this->getLogger()->error( "Failed {$method} {$url}", [
-                    'payload' => $data,
-                    'responseHeaders' => $e->getResponse()->getHeaders(),
-                    'responseBody' => $response,
-                ] );
-            } else {
-                $this->getLogger()->notice( "Not Found {$method} {$url}", [
-                    'payload' => $data,
-                    'responseHeaders' => $e->getResponse()->getHeaders(),
-                    'responseBody' => $response,
-                ] );
-            }
-
-            throw new ODataException( $response->error, $e );
+            $this->exceptionHandler( $e, $method, $url, $data );
+            throw new ODataException( $e->getResponse()->getStatusCode(), $e );
         } catch ( GuzzleException $e ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
             throw new TransportException( $e->getMessage(), $e );
@@ -306,7 +292,7 @@ class Client {
      *
      * @return string
      */
-    private function buildQueryURL(string $uri, ?array $queryOptions = null ): string {
+    private function buildQueryURL( string $uri, ?array $queryOptions = null ): string {
         $endpointURI = $this->settings->getEndpointURI() . $uri;
         $queryParameters = [];
         if ( $queryOptions != null ) {
@@ -360,7 +346,7 @@ class Client {
      *
      * @return array
      */
-    private function buildQueryHeaders(?array $queryOptions = null ): array {
+    private function buildQueryHeaders( ?array $queryOptions = null ): array {
         $headers = [];
         $prefer = [];
 
@@ -442,7 +428,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function getRecord(string $entityCollection, string $entityId, ?array $queryOptions = null ): object {
+    public function getRecord( string $entityCollection, string $entityId, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( "%s(%s)", $entityCollection, $entityId ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -458,7 +444,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function getCount(string $uri, ?array $queryOptions = null ): object {
+    public function getCount( string $uri, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( sprintf( '%s/$count', $uri ), $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -610,7 +596,7 @@ class Client {
         string $fromEntityId,
         string $navProperty,
         string $toEntityCollection,
-        string $toEntityId
+        string $toEntityId,
     ): void {
         $url = sprintf( '%s%s(%s)/%s/$ref', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty );
         $data = [ Annotation::ODATA_ID => sprintf( '%s%s(%s)', $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId ) ];
@@ -633,7 +619,7 @@ class Client {
         string $fromEntityId,
         string $navProperty,
         string $toEntityCollection,
-        string $toEntityId
+        string $toEntityId,
     ): void {
         $url = sprintf( '%s%s(%s)/%s/$ref?$id=%s%s(%s)', $this->settings->getEndpointURI(), $fromEntityCollection, $fromEntityId, $navProperty, $this->settings->getEndpointURI(), $toEntityCollection, $toEntityId );
         $this->doRequest( 'DELETE', $url );
@@ -648,7 +634,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeWebRequest(string $uri, ?array $queryOptions = null ): object {
+    public function executeWebRequest( string $uri, ?array $queryOptions = null ): object {
         $url = $this->buildQueryURL( $uri, $queryOptions );
         $res = $this->doRequest( 'GET', $url, null, $this->buildQueryHeaders( $queryOptions ) );
 
@@ -668,7 +654,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeFunction(string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
+    public function executeFunction( string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
         if ( $parameters !== null ) {
             $paramNames = [];
             $paramValues = [];
@@ -711,7 +697,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function executeAction(string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
+    public function executeAction( string $name, $parameters = null, ?string $entityCollection = null, ?string $entityId = null ): ?object {
         $url = sprintf( '%s%s', $this->settings->getEndpointURI(), $name );
         if ( $entityCollection !== null ) {
             $url = sprintf( '%s%s(%s)%s', $this->settings->getEndpointURI(), $entityCollection, $entityId, $name );
@@ -745,7 +731,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function query(string $search, ?array $searchParameters = null ) {
+    public function query( string $search, ?array $searchParameters = null ) {
         return $this->search( 'query', $search, $searchParameters );
     }
 
@@ -759,7 +745,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function suggest(string $search, ?array $searchParameters = null ) {
+    public function suggest( string $search, ?array $searchParameters = null ) {
         return $this->search( 'suggest', $search, $searchParameters );
     }
 
@@ -773,7 +759,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    public function autocomplete(string $search, ?array $searchParameters = null ) {
+    public function autocomplete( string $search, ?array $searchParameters = null ) {
         return $this->search( 'autocomplete', $search, $searchParameters );
     }
 
@@ -790,7 +776,7 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      */
-    protected function search(string $type, string $search, ?array $searchParameters = null ) {
+    protected function search( string $type, string $search, ?array $searchParameters = null ) {
         $url = $this->settings->instanceURI . '/api/search/v1.0/' . $type;
 
         $data = [
@@ -804,6 +790,45 @@ class Client {
         $result = $this->doRequest( 'POST', $url, $data );
 
         return json_decode( $result->getBody() );
+    }
+
+    /**
+     * @param RequestException $e
+     * @param $method
+     * @param $url
+     * @param null $payload
+     *
+     * @return void
+     * @throws AuthenticationException
+     * @throws TransportException
+     */
+    protected function exceptionHandler( RequestException $e, $method, $url, $payload = null ): void {
+        if ( $e->getResponse() === null ) {
+            $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
+            throw new TransportException( $e->getMessage(), $e );
+        }
+
+        $responseCode = $e->getResponse()->getStatusCode();
+        if ( $responseCode === 401 ) {
+            $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
+            $this->authMiddleware->discardToken();
+            throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
+        }
+
+        $response = json_decode( $e->getResponse()->getBody()->getContents() );
+        if ( $responseCode !== 404 ) {
+            $this->getLogger()->error( "Failed {$method} {$url}", [
+                'payload' => $payload,
+                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseBody' => $response,
+            ] );
+        } else {
+            $this->getLogger()->notice( "Not Found {$method} {$url}", [
+                'payload' => $payload,
+                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseBody' => $response,
+            ] );
+        }
     }
 
     /**

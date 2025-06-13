@@ -72,42 +72,17 @@ class ClientFactory {
      * Creates a client proxy implementing the IOrganizationService interface given the Organization URI
      * and credentials for the Azure AD application configured for access to Dynamics 365.
      *
-     * @param string $instanceURI Organization URI, e.g. https://contoso.crm.dynamics.com/.
-     * @param string $applicationAuthURI
-     * @param ?string $refreshTokenURI
-     * @param string $resourceURI
-     * @param string $applicationID GUID of the Azure AD application.
-     * @param string $applicationSecret Secret key of the Azure AD application.
-     * @param string $username
-     * @param string $password
+     * @param OnPremiseSettings $settings
      * @param array $services Optional services like `logger` or `cachePool`.
+     * @param bool $ignoreAuthCache
      *
      * @return Client
      */
     public static function createOnPremiseClient(
-        string $instanceURI,
-        string $applicationAuthURI,
-        ?string $refreshTokenURI,
-        string $resourceURI,
-        string $applicationID,
-        string $applicationSecret,
-        string $username,
-        string $password,
+        OnPremiseSettings $settings,
         array $services = [],
+        ?bool $ignoreAuthCache = false,
     ): Client {
-        $settings = new OnPremiseSettings();
-        $settings->instanceURI = $instanceURI;
-        $settings->authURI = $applicationAuthURI;
-        if ( $refreshTokenURI ) {
-            $settings->refreshTokenURI = $refreshTokenURI;
-        } else {
-            $settings->refreshTokenURI = $applicationAuthURI;
-        }
-        $settings->resource = $resourceURI;
-        $settings->applicationID = $applicationID;
-        $settings->applicationSecret = $applicationSecret;
-        $settings->username = $username;
-        $settings->password = $password;
 
         if ( isset ( $services['logger'] ) && $services['logger'] instanceof LoggerInterface ) {
             $settings->setLogger( $services['logger'] );
@@ -116,7 +91,7 @@ class ClientFactory {
             $settings->cachePool = $services['cachePool'];
         }
 
-        $middleware = new OnPremiseAuthMiddleware( $settings );
+        $middleware = new OnPremiseAuthMiddleware( $settings, $ignoreAuthCache );
         $odataClient = new OData\Client( $settings, $middleware );
 
         return new Client( $odataClient );
