@@ -111,7 +111,7 @@ class MetadataRegistry {
      * @throws OrganizationException
      * @throws ToolkitException
      */
-    public function getDefinition( string $logicalName ): ?EntityMetadata {
+    public function getDefinition( string $logicalName, array $expand = [ 'Attributes', 'Keys', 'OneToManyRelationships', 'ManyToOneRelationships', 'ManyToManyRelationships', ] ): ?EntityMetadata {
         $cached = $this->storage->getItem( $logicalName );
         if ( $cached->isHit() ) {
             return $cached->get();
@@ -119,7 +119,7 @@ class MetadataRegistry {
 
         try {
             $object = $this->client->getRecord( 'EntityDefinitions', "LogicalName='{$logicalName}'", [
-                'Expand' => 'Attributes,Keys,OneToManyRelationships,ManyToOneRelationships,ManyToManyRelationships',
+                'Expand' => $expand,
                 'ApiVersion' => $this->client->getSettings()->apiVersion,
             ] );
             unset( $object->{Annotation::ODATA_CONTEXT} );
@@ -195,7 +195,7 @@ class MetadataRegistry {
 
                     unset( $attribute->GlobalOptionSet );
 
-                    if ( !isset($attribute->{'@odata.type'})){
+                    if ( !isset( $attribute->{'@odata.type'} ) ) {
                         $attribute->{'@odata.type'} = "#Microsoft.Dynamics.CRM.{$type}";
                     }
 
