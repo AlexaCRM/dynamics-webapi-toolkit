@@ -53,7 +53,7 @@ class ODataException extends Exception {
         $this->message = $response;
         if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
-            $guzzleResponse = $inner->getResponse();
+            $guzzleResponse = GuzzleCompat::getResponse( $inner );
             $statusCode = ( $guzzleResponse !== null ) ? $guzzleResponse->getStatusCode() : 0;
 
             $this->code = $statusCode;

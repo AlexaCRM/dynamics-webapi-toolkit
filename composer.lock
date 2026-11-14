@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d6b83cfba4b7789159b432bca485a631",
+    "content-hash": "0d103bd4bcaee41959e66d654e2f54a6",
     "packages": [
         {
             "name": "alexacrm/strong-serializer",
@@ -2612,8 +2612,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.0"
+        "php": ">=8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.11.0"
 }

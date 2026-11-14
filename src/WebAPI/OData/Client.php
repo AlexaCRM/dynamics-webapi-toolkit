@@ -33,6 +33,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\HandlerStack;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
@@ -140,7 +141,6 @@ class Client {
      *
      * @return Metadata
      * @throws AuthenticationException
-     * @throws GuzzleException
      * @throws TransportException
      * @throws InvalidArgumentException
      */
@@ -163,15 +163,18 @@ class Client {
                 'headers' => [ 'Accept' => 'application/xml' ],
             ] );
             $this->getLogger()->debug( 'Retrieved OData metadata via ' . $metadataURI );
-        } catch ( ConnectException $e ) {
+        } catch ( ConnectException | ResponseTimeoutException $e ) {
+            // Guzzle 7 reports every cURL timeout as ConnectException, Guzzle 8 reports a timeout
+            // after the response headers as ResponseTimeoutException (a RequestException with a response).
             throw new TransportException( $e->getMessage(), $e );
         } catch ( RequestException $e ) {
-            if ( $e->getResponse() === null ) {
+            $errorResponse = GuzzleCompat::getResponse( $e );
+            if ( $errorResponse === null ) {
                 $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
                 throw new TransportException( $e->getMessage(), $e );
             }
 
-            $responseCode = $e->getResponse()->getStatusCode();
+            $responseCode = $errorResponse->getStatusCode();
             if ( $responseCode === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();
@@ -180,6 +183,11 @@ class Client {
 
             $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
             throw new TransportException( 'Metadata request returned a ' . $responseCode . ' code', $e );
+        } catch ( GuzzleException $e ) {
+            // Guzzle 8 reports no-response network failures other than connection errors as NetworkException,
+            // which is neither a ConnectException nor a RequestException.
+            $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
+            throw new TransportException( $e->getMessage(), $e );
         }
 
         $metadataXML = $resp->getBody()->getContents();
@@ -300,9 +308,14 @@ class Client {
             }
 
             return $response;
+        } catch ( ResponseTimeoutException $e ) {
+            // Guzzle 7 reports every cURL timeout as ConnectException, Guzzle 8 reports a timeout
+            // after the response headers as ResponseTimeoutException (a RequestException with a response).
+            $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
+            throw new TransportException( $e->getMessage(), $e );
         } catch ( RequestException $e ) {
             $this->exceptionHandler( $e, $method, $url, $data );
-            throw new ODataException( $e->getResponse()->getStatusCode(), $e );
+            throw new ODataException( GuzzleCompat::getResponse( $e )?->getStatusCode(), $e );
         } catch ( GuzzleException $e ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
             throw new TransportException( $e->getMessage(), $e );
@@ -828,29 +841,30 @@ class Client {
      * @throws TransportException
      */
     protected function exceptionHandler( RequestException $e, $method, $url, $payload = null ): void {
-        if ( $e->getResponse() === null ) {
+        $errorResponse = GuzzleCompat::getResponse( $e );
+        if ( $errorResponse === null ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
             throw new TransportException( $e->getMessage(), $e );
         }
 
-        $responseCode = $e->getResponse()->getStatusCode();
+        $responseCode = $errorResponse->getStatusCode();
         if ( $responseCode === 401 ) {
             $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
             $this->authMiddleware->discardToken();
             throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
         }
 
-        $response = json_decode( $e->getResponse()->getBody()->getContents() );
+        $response = json_decode( $errorResponse->getBody()->getContents() );
         if ( $responseCode !== 404 ) {
             $this->getLogger()->error( "Failed {$method} {$url}", [
                 'payload' => $payload,
-                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseHeaders' => $errorResponse->getHeaders(),
                 'responseBody' => $response,
             ] );
         } else {
             $this->getLogger()->notice( "Not Found {$method} {$url}", [
                 'payload' => $payload,
-                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseHeaders' => $errorResponse->getHeaders(),
                 'responseBody' => $response,
             ] );
         }
