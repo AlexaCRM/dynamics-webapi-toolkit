@@ -49,7 +49,29 @@ class RequestHeaderMiddleware implements MiddlewareInterface {
      */
     public function __construct( string $headerName, mixed $headerValue ) {
         $this->headerName = $headerName;
-        $this->headerValue = $headerValue;
+        $this->headerValue = self::normalizeHeaderValue( $headerValue );
+    }
+
+    /**
+     * Casts scalar and null header values to strings.
+     *
+     * Guzzle PSR-7 2.x (Guzzle 7) cast scalar and null header values to strings implicitly,
+     * Guzzle PSR-7 3.x (Guzzle 8) accepts only strings or arrays of strings.
+     *
+     * @param mixed $headerValue
+     *
+     * @return mixed
+     */
+    private static function normalizeHeaderValue( mixed $headerValue ): mixed {
+        if ( is_array( $headerValue ) ) {
+            return array_map( [ self::class, 'normalizeHeaderValue' ], $headerValue );
+        }
+
+        if ( is_scalar( $headerValue ) || $headerValue === null ) {
+            return (string)$headerValue;
+        }
+
+        return $headerValue;
     }
 
     /**

@@ -177,8 +177,9 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
             $settings->logger->debug( 'Retrieved a new access token via ' . $tokenEndpoint );
         } catch ( RequestException $e ) {
             $errorDescription = $e->getMessage();
-            if ( $e->getResponse() instanceof ResponseInterface ) {
-                $response = json_decode( $e->getResponse()->getBody()->getContents() );
+            $errorResponse = GuzzleCompat::getResponse( $e );
+            if ( $errorResponse instanceof ResponseInterface ) {
+                $response = json_decode( $errorResponse->getBody()->getContents() );
                 $errorDescription = $response->error_description;
             }
 
