@@ -26,7 +26,6 @@ use GuzzleHttp\Exception\RequestException;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Represents the Dynamics 365 (On Premise) authentication middleware.
@@ -191,13 +190,19 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
         $httpClient = $this->getHttpClient();
 
         try {
-            $tokenResponse = $httpClient->post( $endPoint, $requestPayload );
+            $tokenResponse = $httpClient->request( 'POST', $endPoint, $requestPayload );
             $settings->logger->debug( 'Retrieved a new access token via ' . $endPoint );
         } catch ( RequestException $e ) {
             $errorDescription = $e->getMessage();
-            if ( $e->getResponse() instanceof ResponseInterface ) {
-                $response = json_decode( $e->getResponse()->getBody()->getContents() );
-                $errorDescription = $response->error_description;
+            $errorResponse = GuzzleCompat::getResponse( $e );
+            if ( $errorResponse !== null ) {
+                $rawBody = GuzzleCompat::getBody( $errorResponse );
+                $response = $rawBody !== null ? json_decode( $rawBody ) : null;
+                if ( $response instanceof \stdClass && isset( $response->error_description ) ) {
+                    $errorDescription = $response->error_description;
+                } elseif ( $rawBody !== null && $rawBody !== '' ) {
+                    $errorDescription = 'Unexpected response from token endpoint (HTTP ' . $errorResponse->getStatusCode() . '): ' . $rawBody;
+                }
             }
 
             throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
@@ -205,7 +210,7 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
         $pool = $this->getPool();
         $cacheToken = $pool->getItem( $this->tokenCacheKey );
         $cacheRefreshToken = $pool->getItem( $this->refreshTokenCacheKey );
-        $this->token = TokenOnPremise::createFromJson( $tokenResponse->getBody()->getContents() );
+        $this->token = TokenOnPremise::createFromJson( (string)GuzzleCompat::getBody( $tokenResponse ) );
 
         $tokenExpData = new \DateTime();
         $tokenExpData->setTimestamp( $this->token->expiresIn );
@@ -243,7 +248,7 @@ class OnPremiseAuthMiddleware implements AuthMiddlewareInterface {
         return static function( callable $handler ) use ( $self ) {
             return static function( RequestInterface $request, array $options ) use ( $self, $handler ) {
                 $token = $self->acquireToken();
-                $headerValue = ucfirst( $token->type ) . ' ' . $token->token;
+                $headerValue = ucfirst( (string)$token->type ) . ' ' . (string)$token->token;
                 $newReq = $request->withHeader( 'Authorization', $headerValue );
 
                 return $handler( $newReq, $options );

@@ -9,15 +9,17 @@
       "email": "info@alexacrm.com"
     }
   ],
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "prefer-stable": true,
   "require": {
     "php": ">=8.2",
+    "ext-json": "*",
     "psr/log": "^1.0 || ^2.0 || ^3.0",
     "psr/cache": "^1.0 || ^2.0 || ^3.0",
+    "psr/http-message": "^1.0 || ^2.0",
     "elao/enum": "^1.6",
     "alexacrm/strong-serializer": "^2.0",
-    "guzzlehttp/guzzle": "^7.0"
+    "guzzlehttp/guzzle": "^7.0 || ^8.0"
   },
   "autoload": {
     "psr-4": {

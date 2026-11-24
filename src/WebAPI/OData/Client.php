@@ -36,8 +36,10 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Dynamics 365 Web API OData client.
@@ -140,7 +142,6 @@ class Client {
      *
      * @return Metadata
      * @throws AuthenticationException
-     * @throws GuzzleException
      * @throws TransportException
      * @throws InvalidArgumentException
      */
@@ -159,19 +160,20 @@ class Client {
 
         $metadataURI = $this->settings->getEndpointURI() . '$metadata';
         try {
-            $resp = $this->getHttpClient()->get( $metadataURI, [
-                'headers' => [ 'Accept' => 'application/xml' ],
+            $resp = $this->getHttpClient()->request( 'GET', $metadataURI, [
+                'headers' => GuzzleCompat::normalizeHeaders( [ 'Accept' => 'application/xml' ] ),
             ] );
             $this->getLogger()->debug( 'Retrieved OData metadata via ' . $metadataURI );
         } catch ( ConnectException $e ) {
             throw new TransportException( $e->getMessage(), $e );
         } catch ( RequestException $e ) {
-            if ( $e->getResponse() === null ) {
+            $errorResponse = GuzzleCompat::getResponse( $e );
+            if ( $errorResponse === null || GuzzleCompat::isResponseTransferFailure( $e ) ) {
                 $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
                 throw new TransportException( $e->getMessage(), $e );
             }
 
-            $responseCode = $e->getResponse()->getStatusCode();
+            $responseCode = $errorResponse->getStatusCode();
             if ( $responseCode === 401 ) {
                 $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
                 $this->authMiddleware->discardToken();
@@ -180,9 +182,13 @@ class Client {
 
             $this->getLogger()->error( 'Failed to retrieve OData metadata from ' . $metadataURI, [ 'responseCode' => $responseCode ] );
             throw new TransportException( 'Metadata request returned a ' . $responseCode . ' code', $e );
+        } catch ( NetworkExceptionInterface $e ) {
+            // Guzzle 8: NetworkException (incl. timeouts) is what Guzzle 7 reported as ConnectException.
+            $this->getLogger()->error( "Guzzle failed to process the request GET {$metadataURI}", [ 'message' => $e->getMessage() ] );
+            throw new TransportException( $e->getMessage(), $e );
         }
 
-        $metadataXML = $resp->getBody()->getContents();
+        $metadataXML = (string)GuzzleCompat::getBody( $resp );
 
         $this->metadata = Metadata::createFromXML( $metadataXML );
         $this->getCachePool()->save( $cache->set( $this->metadata ) );
@@ -199,13 +205,14 @@ class Client {
      * @return array
      */
     private function getRequestHeaders( ?array $headers = [], ?string $method = 'GET' ): array {
-        $headers = array_merge( $headers, [
+        $method = GuzzleCompat::normalizeMethod( $method ?? 'GET' );
+        $headers = array_merge( $headers ?? [], [
             'Accept' => 'application/json',
             'OData-MaxVersion' => '4.0',
             'OData-Version' => '4.0',
         ] );
 
-        if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
+        if ( in_array( $method, [ 'POST', 'PATCH' ], true ) ) {
             $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
         }
 
@@ -221,7 +228,8 @@ class Client {
             $headers = array_merge( [ 'MSCRMCallerID' => $this->settings->callerID ], $headers );
         }
 
-        return $headers;
+        // psr7 3.x (Guzzle 8) accepts only string|string[] header values.
+        return GuzzleCompat::normalizeHeaders( $headers );
     }
 
     /**
@@ -235,8 +243,10 @@ class Client {
      * @throws ODataException
      * @throws TransportException
      * @throws InvalidArgumentException
+     * @throws Throwable
      */
     private function doRequest( string $method, string $url, $data = null, array $headers = [] ): ResponseInterface {
+        $method = GuzzleCompat::normalizeMethod( $method );
         $headers = $this->getRequestHeaders( $headers, $method );
 
         try {
@@ -261,37 +271,63 @@ class Client {
             // Start timing
             $startTime = microtime( true );
             $response = null;
-            
-            try {
-				$this->getLogger()->debug( "Starting {$method} {$url}", [
-                	'payload' => $payload,
-                ] );
-                
-                $response = $this->getHttpClient()->request( $method, $url, $payload );
+            $caughtThrowable = null;
 
+            try {
+                $this->getLogger()->debug( "Starting {$method} {$url}", [
+                    'payload' => $payload,
+                ] );
+
+                $response = $this->getHttpClient()->request( $method, $url, $payload );
             } catch ( ClientException $e ) {
-                if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()?->getStatusCode() === 401 ) {
+                if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()->getStatusCode() === 401 ) {
                     $this->authMiddleware->refreshToken();
                     $response = $this->getHttpClient()->request( $method, $url, $payload );
                 } else {
-                    $response = $e->getResponse() ?? null;
+                    $response = $e->getResponse();
                     $this->exceptionHandler( $e, $method, $url, $data );
-                    throw new ODataException( $response?->getStatusCode(), $e );
+                    throw new ODataException( $response->getStatusCode(), $e );
                 }
+            } catch ( Throwable $e ) {
+                /*
+                 * Catches all possible exceptions: 5xx (ServerException),
+                 * connect/timeout/TLS failures (ConnectException, which never has a response),
+                 * redirect loops, and non-Guzzle Throwables from middleware.
+                 * Otherwise, $response stays null and log reports nulls with no clue what actually happened.
+                */
+                $caughtThrowable = $e;
+                throw $e;
             } finally {
-	            // Calculate timing
-            	$endTime = microtime( true );
-            	$duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
+                $endTime = microtime( true );
+                $duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
 
-                $this->getLogger()->debug( "Completed {$method} {$url}", [
+                $completedContext = [
                     'responseHeaders' => $response?->getHeaders(),
-                    'responseBody' => $response?->getBody()?->getContents(),
+                    'responseBody' => GuzzleCompat::getBody( $response ),
                     'timing' => [
                         'duration_ms' => $duration,
                         'start_time' => $startTime,
                         'end_time' => $endTime,
                     ],
-                ] );
+                ];
+
+                if ( $caughtThrowable !== null ) {
+                    $completedContext['exception'] = [
+                        'class' => get_class( $caughtThrowable ),
+                        'message' => $caughtThrowable->getMessage(),
+                        'code' => $caughtThrowable->getCode(),
+                    ];
+
+                    if ( $caughtThrowable instanceof GuzzleException ) {
+                        // The outer catch below logs this failure as an error (with the response, if any).
+                        $this->getLogger()->debug( "Failed {$method} {$url} after {$duration}ms", $completedContext );
+                    } else {
+                        // Nothing else logs non-Guzzle failures (e.g. thrown by middleware).
+                        $this->getLogger()->error( "Failed {$method} {$url} after {$duration}ms", $completedContext );
+                    }
+                } else {
+                    $this->getLogger()->debug( "Completed {$method} {$url}", $completedContext );
+                }
             }
 
             $responseCookie = $this->getHttpClient()->getConfig( 'cookies' );
@@ -301,10 +337,22 @@ class Client {
 
             return $response;
         } catch ( RequestException $e ) {
+            $errorResponse = GuzzleCompat::getResponse( $e );
+            if ( $errorResponse === null || GuzzleCompat::isResponseTransferFailure( $e ) ) {
+                $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [
+                    'exception' => get_class( $e ),
+                    'message' => $e->getMessage(),
+                ] );
+                throw new TransportException( $e->getMessage(), $e );
+            }
+
             $this->exceptionHandler( $e, $method, $url, $data );
-            throw new ODataException( $e->getResponse()->getStatusCode(), $e );
+            throw new ODataException( $errorResponse->getStatusCode(), $e );
         } catch ( GuzzleException $e ) {
-            $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
+            $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [
+                'exception' => get_class( $e ),
+                'message' => $e->getMessage(),
+            ] );
             throw new TransportException( $e->getMessage(), $e );
         }
     }
@@ -573,7 +621,7 @@ class Client {
         foreach ( $response->getHeaders() as $headerKey => $headerValue ) {
             header( "{$headerKey}: {$response->getHeaderLine($headerKey)}" );
         }
-        echo $response->getBody()->getContents();
+        echo GuzzleCompat::getBody( $response );
     }
 
     /**
@@ -588,8 +636,9 @@ class Client {
      * @throws TransportException
      */
     public function downloadImage( string $entityName, string $entityId, string $filenameField, array $headers = [] ): void {
-        $headers = array_push( $headers, [ 'Content-Type' => 'application/octet-stream' ] );
-        $this->downloadFile( $entityName, $entityId, $filenameField, (array)$headers, true );
+        // array_push() returned an int here before, producing a bogus `0: 1` header (rejected by psr7 3.x).
+        $headers['Content-Type'] = 'application/octet-stream';
+        $this->downloadFile( $entityName, $entityId, $filenameField, $headers, true );
     }
 
     /**
@@ -828,29 +877,34 @@ class Client {
      * @throws TransportException
      */
     protected function exceptionHandler( RequestException $e, $method, $url, $payload = null ): void {
-        if ( $e->getResponse() === null ) {
+        $errorResponse = GuzzleCompat::getResponse( $e );
+        if ( $errorResponse === null || GuzzleCompat::isResponseTransferFailure( $e ) ) {
             $this->getLogger()->error( "Guzzle failed to process the request {$method} {$url}", [ 'message' => $e->getMessage() ] );
             throw new TransportException( $e->getMessage(), $e );
         }
 
-        $responseCode = $e->getResponse()->getStatusCode();
+        $responseCode = $errorResponse->getStatusCode();
         if ( $responseCode === 401 ) {
             $this->getLogger()->error( 'Dynamics 365 rejected the access token', [ 'exception' => $e ] );
             $this->authMiddleware->discardToken();
             throw new AuthenticationException( 'Dynamics 365 rejected the access token', $e );
         }
 
-        $response = json_decode( $e->getResponse()->getBody()->getContents() );
+        $rawBody = GuzzleCompat::getBody( $errorResponse );
+        $response = $rawBody !== null ? json_decode( $rawBody ) : null;
+        if ( $response === null ) {
+            $response = $rawBody;
+        }
         if ( $responseCode !== 404 ) {
             $this->getLogger()->error( "Failed {$method} {$url}", [
                 'payload' => $payload,
-                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseHeaders' => $errorResponse->getHeaders(),
                 'responseBody' => $response,
             ] );
         } else {
             $this->getLogger()->notice( "Not Found {$method} {$url}", [
                 'payload' => $payload,
-                'responseHeaders' => $e->getResponse()->getHeaders(),
+                'responseHeaders' => $errorResponse->getHeaders(),
                 'responseBody' => $response,
             ] );
         }
@@ -878,8 +932,8 @@ class Client {
         return $id;
     }
 
-    public function getWebApiHeaderByName( $headerName ): array {
-        return $this?->webApiHeaders[ $headerName ];
+    public function getWebApiHeaderByName( $headerName ): mixed {
+        return $this->webApiHeaders[ $headerName ] ?? null;
     }
 
     public function unsetWebApiHeaderByName( $headerName ): void {

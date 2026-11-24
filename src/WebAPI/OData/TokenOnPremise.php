@@ -21,8 +21,6 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-use GuzzleHttp\Utils;
-
 /**
  * Represents a Bearer token issued by an OAuth2 token endpoint.
  */
@@ -44,8 +42,12 @@ class TokenOnPremise extends Token {
      */
     public static function createFromJson( string $json ): TokenOnPremise {
         try {
-            $tokenArray = Utils::jsonDecode( $json, true );
-        } catch ( \InvalidArgumentException $e ) {
+            $tokenArray = json_decode( $json, true, 512, JSON_THROW_ON_ERROR );
+        } catch ( \JsonException $e ) {
+            return new TokenOnPremise();
+        }
+
+        if ( !is_array( $tokenArray ) ) {
             return new TokenOnPremise();
         }
 
@@ -56,7 +58,7 @@ class TokenOnPremise extends Token {
         $token->token = $tokenArray['access_token'] ?? null;
         $token->refreshToken = $tokenArray['refresh_token'] ?? null;
         if ( isset( $tokenArray['refresh_token_expires_in'] ) ) {
-            $token->refreshTokenExpiresIn = $tokenArray['refresh_token_expires_in'] + time();
+            $token->refreshTokenExpiresIn = (int)$tokenArray['refresh_token_expires_in'] + time();
         }
 
         return $token;

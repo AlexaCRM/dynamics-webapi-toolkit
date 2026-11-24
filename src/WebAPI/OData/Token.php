@@ -21,8 +21,6 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-use GuzzleHttp\Utils;
-
 /**
  * Represents a Bearer token issued by an OAuth2 token endpoint.
  */
@@ -58,8 +56,12 @@ class Token {
      */
     public static function createFromJson( string $json ): Token {
         try {
-            $tokenArray = Utils::jsonDecode( $json, true );
-        } catch ( \InvalidArgumentException $e ) {
+            $tokenArray = json_decode( $json, true, 512, JSON_THROW_ON_ERROR );
+        } catch ( \JsonException $e ) {
+            return new Token();
+        }
+
+        if ( !is_array( $tokenArray ) ) {
             return new Token();
         }
 

@@ -23,10 +23,11 @@ namespace AlexaCRM\WebAPI\OData;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException as HttpClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Represents the Dynamics 365 (online) authentication middleware.
@@ -100,19 +101,41 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         $cacheKey = 'msdynwebapi.tenant.' . sha1( $endpointUri );
         $cache = $pool->getItem( $cacheKey );
         if ( $cache->isHit() ) {
-            return $cache->get();
+            $cachedTenantID = $cache->get();
+            $this->settings->logger->debug( "Using cached tenant ID {$cachedTenantID} for {$endpointUri}" );
+
+            return $cachedTenantID;
         }
 
         $httpClient = $this->getHttpClient();
 
         try {
-            $probeResponse = $httpClient->get( $endpointUri );
+            $probeResponse = $httpClient->request( 'GET', $endpointUri );
         } catch ( HttpClientException $e ) {
             $probeResponse = $e->getResponse();
+        } catch ( GuzzleException $e ) {
+            $probeResponse = GuzzleCompat::getResponse( $e );
+            $this->settings->logger->warning( sprintf( 'Tenant probe of %s failed: %s: %s', $endpointUri, get_class( $e ), $e->getMessage() ) );
+            if ( $probeResponse === null ) {
+                throw new AuthenticationException( "Could not detect the Azure AD tenant ID for {$endpointUri}: " . $e->getMessage(), $e );
+            }
         }
 
-        preg_match( '~/([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})/~', $probeResponse->getHeader( 'WWW-Authenticate' )[0], $tenantMatch );
-        $tenantID = $tenantMatch[1];
+        $wwwAuthHeaders = $probeResponse->getHeader( 'WWW-Authenticate' ) ?? [];
+        $this->settings->logger->debug( sprintf(
+            'Tenant probe of %s returned HTTP %s, WWW-Authenticate: %s',
+            $endpointUri,
+            $probeResponse->getStatusCode() ?? 'null (no response)',
+            empty( $wwwAuthHeaders ) ? '(none)' : implode( ' | ', $wwwAuthHeaders )
+        ) );
+
+        preg_match( '~/([a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12})/~', $wwwAuthHeaders[0] ?? '', $tenantMatch );
+        $tenantID = $tenantMatch[1] ?? null;
+        if ( $tenantID === null ) {
+            $this->settings->logger->error( "Failed to extract tenant ID from WWW-Authenticate header for {$endpointUri}" );
+            throw new AuthenticationException( "Could not detect the Azure AD tenant ID for {$endpointUri}: no matching GUID found in the WWW-Authenticate challenge." );
+        }
+
         $this->settings->logger->debug( "Probed {$endpointUri} for tenant ID {{$tenantID}}" );
 
         $expirationDuration = new \DateInterval( 'P1Y' ); // Cache the tenant ID for 1 year.
@@ -125,6 +148,8 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
      * Acquires the Bearer token via client credentials OAuth2 flow.
      *
      * @throws AuthenticationException
+     * @throws InvalidArgumentException
+     * @throws \Exception
      */
     protected function acquireToken(): Token {
         if ( $this->token instanceof Token && $this->token->isValid() ) {
@@ -162,30 +187,41 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
                 ],
             ];
 
-	        // Add and remove unnecessary params for certificate-based auth
-	        if ( $this->settings->isCertificateBasedAuth() ) {
-		        $client_assertion              = $this->computeAssertion( $tokenEndpoint );
-		        $requestPayload['form_params'] = array_merge( $requestPayload['form_params'], [
-			        'client_assertion_type' => 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
-			        'client_assertion'      => $client_assertion,
-		        ] );
-		        unset( $requestPayload['form_params']['client_secret'] );
-	        }
+            // Add and remove unnecessary params for certificate-based auth
+            if ( $this->settings->isCertificateBasedAuth() ) {
+                $client_assertion = $this->computeAssertion( $tokenEndpoint );
+                $requestPayload['form_params'] = array_merge( $requestPayload['form_params'], [
+                    'client_assertion_type' => 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
+                    'client_assertion' => $client_assertion,
+                ] );
+                unset( $requestPayload['form_params']['client_secret'] );
+            }
 
-	        $tokenResponse = $httpClient->post( $tokenEndpoint, $requestPayload );
+            $tokenResponse = $httpClient->request( 'POST', $tokenEndpoint, $requestPayload );
 
             $settings->logger->debug( 'Retrieved a new access token via ' . $tokenEndpoint );
         } catch ( RequestException $e ) {
             $errorDescription = $e->getMessage();
-            if ( $e->getResponse() instanceof ResponseInterface ) {
-                $response = json_decode( $e->getResponse()->getBody()->getContents() );
-                $errorDescription = $response->error_description;
+            $errorResponse = GuzzleCompat::getResponse( $e );
+
+            if ( $errorResponse !== null ) {
+                $statusCode = $errorResponse->getStatusCode();
+                $rawBody = GuzzleCompat::getBody( $errorResponse );
+                $response = $rawBody !== null ? json_decode( $rawBody ) : null;
+                if ( $response instanceof \stdClass && isset( $response->error_description ) ) {
+                    $errorDescription = $response->error_description;
+                } else {
+                    $errorDescription = 'Non-JSON or unexpected response from token endpoint: ' . $rawBody;
+                }
+                $settings->logger->error( 'Azure AD token request failed with status ' . $statusCode . ': ' . $rawBody );
+            } else {
+                $settings->logger->error( "Azure AD token request to {$tokenEndpoint} failed (no HTTP response - network/TLS-level failure): " . $e->getMessage() );
             }
 
             throw new AuthenticationException( 'Authentication at Azure AD failed. ' . $errorDescription, $e );
         }
 
-        $this->token = Token::createFromJson( $tokenResponse->getBody()->getContents() );
+        $this->token = Token::createFromJson( (string)GuzzleCompat::getBody( $tokenResponse ) );
         $expirationDate = new \DateTime();
         $expirationDate->setTimestamp( $this->token->expiresOn );
         $pool->save( $cache->set( $this->token )->expiresAt( $expirationDate ) );
@@ -193,56 +229,58 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
         return $this->token;
     }
 
-	/**
-	 * @param string $tokenEndpoint
-	 * Compute an assertion for auth certificate in JWT format
-	 * The assertion is generated based on the guide: https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials
-	 * @return string
-	 * @throws \Exception
-	 */
-	private function computeAssertion( string $tokenEndpoint ): string {
-		if ( $certificate = file_get_contents( $this->settings->certificatePath ) ) {
-			openssl_pkcs12_read( $certificate, $certs, $this->settings->passphrase );
-			if ( empty( $certs ) ) {
-				throw new \Exception( "Can't read certificate. Please check your passphrase" );
-			}
-			$cert = openssl_x509_read( $certs["cert"] );
-			$pkey = openssl_pkey_get_private( $certs["pkey"] );
+    /**
+     * @param string $tokenEndpoint
+     * Compute an assertion for auth certificate in JWT format
+     * The assertion is generated based on the guide: https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials
+     *
+     * @return string
+     * @throws \Exception
+     */
+    private function computeAssertion( string $tokenEndpoint ): string {
+        if ( $certificate = file_get_contents( $this->settings->certificatePath ) ) {
+            openssl_pkcs12_read( $certificate, $certs, $this->settings->passphrase );
+            if ( empty( $certs ) ) {
+                throw new \Exception( "Can't read certificate. Please check your passphrase" );
+            }
+            $cert = openssl_x509_read( $certs["cert"] );
+            $pkey = openssl_pkey_get_private( $certs["pkey"] );
 
-			$header = json_encode( [
-				'alg' => 'RS256',
-				'typ' => 'JWT',
-				'x5t' => $this->base64UrlEncode( openssl_x509_fingerprint( $cert, 'sha1', true ) ),
-			] );
+            $header = json_encode( [
+                'alg' => 'RS256',
+                'typ' => 'JWT',
+                'x5t' => $this->base64UrlEncode( openssl_x509_fingerprint( $cert, 'sha1', true ) ),
+            ] );
 
-			$payload = json_encode( [
-				'iss' => $this->settings->applicationID,
-				'sub' => $this->settings->applicationID,
-				'exp' => time() + ( 60 * 10 ),
-				'jti' => vsprintf( '%s%s-%s-4000-8%.3s-%s%s%s0', str_split( dechex( microtime( true ) * 1000 ) . bin2hex( random_bytes( 8 ) ), 4 ) ),
-				'aud' => $tokenEndpoint,
-				'nbf' => time() - ( 60 * 10 ),
-			] );
+            $payload = json_encode( [
+                'iss' => $this->settings->applicationID,
+                'sub' => $this->settings->applicationID,
+                'exp' => time() + ( 60 * 10 ),
+                'jti' => vsprintf( '%s%s-%s-4000-8%.3s-%s%s%s0', str_split( dechex( microtime( true ) * 1000 ) . bin2hex( random_bytes( 8 ) ), 4 ) ),
+                'aud' => $tokenEndpoint,
+                'nbf' => time() - ( 60 * 10 ),
+            ] );
 
-			$base64UrlHeader  = $this->base64UrlEncode( $header );
-			$base64UrlPayload = $this->base64UrlEncode( $payload );
-			openssl_sign( "$base64UrlHeader.$base64UrlPayload", $signature, $pkey, 'SHA256' );
-			$base64UrlSignature = $this->base64UrlEncode( $signature );
+            $base64UrlHeader = $this->base64UrlEncode( $header );
+            $base64UrlPayload = $this->base64UrlEncode( $payload );
+            openssl_sign( "$base64UrlHeader.$base64UrlPayload", $signature, $pkey, 'SHA256' );
+            $base64UrlSignature = $this->base64UrlEncode( $signature );
 
-			return "$base64UrlHeader.$base64UrlPayload.$base64UrlSignature";
-		} else {
-			throw new \Exception( "No certificate found in '{$this->settings->certificatePath}'" );
-		}
-	}
+            return "$base64UrlHeader.$base64UrlPayload.$base64UrlSignature";
+        } else {
+            throw new \Exception( "No certificate found in '{$this->settings->certificatePath}'" );
+        }
+    }
 
-	/**
-	 * @param $text
-	 * Returns base64 url-encode string
-	 * @return string
-	 */
-	function base64UrlEncode( $text ) {
-		return rtrim( strtr( base64_encode( $text ), '+/', '-_' ), '=' );
-	}
+    /**
+     * @param $text
+     * Returns base64 url-encode string
+     *
+     * @return string
+     */
+    function base64UrlEncode( $text ) {
+        return rtrim( strtr( base64_encode( $text ), '+/', '-_' ), '=' );
+    }
 
     /**
      * Discards the access token from memory and cache.
@@ -266,10 +304,10 @@ class OnlineAuthMiddleware implements AuthMiddlewareInterface {
     public function getMiddleware(): callable {
         $self = $this;
 
-        return static function ( callable $handler ) use ( $self ) {
-            return static function ( RequestInterface $request, array $options ) use ( $self, $handler ) {
+        return static function( callable $handler ) use ( $self ) {
+            return static function( RequestInterface $request, array $options ) use ( $self, $handler ) {
                 $token = $self->acquireToken();
-                $headerValue = $token->type . ' ' . $token->token;
+                $headerValue = (string)$token->type . ' ' . (string)$token->token;
                 $newReq = $request->withHeader( 'Authorization', $headerValue );
 
                 return $handler( $newReq, $options );

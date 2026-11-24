@@ -45,7 +45,7 @@ class ODataException extends Exception {
     /**
      * ODataException constructor.
      *
-     * @param object $response OData error response object
+     * @param object|string|int $response OData error response
      * @param RequestException|null $inner
      */
     public function __construct( $response, ?RequestException $inner = null ) {
@@ -53,7 +53,7 @@ class ODataException extends Exception {
         $this->message = $response;
         if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
-            $guzzleResponse = $inner->getResponse();
+            $guzzleResponse = GuzzleCompat::getResponse( $inner );
             $statusCode = ( $guzzleResponse !== null ) ? $guzzleResponse->getStatusCode() : 0;
 
             $this->code = $statusCode;

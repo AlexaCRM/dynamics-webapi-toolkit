@@ -33,7 +33,7 @@ class RequestHeaderMiddleware implements MiddlewareInterface {
     protected string $headerName;
 
     /**
-     * @var mixed
+     * @var mixed Header value cast to string(s) as Guzzle 7 did (see GuzzleCompat::normalizeHeaderValue()).
      */
     protected mixed $headerValue;
 
@@ -45,7 +45,7 @@ class RequestHeaderMiddleware implements MiddlewareInterface {
      */
     public function __construct( string $headerName, mixed $headerValue ) {
         $this->headerName = $headerName;
-        $this->headerValue = $headerValue;
+        $this->headerValue = GuzzleCompat::normalizeHeaderValue( $headerValue );
     }
 
     /**
@@ -60,7 +60,9 @@ class RequestHeaderMiddleware implements MiddlewareInterface {
 
         return static function ( callable $handler ) use ( $self ) {
             return static function ( RequestInterface $request, array $options ) use ( $handler, $self ) {
-                $request = $request->withHeader( $self->headerName, $self->headerValue );
+                $request = ( $self->headerValue === [] )
+                    ? $request->withoutHeader( $self->headerName )
+                    : $request->withHeader( $self->headerName, $self->headerValue );
 
                 return $handler( $request, $options );
             };
