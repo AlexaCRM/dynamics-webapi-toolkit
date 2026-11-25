@@ -20,10 +20,6 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-if ( !defined( 'ABSPATH' ) ) {
-    exit;
-}
-
 use Psr\Http\Message\RequestInterface;
 
 /**
