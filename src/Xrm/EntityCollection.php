@@ -63,7 +63,7 @@ class EntityCollection implements \Iterator {
      *
      * @return mixed
      */
-    public function current() {
+    public function current(): mixed {
         return current( $this->Entities );
     }
 
@@ -79,7 +79,7 @@ class EntityCollection implements \Iterator {
      *
      * @return mixed Scalar on success, or null on failure.
      */
-    public function key() {
+    public function key(): mixed {
         return key( $this->Entities );
     }
 

@@ -20,10 +20,6 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
-if ( !defined( 'ABSPATH' ) ) {
-    exit;
-}
-
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -31,20 +27,23 @@ use Psr\Http\Message\RequestInterface;
  */
 class TransferOptionMiddleware implements MiddlewareInterface {
 
+    /**
+     * @var string
+     */
     protected string $optionName;
 
     /**
      * @var mixed
      */
-    protected $optionValue;
+    protected mixed $optionValue;
 
     /**
-     * ConnectionProxyMiddleware constructor.
+     * TransferOptionMiddleware constructor.
      *
      * @param string $optionName
      * @param mixed $optionValue
      */
-    public function __construct( string $optionName, $optionValue ) {
+    public function __construct( string $optionName, mixed $optionValue ) {
         $this->optionName = $optionName;
         $this->optionValue = $optionValue;
     }
@@ -61,7 +60,7 @@ class TransferOptionMiddleware implements MiddlewareInterface {
         $self = $this;
 
         return static function ( callable $handler ) use ( $self ) {
-            return static function ( RequestInterface $request, $options ) use ( $handler, $self ) {
+            return static function ( RequestInterface $request, array $options ) use ( $handler, $self ) {
                 $options[ $self->optionName ] = $self->optionValue;
 
                 return $handler( $request, $options );

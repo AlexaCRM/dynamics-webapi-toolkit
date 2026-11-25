@@ -21,6 +21,8 @@
 
 namespace AlexaCRM\WebAPI\OData;
 
+use GuzzleHttp\Utils;
+
 /**
  * Represents a Bearer token issued by an OAuth2 token endpoint.
  */
@@ -56,16 +58,16 @@ class Token {
      */
     public static function createFromJson( string $json ): Token {
         try {
-            $tokenArray = \GuzzleHttp\json_decode( $json, true );
+            $tokenArray = Utils::jsonDecode( $json, true );
         } catch ( \InvalidArgumentException $e ) {
             return new Token();
         }
 
         $token = new Token();
         $token->type = $tokenArray['token_type'] ?? null;
-        $token->expiresIn = isset( $tokenArray['expires_in'] )? (int)$tokenArray['expires_in'] : null;
-        $token->expiresOn = isset( $tokenArray['expires_on'] )? (int)$tokenArray['expires_on'] : null;
-        $token->notBefore = isset( $tokenArray['not_before'] )? (int)$tokenArray['not_before'] : null;
+        $token->expiresIn = isset( $tokenArray['expires_in'] ) ? (int)$tokenArray['expires_in'] : null;
+        $token->expiresOn = isset( $tokenArray['expires_on'] ) ? (int)$tokenArray['expires_on'] : null;
+        $token->notBefore = isset( $tokenArray['not_before'] ) ? (int)$tokenArray['not_before'] : null;
         $token->resource = $tokenArray['resource'] ?? null;
         $token->token = $tokenArray['access_token'] ?? null;
 
@@ -79,7 +81,7 @@ class Token {
      *
      * @return bool
      */
-    public function isValid( int $time = null ): bool {
+    public function isValid( ?int $time = null ): bool {
         if ( $time === null ) {
             $time = time();
         }

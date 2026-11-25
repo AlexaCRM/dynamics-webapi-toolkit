@@ -65,7 +65,7 @@ class QueryByAttribute extends QueryBase {
      *
      * @param string|null $entityName
      */
-    public function __construct( string $entityName = null ) {
+    public function __construct( ?string $entityName = null ) {
         $this->EntityName = $entityName;
     }
 
@@ -76,7 +76,7 @@ class QueryByAttribute extends QueryBase {
      * @param mixed $value The attribute value.
      */
     public function AddAttributeValue( string $attributeName, $value ): void {
-        $this->Attributes[$attributeName] = $value;
+        $this->Attributes[ $attributeName ] = $value;
     }
 
     /**
@@ -86,7 +86,7 @@ class QueryByAttribute extends QueryBase {
      * @param OrderType $orderType The order for that attribute.
      */
     public function AddOrder( string $attributeName, OrderType $orderType ): void {
-        $this->Orders[$attributeName] = $orderType;
+        $this->Orders[ $attributeName ] = $orderType;
     }
 
 }

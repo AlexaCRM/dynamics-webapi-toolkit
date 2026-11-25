@@ -24,6 +24,7 @@ namespace AlexaCRM\Xrm\Metadata;
  * Contains properties representing actions that may be performed
  * on the referenced entity in a one-to-many entity relationship.
  */
+#[\AllowDynamicProperties]
 class CascadeConfiguration {
 
     /**

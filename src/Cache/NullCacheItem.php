@@ -66,7 +66,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return mixed
      *   The value corresponding to this cache item's key, or null if not found.
      */
-    public function get() {
+    public function get() : mixed {
         return null;
     }
 
@@ -96,7 +96,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The invoked object.
      */
-    public function set($value) {
+    public function set(mixed $value ) : static {
         return $this;
     }
 
@@ -112,7 +112,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The called object.
      */
-    public function expiresAt($expiration) {
+    public function expiresAt(?\DateTimeInterface $expiration): static {
         return $this;
     }
 
@@ -129,7 +129,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The called object.
      */
-    public function expiresAfter($time) {
+    public function expiresAfter(int|\DateInterval|null $time): static {
         return $this;
     }
 }

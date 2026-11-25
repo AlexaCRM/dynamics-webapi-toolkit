@@ -58,7 +58,8 @@ class DoubleAttributeMetadata extends AttributeMetadata {
      *
      * @param string|null $schemaName
      */
-    public function __construct( string $schemaName = null ) {
+    public function __construct( ?string $schemaName = null ) {
+        parent::__construct( $schemaName );
         $this->SchemaName = $schemaName;
     }
 

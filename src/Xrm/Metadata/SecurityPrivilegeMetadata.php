@@ -23,6 +23,7 @@ namespace AlexaCRM\Xrm\Metadata;
 /**
  * Contains the metadata that describes a security privilege for access to an entity.
  */
+#[\AllowDynamicProperties]
 final class SecurityPrivilegeMetadata {
 
     /**

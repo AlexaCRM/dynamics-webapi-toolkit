@@ -46,21 +46,22 @@ class ODataException extends Exception {
      * ODataException constructor.
      *
      * @param object $response OData error response object
-     * @param RequestException $inner
+     * @param RequestException|null $inner
      */
-    public function __construct( $response, RequestException $inner = null ) {
+    public function __construct( $response, ?RequestException $inner = null ) {
+        parent::__construct();
         $this->message = $response;
         if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
             $guzzleResponse = $inner->getResponse();
-            $statusCode = ( $guzzleResponse !== null )? $guzzleResponse->getStatusCode() : 0;
+            $statusCode = ( $guzzleResponse !== null ) ? $guzzleResponse->getStatusCode() : 0;
 
-            $this->code = (int)$statusCode;
+            $this->code = $statusCode;
 
-            $level = (int) floor( $statusCode / 100);
-            if ($level === 4) {
+            $level = (int) floor( $statusCode / 100 );
+            if ( $level === 4 ) {
                 $label = 'Client error';
-            } elseif ($level === 5) {
+            } elseif ( $level === 5 ) {
                 $label = 'Server error';
             } else {
                 $label = 'Unsuccessful request';
@@ -74,8 +75,8 @@ class ODataException extends Exception {
                 $guzzleRequest->getMethod(),
                 $uri,
                 $statusCode,
-                ( $guzzleResponse !== null )? $guzzleResponse->getReasonPhrase() : '',
-                $response->message
+                ( $guzzleResponse !== null ) ? $guzzleResponse->getReasonPhrase() : '',
+                $response->message ?? $response
             );
         }
 

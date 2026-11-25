@@ -23,6 +23,8 @@ namespace AlexaCRM\WebAPI;
 
 use AlexaCRM\WebAPI\OData\OnlineAuthMiddleware;
 use AlexaCRM\WebAPI\OData\OnlineSettings;
+use AlexaCRM\WebAPI\OData\OnPremiseAuthMiddleware;
+use AlexaCRM\WebAPI\OData\OnPremiseSettings;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -46,7 +48,7 @@ class ClientFactory {
         string $instanceURI,
         string $applicationID,
         string $applicationSecret,
-        array $services = []
+        array $services = [],
     ): Client {
         $settings = new OnlineSettings();
         $settings->instanceURI = $instanceURI;
@@ -61,6 +63,35 @@ class ClientFactory {
         }
 
         $middleware = new OnlineAuthMiddleware( $settings );
+        $odataClient = new OData\Client( $settings, $middleware );
+
+        return new Client( $odataClient );
+    }
+
+    /**
+     * Creates a client proxy implementing the IOrganizationService interface given the Organization URI
+     * and credentials for the Azure AD application configured for access to Dynamics 365.
+     *
+     * @param OnPremiseSettings $settings
+     * @param array $services Optional services like `logger` or `cachePool`.
+     * @param bool $ignoreAuthCache
+     *
+     * @return Client
+     */
+    public static function createOnPremiseClient(
+        OnPremiseSettings $settings,
+        array $services = [],
+        ?bool $ignoreAuthCache = false,
+    ): Client {
+
+        if ( isset ( $services['logger'] ) && $services['logger'] instanceof LoggerInterface ) {
+            $settings->setLogger( $services['logger'] );
+        }
+        if ( isset ( $services['cachePool'] ) && $services['cachePool'] instanceof CacheItemPoolInterface ) {
+            $settings->cachePool = $services['cachePool'];
+        }
+
+        $middleware = new OnPremiseAuthMiddleware( $settings, $ignoreAuthCache );
         $odataClient = new OData\Client( $settings, $middleware );
 
         return new Client( $odataClient );

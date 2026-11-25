@@ -59,7 +59,7 @@ class AttributeState implements \ArrayAccess, \IteratorAggregate {
      *
      * @return mixed Can return all value types.
      */
-    public function offsetGet( $offset ) {
+    public function offsetGet( $offset ): mixed {
         return array_key_exists( $offset, $this->attributes ) && $this->attributes[$offset] === true;
     }
 

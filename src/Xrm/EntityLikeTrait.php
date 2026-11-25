@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2020 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
@@ -47,7 +47,7 @@ trait EntityLikeTrait {
      * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value.
      */
-    private function constructOverloaded( string $entityName = null, $entityId = null, $keyValue = null ): void {
+    private function constructOverloaded( ?string $entityName = null, $entityId = null, $keyValue = null ): void {
         if ( $entityName === null ) {
             return;
         }

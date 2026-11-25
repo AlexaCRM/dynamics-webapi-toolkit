@@ -47,8 +47,15 @@ class EntityReference {
      * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value.
      */
-    public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
+    public function __construct( ?string $entityName = null, $entityId = null, $keyValue = null ) {
         $this->constructOverloaded( $entityName, $entityId, $keyValue );
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string {
+        return $this->Name ?? '';
     }
 
 }

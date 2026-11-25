@@ -42,7 +42,8 @@ class LookupAttributeMetadata extends AttributeMetadata {
      *
      * @param LookupFormat|null $format
      */
-    public function __construct( LookupFormat $format = null ) {
+    public function __construct( ?LookupFormat $format = null ) {
+        parent::__construct();
         $this->Format = $format;
     }
 

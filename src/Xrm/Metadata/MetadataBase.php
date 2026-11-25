@@ -23,7 +23,9 @@ namespace AlexaCRM\Xrm\Metadata;
 /**
  * Specifies the base class for classes that contains metadata information.
  */
-abstract class MetadataBase {
+#[\AllowDynamicProperties]
+abstract class MetadataBase
+{
 
     /**
      * A unique identifier for the metadata item.
